@@ -1,13 +1,18 @@
 services:
+
+  # A new standalone container
   test_breedbase:
+    container_name: test_breedbase
     build:
       context: .
       cache_from:
         - breedbase/breedbase:latest
     environment:
-      HOME: /root
       MODE: 'TESTING'
+      PGDATABASE: breedbase
+      PGHOST: breedbase_db
       PGPASSWORD: postgres
+      PGUSER: postgres
       SGN_TEST_SERVER: http://test_breedbase:3010
       SGN_REMOTE_SERVER_ADDR: selenium
     depends_on:
@@ -16,43 +21,64 @@ services:
       selenium:
         condition: service_healthy
     volumes:
-      - ./cxgn:/home/production/cxgn
-      # repos/sgn/sgn_test.conf assumes /home/vagrant
-      - ./.git:/home/production/.git
+      - type: bind
+        source: ./sgn_local.conf
+        target: /home/production/cxgn/sgn/sgn_local.conf
+      - type: bind
+        source: ./cxgn
+        target: /home/production/cxgn
+        # include .git dir that tracks all submodules in cxgn
+      - type: bind
+        source: .git
+        target: /home/production/.git
       - shared_data:/downloads
-    command: ["t/unit", "t/unit_fixture", "t/unit_mech"]
+    networks:
+      - test-breedbase
+    healthcheck:
+      test: curl -I localhost:8080
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s      
+
+  breedbase_db:
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    image: postgres:12.7
+    container_name: breedbase_db
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q postgres -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     networks:
       - test-breedbase
 
   selenium:
-    image: selenium/standalone-firefox:97.0
-    shm_size: '2gb'
-    healthcheck:
-      test: "curl --silent --head http://localhost:4444 || exit 1"
-    networks:
-      - test-breedbase
+    container_name: selenium
+    image: selenium/standalone-firefox:3.141.59
     volumes:
       - type: bind
         source: ./cxgn/sgn/t/data
         target: /home/production/cxgn/sgn/t/data
       - shared_data:/downloads
     ports:
-       - 5900:5900
-       - 4444:4444
-
-
-  breedbase_db:
-    image: postgres:12.7
-    environment:
-      POSTGRES_PASSWORD: postgres
+      - 5900:5900
+      - 4444:4444
     healthcheck:
-      test: "pg_isready -U postgres || exit 1"
+      test: curl -I "http://localhost:4444/wd/hub/static/resource/hub.html"
       interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
     networks:
       - test-breedbase
 
 volumes:
+  webdata:
+  dbdata:
   shared_data:
   
 networks:
   test-breedbase:
+

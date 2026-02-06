@@ -130,7 +130,7 @@ RUN cd /home/production/cxgn/sgn/programs/; make; cd -;
  
 # npm install needs a non-root user (new in latest version)
 #
-RUN adduser --disabled-password --gecos "" -u 1250 production && chown -R production /home/production
+RUN adduser --disabled-password --gecos "" -u 1250 production && chown -R production:production /home/production
 
 WORKDIR /home/production/cxgn/sgn
 

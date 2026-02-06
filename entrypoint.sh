@@ -31,11 +31,11 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER}  | cut -d '|' -f1  | sed 's/^[[:blan
     then
 	echo "LOADING empty_breedbase dump...";
 	psql -f /db_dumps/empty_breedbase.sql
-	(cd db && ./run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e admin )
+    script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'db/run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e admin'"
     else
 	echo "LOADING cxgn_fixture.sql dump...";
 	psql -f t/data/fixture/cxgn_fixture.sql
-	(cd db && ./run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e janedoe )
+    script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'db/run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e janedoe'"
     fi
     
     
@@ -76,7 +76,7 @@ then
     then
         mkdir /home/production/volume/public/images
         chown www-data /home/production/volume/public/images
-	chmod 770 /home/production/volume/images
+	chmod 770 /home/production/volume/public/images
     fi
 
     if [[ ! -e /home/production/volume/tmp ]]
