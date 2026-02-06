@@ -1,125 +1,192 @@
 #!/bin/bash
-sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
-/etc/init.d/postfix start
-/etc/init.d/cron start
-chown 106 /etc/munge/munge.key
-/etc/init.d/munge start
-/etc/init.d/slurmctld start
-/etc/init.d/slurmd start
-#/etc/init.d/postgres start
 
-chown root /etc/crontab # in case it was mounted from local dir
+set -e
 
-if [ "${MODE}" = 'TESTING' ]; then
-    exec perl t/test_fixture.pl --carpalways -v "${@}"
+# If we are not running as a custom user, run as a new 1000:1000 user
+if [[ -z $USER_GROUP_ID ]]; then
+    USER_GROUP_ID="1000:1000"
 fi
 
-umask 002
+USER_ID=$(echo "$USER_GROUP_ID" | cut -d ":" -f 1)
+GROUP_ID=$(echo "$USER_GROUP_ID" | cut -d ":" -f 2)
 
-# load empty fixture and run any missing patches
+docker_initialize_user() {
 
-echo "CHECKING IF A DATABASE NEEDS TO BE INSTALLED...";
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing user ( $USER_GROUP_ID $whoami)"
+    echo "-------------------------------------------------------------------------"
 
-if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER}  | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
-    echo "INSTALLING DATABASE...";
-    echo "CREATING web_usr...";
-    psql -d postgres -c "CREATE USER web_usr PASSWORD 'postgres';"
-    echo "CREATING breedbase DATABASE...";
-    
-    psql -d postgres -c "CREATE DATABASE breedbase; "
-    if [ -e '/db_dumps/empty_breedbase.sql' ]
-    then
-	echo "LOADING empty_breedbase dump...";
-	psql -f /db_dumps/empty_breedbase.sql
-    script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'db/run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e admin'"
+    # Downstream steps such as javascript will error if the user is unknown to the system
+	if ! getent passwd "$USER_ID" &> /dev/null; then
+        echo "Adding group $GROUP_ID to system as: sgn"
+        addgroup sgn
+
+        echo "Adding user $USER_GROUP_ID to system as: sgn"
+        useradd -u $USER_ID -g sgn -m sgn -d /home/sgn
+
+        #echo "sgn:x:$USER_ID:$GROUP_ID:,,,:/home/production:/usr/sbin/nologin" >> /etc/passwd
+        #echo "sgn:x:$GROUP_ID:" >> /etc/group
+	fi
+
+    echo "System user:" $(getent passwd "$USER_ID")
+    echo "System group:" $(getent group "$USER_ID")
+}
+
+# used to start system daemons that require root
+docker_start_system_services() {
+    echo "-------------------------------------------------------------------------"
+    echo "Starting system services"
+    echo "-------------------------------------------------------------------------"
+
+    sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
+    /etc/init.d/postfix start
+    /etc/init.d/cron start
+    chown 106 /etc/munge/munge.key
+    /etc/init.d/munge start
+    /etc/init.d/slurmctld start
+    /etc/init.d/slurmd start
+    chown root /etc/crontab # in case it was mounted from local dir
+
+    umask 002
+
+}
+
+docker_initialize_db() {
+
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing Database"
+    echo "-------------------------------------------------------------------------"
+
+    echo "CHECKING IF A DATABASE NEEDS TO BE INSTALLED...";
+
+    if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER}  | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase || true ) = '' ]]; then
+        echo "INSTALLING DATABASE...";
+        echo "CREATING web_usr...";
+        psql -d postgres -c "CREATE USER web_usr PASSWORD 'postgres';"
+        echo "CREATING breedbase DATABASE...";
+        
+        psql -d postgres -c "CREATE DATABASE breedbase; "
+        # work around run_all_patches.pl "what the heck - no TTY??" error
+        # https://github.com/solgenomics/sgn/blob/39144f63dfd33a72b7c8f47fc036c3736cc07f07/.github/workflows/test.yml#L57
+        # https://github.com/actions/runner/issues/241#issuecomment-842566950
+        if [ -e '/db_dumps/empty_breedbase.sql' ]; then
+            echo "LOADING empty_breedbase dump...";
+            psql -f /db_dumps/empty_breedbase.sql
+        else
+            echo "LOADING cxgn_fixture.sql dump...";
+            psql -f t/data/fixture/cxgn_fixture.sql
+        fi  
+    fi
+
+    set +e
+    if [ -e '/db_dumps/empty_breedbase.sql' ]; then
+        echo "PATCHING DATABASE WITH admin...";
+        script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'run_all_patches.pl -e admin -p /home/production/cxgn/sgn/db'"
     else
-	echo "LOADING cxgn_fixture.sql dump...";
-	psql -f t/data/fixture/cxgn_fixture.sql
-    script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'db/run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e janedoe'"
+        echo "PATCHING DATABASE WITH janedoe...";
+        # Run with -n to not die on failing patches, because AddCascadeDeletes fails
+        script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'run_all_patches.pl -e janedoe -p /home/production/cxgn/sgn/db -n'"
     fi
+    set -e
+}
+
+docker_initialize_volumes() {
+
+    # Define default permissions for newly created files
+    umask 002
+
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing Volumes"
+    echo "-------------------------------------------------------------------------"
+
+    if [[ -e /home/production/volume ]]; then
+        for dir_name in archive blast cache cluster logs public public/images tmp ; do
+            dir_path=/home/production/volume/${dir_name}
+            if [[ ! -e $dir_path ]]; then
+                echo "Creating volume: $dir_path"
+                mkdir -p $dir_path
+            else
+                echo "Located volume: $dir_path"
+            fi
+            chown -R ${USER_GROUP_ID} ${dir_path};
+	        chmod 770 $dir_path
+        done
+    else
+        echo "/home/production/volume does not exist... not creating dirs";
+    fi
+}
+
+docker_npm_build() {
+
+    echo "-------------------------------------------------------------------------"
+    echo "NPM Build"
+    echo "-------------------------------------------------------------------------"
     
-    
-fi
+    cd /home/production/cxgn/sgn/js
+    HOME=/home/sgn npm run build
+    cd -
 
-# create necessary dirs/permissions if we have a docker volume dir
-# at /home/production/volume
+}
 
-if [[ -e /home/production/volume ]]
-then
-    if [[ ! -e /home/production/volume/archive ]]
-    then
-        mkdir /home/production/volume/archive
-        chown www-data /home/production/volume/archive
-	chmod 770 /home/production/volume/archive
-    fi
+docker_start_server() {
+    if [ "${MODE}" == "TESTING" ]; then
+        echo "-------------------------------------------------------------------------"
+        echo "Starting SGN Tests"
+        echo "-------------------------------------------------------------------------"
 
-    if [[ ! -e /home/production/volume/logs ]]
-    then
-        mkdir /home/production/volume/logs
-        chown www-data /home/production/volume/logs
-	chmod 770 /home/production/volume/logs
-    fi
+        exec perl t/test_fixture.pl --carpalways -v "${@}"
 
-    if [[ ! -e /home/production/volume/blast ]]
-    then
-        mkdir /home/production/volume/blast
-    fi
+    elif [ "$MODE" == "DEVELOPMENT" ]; then
+        echo "-------------------------------------------------------------------------"
+        echo "Starting SGN Development Server"
+        echo "-------------------------------------------------------------------------"
 
-    if [[ ! -e /home/production/volume/public ]]
-    then
-        mkdir /home/production/volume/public
-	chown www-data /home/production/volume/public
-	chmod 770 /home/production/volume/public
-    fi
-
-    if [[ ! -e /home/production/volume/public/images ]]
-    then
-        mkdir /home/production/volume/public/images
-        chown www-data /home/production/volume/public/images
-	chmod 770 /home/production/volume/public/images
-    fi
-
-    if [[ ! -e /home/production/volume/tmp ]]
-    then
-        mkdir /home/production/volume/tmp
-        chown www-data /home/production/volume/tmp
-	chmod 770 /home/production/volume/tmp
-    fi
-
-    if [[ ! -e /home/production/volume/cache ]]
-    then
-        mkdir /home/production/volume/cache
-        chown www-data /home/production/volume/cache
-	chmod 770 /home/production/volume/cache
-    fi
-
-    if [[ ! -e /home/production/volume/cluster ]]
-    then
-        mkdir /home/production/volume/cluster
-        chown www-data /home/production/volume/cluster
-	chmod 770 /home/production/volume/cluster
-    fi
-    
-    if [[ ! -e /home/production/volume/pgdata ]]
-    then
-        mkdir /home/production/volume/pgdata
-        chown postgres /home/production/pgdata
-    fi
-else
-    echo "/home/production/volume does not exist... not creating dirs";
-fi
-
-
-if [ "$MODE" == "DEVELOPMENT" ]; then
         /home/production/cxgn/sgn/bin/sgn_server.pl --fork -r -p 8080
-else
-    /etc/init.d/sgn start
-    touch /var/log/sgn/error.log
-  chmod 777 /var/log/sgn/error.log
-  tail -f /var/log/sgn/error.log
-fi
 
-# for unigene page, compile drawcontig align program
-#cd /home/production/cxgn/sgn/programs
-#make
-#cd /home/production/cxgn/sgn
+    else
+        echo "-------------------------------------------------------------------------"
+        echo "Starting SGN Production Server"
+        echo "-------------------------------------------------------------------------"
+
+        /etc/init.d/sgn start
+        touch /var/log/sgn/error.log
+        chmod 777 /var/log/sgn/error.log
+        tail -f /var/log/sgn/error.log
+
+    fi
+
+    # Stream server logs
+    touch /var/log/sgn/error.log
+    chmod 777 /var/log/sgn/error.log
+    tail -f /var/log/sgn/error.log
+}
+
+_main() {
+
+    # These setup steps need to be performed as root
+    if [ "$(id -u)" = '0' ]; then
+        docker_initialize_user
+        docker_start_system_services
+        docker_initialize_volumes
+		# restart script as non-root (www-data) user
+        # this process is modelled after the postgres docker entrypoint
+		exec gosu $USER_GROUP_ID "$BASH_SOURCE" "$@"
+	fi
+
+    # These steps should be performed as a non-root user
+    docker_initialize_db
+    docker_npm_build
+    docker_start_server
+}
+
+# check to see if this file is being run or sourced from another script
+_is_sourced() {
+	# https://unix.stackexchange.com/a/215279
+	[ "${#FUNCNAME[@]}" -ge 2 ] \
+		&& [ "${FUNCNAME[0]}" = '_is_sourced' ] \
+		&& [ "${FUNCNAME[1]}" = 'source' ]
+}
+
+if ! _is_sourced; then
+	_main "$@"
+fi

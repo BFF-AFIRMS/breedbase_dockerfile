@@ -26,6 +26,8 @@ RUN adduser --disabled-password --gecos "" -u 1250 production && chown -R produc
 # This also adds the Mason website skins
 #
 ADD --chown=production:production cxgn /home/production/cxgn
+# Custom run_all_patches.pl script that doesn't leak credentials to log
+ADD run_all_patches.pl /usr/local/bin/run_all_patches.pl
 
 # move this here so it is not clobbered by the cxgn move
 #

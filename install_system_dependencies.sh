@@ -74,6 +74,25 @@ apt-get install libmoosex-runnable-perl -y
 apt-get install libgdbm6 libgdm-dev -y
 apt-get install nodejs -y
 
+# Manually install nodejs to get a more recent version
+apt remove -y nodejs \
+  && wget https://nodejs.org/dist/v25.6.0/node-v25.6.0-linux-x64.tar.xz \
+  && tar -xvf node-v25.6.0-linux-x64.tar.xz \
+  && rm -f node-v25.6.0-linux-x64.tar.xz \
+  && mkdir -p /opt/node \
+  && mv node-v25.6.0-linux-x64 /opt/node/25.6.0 \
+  && ln -f -s /opt/node/25.6.0/bin/node /usr/bin/node \
+  && ln -f -s /opt/node/25.6.0/bin/npm /usr/bin/npm \
+  && ln -f -s /opt/node/25.6.0/bin/npx /usr/bin/npx \
+  && ln -f -s /opt/node/25.6.0/bin/corepack /usr/bin/corepack \
+  && mkdir -p /home/production/.npm /home/production/.config \
+  && touch /home/production/.npmrc
+
+# Install gosu to help with custom users in the entrypoint
+wget https://github.com/tianon/gosu/releases/download/1.19/gosu-amd64 \
+  && chmod +x gosu-amd64 \
+  && mv gosu-amd64 /usr/local/bin/gosu
+
 cpanm Selenium::Remote::Driver@1.49
 
 #INSTALL OPENCV IMAGING LIBRARY
