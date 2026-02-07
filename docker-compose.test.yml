@@ -8,6 +8,7 @@ services:
       cache_from:
         - breedbase/breedbase:latest
     environment:
+      USER_GROUP_ID: ${USER_GROUP_ID:?}
       MODE: 'TESTING'
       PGDATABASE: breedbase
       PGHOST: breedbase_db

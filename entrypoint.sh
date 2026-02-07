@@ -23,13 +23,11 @@ docker_initialize_user() {
 
         echo "Adding user $USER_GROUP_ID to system as: sgn"
         useradd -u $USER_ID -g sgn -m sgn -d /home/sgn
-
-        #echo "sgn:x:$USER_ID:$GROUP_ID:,,,:/home/production:/usr/sbin/nologin" >> /etc/passwd
-        #echo "sgn:x:$GROUP_ID:" >> /etc/group
 	fi
 
     echo "System user:" $(getent passwd "$USER_ID")
     echo "System group:" $(getent group "$USER_ID")
+
 }
 
 # used to start system daemons that require root
@@ -90,13 +88,13 @@ docker_initialize_db() {
     set -e
 }
 
-docker_initialize_volumes() {
+docker_initialize_directories() {
 
     # Define default permissions for newly created files
     umask 002
 
     echo "-------------------------------------------------------------------------"
-    echo "Initializing Volumes"
+    echo "Initializing Directories"
     echo "-------------------------------------------------------------------------"
 
     if [[ -e /home/production/volume ]]; then
@@ -108,12 +106,30 @@ docker_initialize_volumes() {
             else
                 echo "Located volume: $dir_path"
             fi
-            chown -R ${USER_GROUP_ID} ${dir_path};
 	        chmod 770 $dir_path
         done
+        chown -R $USER_GROUP_ID /home/production/volume
     else
         echo "/home/production/volume does not exist... not creating dirs";
     fi
+
+    # If we are running in production, (not mounting local paths) fix javascript permissions
+    if [ "$MODE" == "PRODUCTION" ]; then
+        echo "Changing owner of cxgn/sgn/js to: $USER_GROUP_ID"
+        chown -R $USER_GROUP_ID /home/production/cxgn/sgn/js
+
+        echo "Changing owner of cxgn/sgn/static to: $USER_GROUP_ID"
+        chown -R $USER_GROUP_ID /home/production/cxgn/sgn/static/
+
+        echo "Changing owner of cxgn/local-lib to: $USER_GROUP_ID"
+        chown -R $USER_GROUP_ID /home/production/cxgn/local-lib
+    fi
+
+    # Create directory for system logs
+    mkdir -p /var/log/sgn
+    chown -R $USER_GROUP_ID /var/log/sgn
+
+
 }
 
 docker_npm_build() {
@@ -167,7 +183,7 @@ _main() {
     if [ "$(id -u)" = '0' ]; then
         docker_initialize_user
         docker_start_system_services
-        docker_initialize_volumes
+        docker_initialize_directories
 		# restart script as non-root (www-data) user
         # this process is modelled after the postgres docker entrypoint
 		exec gosu $USER_GROUP_ID "$BASH_SOURCE" "$@"

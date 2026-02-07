@@ -55,22 +55,19 @@ Please note that installing docker natively in Windows will conflict with VMWare
 
 ### Deploy for Production with docker compose
 
-1. Create a `.env` file with the following lines.
+1. Create a `.env` file with configuration variables.
 
     ```bash
-    touch .env
-    ```
-
-    ```text
+    echo "
+    PGDATABASE=breedbase
     PGDATABASE=breedbase
     PGHOST=breedbase_db
     PGPASSWORD=postgres
-    PGUSER=postgres"
+    PGUSER=postgres
+    USER_GROUP_ID=$(id -u):$(id -g)" > .env
     ```
-    
-    Run this command to read the environment variables: `source .env`
 
-3. Deploy with docker compose.
+2. Deploy with docker compose.
 
     ```
     docker compose -f docker-compose.yml -f production.yml up -d
