@@ -21,5 +21,11 @@ jobs:
       - name: Build container image
         run: docker compose -f docker-compose.test.yml build --no-cache test_breedbase
 
-      - name: Run tests
-        run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c '/entrypoint.sh t/unit t/unit_fixture t/unit_mech 2>/dev/null'
+      - name: Run unit tests
+        run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c 'prove --recurse t/unit'
+
+      - name: Run unit_fixture tests
+        run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c '/entrypoint.sh t/unit_fixture'
+
+      - name: Run unit_mech tests
+        run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c '/entrypoint.sh t/unit_mech'
