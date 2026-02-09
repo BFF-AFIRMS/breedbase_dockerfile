@@ -23,13 +23,15 @@ RUN cd /cxgn/gtsimsrch/src && make
 # Compile contigalign (tiny, no need for aggresive cleaning)
 RUN cd /cxgn/sgn/programs/ && make
 
-# [OPTIONAL] CLEANUPS
+# [RECOMMENDED] CLEANUPS
 # Clean gtsimsrch testing and example data (~100MB)
 RUN cd /cxgn/gtsimsrch/ && rm -rf data/ example/ testing/
 # Clean R package docs (doc, help, html) (~100MB)
 RUN rm -rf /cxgn/R_libs/*/doc /cxgn/R_libs/*/help /cxgn/R_libs/*/html
+
+# [OPTIONAL] CLEANUPS
 # Clean sgn non-html docs (~100MB)
-RUN rm -rf /cxgn/sgn/docs/BreedbaseManual.pdf /cxgn/sgn/docs/r_markdown_docs
+# RUN rm -rf /cxgn/sgn/docs/BreedbaseManual.pdf /cxgn/sgn/docs/r_markdown_docs
 
 # -----------------------------------------------------------------------------
 # Final Image
