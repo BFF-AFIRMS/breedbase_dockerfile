@@ -25,7 +25,26 @@ apt-get update --fix-missing -y
 
 apt-get install -y aptitude
 
-aptitude install -y npm libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-12 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink
+aptitude install -y libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-12 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink
+
+# Manually install npm and nodejs to get a more recent version
+apt remove -y nodejs \
+  && wget https://nodejs.org/dist/v25.6.0/node-v25.6.0-linux-x64.tar.xz \
+  && tar -xvf node-v25.6.0-linux-x64.tar.xz \
+  && rm -f node-v25.6.0-linux-x64.tar.xz \
+  && mkdir -p /opt/node \
+  && mv node-v25.6.0-linux-x64 /opt/node/25.6.0 \
+  && ln -f -s /opt/node/25.6.0/bin/node /usr/bin/node \
+  && ln -f -s /opt/node/25.6.0/bin/npm /usr/bin/npm \
+  && ln -f -s /opt/node/25.6.0/bin/npx /usr/bin/npx \
+  && ln -f -s /opt/node/25.6.0/bin/corepack /usr/bin/corepack \
+  && mkdir -p /home/production/.npm /home/production/.config \
+  && touch /home/production/.npmrc
+
+# Install gosu to help with custom users in the entrypoint
+wget https://github.com/tianon/gosu/releases/download/1.19/gosu-amd64 \
+  && chmod +x gosu-amd64 \
+  && mv gosu-amd64 /usr/local/bin/gosu
 
 # Set the locale correclty to UTF-8
 locale-gen en_US.UTF-8
@@ -72,33 +91,7 @@ apt-get install libpq-dev -y
 apt-get install libmoosex-runnable-perl -y
 
 apt-get install libgdbm6 libgdm-dev -y
-apt-get install nodejs -y
-
-# Manually install nodejs to get a more recent version
-apt remove -y nodejs \
-  && wget https://nodejs.org/dist/v25.6.0/node-v25.6.0-linux-x64.tar.xz \
-  && tar -xvf node-v25.6.0-linux-x64.tar.xz \
-  && rm -f node-v25.6.0-linux-x64.tar.xz \
-  && mkdir -p /opt/node \
-  && mv node-v25.6.0-linux-x64 /opt/node/25.6.0 \
-  && ln -f -s /opt/node/25.6.0/bin/node /usr/bin/node \
-  && ln -f -s /opt/node/25.6.0/bin/npm /usr/bin/npm \
-  && ln -f -s /opt/node/25.6.0/bin/npx /usr/bin/npx \
-  && ln -f -s /opt/node/25.6.0/bin/corepack /usr/bin/corepack \
-  && mkdir -p /home/production/.npm /home/production/.config \
-  && touch /home/production/.npmrc
-
-# Install gosu to help with custom users in the entrypoint
-wget https://github.com/tianon/gosu/releases/download/1.19/gosu-amd64 \
-  && chmod +x gosu-amd64 \
-  && mv gosu-amd64 /usr/local/bin/gosu
-
-cpanm Selenium::Remote::Driver@1.49
 
 #INSTALL OPENCV IMAGING LIBRARY
 
 apt-get install -y python3-dev  python3-pip python3-numpy libgtk2.0-dev libgtk-3-0 libgtk-3-dev libavcodec-dev libavformat-dev libswscale-dev libhdf5-serial-dev libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libxvidcore-dev libatlas-base-dev gfortran libgdal-dev exiftool libzbar-dev zbar-tools cmake
-
-pip3 install --upgrade pip
-pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
-    && pip3 install -U keras-tuner

@@ -23,8 +23,7 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
     - [Install docker](#install-docker)
     - [Install docker compose](#install-docker-compose)
 2. [Deploy](#deploy)
-    - [Deploy for Production with docker compose](#deploy-for-production-with-docker-compose)
-    - [Deploy for Production with docker swarm](#deploy-for-production-with-docker-swarm)    
+    - [Deploy for Production](#deploy-for-production-with-docker-compose)   
     - [Deploy for Development](#deploy-for-development)<br>
     - [Deploy for Testing](#deploy-for-testing)<br>
 2. [Access and Configure](#access-and-configure)<br>
@@ -33,41 +32,42 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 ## Install
 
-### Clone Repository
+1. **Install `docker`.**
 
-```bash
-git clone https://github.com/solgenomics/breedbase_dockerfile
-cd breedbase_dockerfile
-```
-### Install docker
+    For installs on Debian, follow the instructions on https://docs.docker.com/engine/install/debian/ to install the docker executable.
 
-For installs on Debian, follow the instructions on https://docs.docker.com/engine/install/debian/ to install the docker executable.
+1. **Install `docker compose`.**
 
-### Install docker compose
+    Debian/Ubuntu: ```apt-get install docker-compose```
 
-Debian/Ubuntu: ```apt-get install docker-compose```
+    For Mac/Windows: It will be installed as part of installing [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
-For Mac/Windows: It will be installed as part of installing [Docker Desktop](https://www.docker.com/products/docker-desktop)
+    Please note that installing docker natively in Windows will conflict with VMWare and Virtualbox virtualization settings.
 
-Please note that installing docker natively in Windows will conflict with VMWare and Virtualbox virtualization settings.
+1. **Clone repository.**
+
+    ```bash
+    git clone https://github.com/solgenomics/breedbase_dockerfile
+    cd breedbase_dockerfile
+    ```
 
 ## Deploy
 
-### Deploy for Production with docker compose
+For all deployment methods, first create a `.env` file with:
 
-1. Create a `.env` file with configuration variables.
+```bash
+echo "
+PGDATABASE=breedbase
+PGDATABASE=breedbase
+PGHOST=breedbase_db
+PGPASSWORD=postgres
+PGUSER=postgres
+USER_GROUP_ID=$(id -u):$(id -g)" > .env
+```
 
-    ```bash
-    echo "
-    PGDATABASE=breedbase
-    PGDATABASE=breedbase
-    PGHOST=breedbase_db
-    PGPASSWORD=postgres
-    PGUSER=postgres
-    USER_GROUP_ID=$(id -u):$(id -g)" > .env
-    ```
+### Deploy for Production
 
-2. Deploy with docker compose.
+1. **Deploy with docker compose.**
 
     ```
     docker compose -f docker-compose.yml -f production.yml up -d
@@ -77,38 +77,9 @@ Please note that installing docker natively in Windows will conflict with VMWare
 
     > Make sure to specify both the base yml file and the production yml file with your command. These will overwrite the default development settings found in `docker-compose.override.yml`, and instead use production settings. These settings include setting the env MODE to PRODUCTION rather than DEVELOPMENT, and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
 
-### Deploy for Production with `docker swarm`
-
-Docker Swarm allows you to define a service, as well as to allow you to configure auto scaling and clustering of a service.
-
-You need to write an `sgn_local.conf` file specific to your service. A [template](./sgn_local.conf) is provided in the breedbase_dockerfile repo (you have to fill in the `dbhost`, `dbport`, `dbname`, and `dbuser` and `dbpassword`).
-
-1. (If needed) Initialize Docker Swarm
-
-    Once the image has been created either through Docker Hub or by building the image, the image can be started. First, Docker Swarm needs to be initialized on the machine. This needs to be done only once.
-
-    ```bash
-    docker swarm init
-    ```
-
-2. Add `sgn_local.conf` to docker config
-    ```bash
-    cat sgn_local.conf | docker config create "breedbase_sgn_local.conf" -
-    ```
-
-3. Start the service
-
-    To run the image on swarm, you have to provide the `sgn_local.config` using `--config`, as well as any mounts that are required for persistent data. Currently, breedbase just mounts directories on the docker host (which can be nfs mounts), but later this could be changed to docker volumes. Multiple mountpoints can be provided with multiple `--mount` options, as follows:
-    ```bash
-    docker service create --name "breedbase_service" --mount src=/export/prod/archive,target=/home/production/archive,type=bind --mount src=/export/prod/public_breedbase,target=/home/production/public,type=bind --config source="breedbase_sgn_local.conf",target="/home/production/cxgn/sgn/sgn_local.conf"  breedbase_image
-    ```
-
-    Depending on where your database is running, you may need to use the `--network` option. For a database server running on the host machine (localhost in your sgn_local.conf), use `--network="host"`.
-
-
 ### Deploy for Development
 
-1. Clone the submodules.
+1. **Clone the submodules.**
 
     ```bash
     git submodule update --init --recursive --progress
@@ -116,7 +87,7 @@ You need to write an `sgn_local.conf` file specific to your service. A [template
    
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted onto the devel container during the compose step, but will still be accessible from the host for development work.
 
-2. Deploy with docker compose.
+2. **Deploy with docker compose.**
 
     ```
     docker compose up -d
@@ -126,7 +97,7 @@ You need to write an `sgn_local.conf` file specific to your service. A [template
 
     Then follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment!
 
-#### Testing
+### Deploy for Testing
 
 1. Connect to the container.
 
