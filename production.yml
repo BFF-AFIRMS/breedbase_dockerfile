@@ -7,9 +7,15 @@ services:
       PGHOST: ${PGHOST:?}
       PGPASSWORD: ${PGPASSWORD:?}
       PGUSER: ${PGUSER:?}
+    volumes:
+      - type: bind
+        source: db_dumps
+        target: /db_dumps
+      - type: bind
+        source: ./sgn_local.conf
+        target: /home/production/cxgn/sgn/sgn_local.conf
 
   breedbase_db:
     restart: always
     environment:
-      POSTGRES_DB: ${PGDATABASE:?}
       POSTGRES_PASSWORD: ${PGPASSWORD:?}

@@ -1,5 +1,6 @@
 services:
   breedbase:
+    image: breedbase/breedbase:latest
     volumes:
       - type: bind
         source: ./sgn_local.conf
@@ -21,9 +22,10 @@ services:
       SGN_TEST_SERVER: http://breedbase:3010
       SGN_REMOTE_SERVER_ADDR: selenium
       DBIC_TRACE: 0
+
   selenium:
     container_name: selenium
-    image: selenium/standalone-firefox-debug
+    image: selenium/standalone-firefox:3.141.59
     volumes:
       - type: bind
         source: ./cxgn/sgn/t/data
@@ -32,10 +34,15 @@ services:
     ports:
       - 5900:5900
       - 4444:4444
+    healthcheck:
+      test: curl -I "http://localhost:4444/wd/hub/static/resource/hub.html"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
 
   breedbase_db:
     environment:
-      POSTGRES_DB: breedbase
       POSTGRES_PASSWORD: postgres
 
 volumes:
