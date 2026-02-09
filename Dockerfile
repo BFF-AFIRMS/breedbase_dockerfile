@@ -34,7 +34,7 @@ RUN rm -rf /cxgn/sgn/docs/BreedbaseManual.pdf /cxgn/sgn/docs/r_markdown_docs
 # -----------------------------------------------------------------------------
 # Final Image
 
-FROM debian:bullseye as final
+FROM debian:bullseye AS final
 
 ENV CPANMIRROR=http://cpan.cpantesters.org
 # based on the vagrant provision.sh script by Nick Morales <nm529@cornell.edu>
@@ -138,7 +138,6 @@ RUN apt-get install -y python3-dev  python3-pip python3-numpy libgtk2.0-dev libg
 RUN pip3 install --upgrade pip \
     && pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
     && pip3 install -U keras-tuner \
-    && find /usr/local/lib/python*/dist-packages -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded \
     && rm -rf /root/.cache/pip
 
 # npm install needs a non-root user (new in latest version)
@@ -165,11 +164,6 @@ COPY starmachine.conf /etc/starmachine/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 COPY sgn_local.conf /home/production/cxgn/sgn/sgn_local.conf
-
-# compile the simsearch and contigalign tools
-#
-RUN cd /home/production/cxgn/gtsimsrch/src; make; cd -;
-RUN cd /home/production/cxgn/sgn/programs/; make; cd -;
 
 WORKDIR /home/production/cxgn/sgn
 
