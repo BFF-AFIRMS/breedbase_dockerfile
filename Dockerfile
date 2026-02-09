@@ -1,4 +1,40 @@
-FROM debian:bullseye
+#syntax=docker/dockerfile:1
+
+# -----------------------------------------------------------------------------
+# A temporary build stage for copying over files and compiling programs.
+# Only the essential directories will be copied over to the final image
+
+FROM debian:bullseye AS build
+
+# install system dependencies
+RUN apt update && apt install binutils gcc libgd-dev make -y
+
+# Copy code source
+COPY cxgn /cxgn
+
+# Shrink cxgn R_libs from 2.2 GB -> 0.84 GB
+# Strip unneeded symbols: https://dirk.eddelbuettel.com/blog/2017/08/20/#010_stripping_shared_libraries
+# Could be --strip-debug instead of strip-unneeded, to be more conservative
+RUN find cxgn/R_libs -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded
+
+# Compile gtsimsrch
+RUN cd /cxgn/gtsimsrch/src && make
+
+# Compile contigalign (tiny, no need for aggresive cleaning)
+RUN cd /cxgn/sgn/programs/ && make
+
+# [OPTIONAL] CLEANUPS
+# Clean gtsimsrch testing and example data (~100MB)
+RUN cd /cxgn/gtsimsrch/ && rm -rf data/ example/ testing/
+# Clean R package docs (doc, help, html) (~100MB)
+RUN rm -rf /cxgn/R_libs/*/doc /cxgn/R_libs/*/help /cxgn/R_libs/*/html
+# Clean sgn non-html docs (~100MB)
+RUN rm -rf /cxgn/sgn/docs/BreedbaseManual.pdf /cxgn/sgn/docs/r_markdown_docs
+
+# -----------------------------------------------------------------------------
+# Final Image
+
+FROM debian:bullseye as final
 
 ENV CPANMIRROR=http://cpan.cpantesters.org
 # based on the vagrant provision.sh script by Nick Morales <nm529@cornell.edu>
@@ -98,9 +134,16 @@ RUN cpanm Selenium::Remote::Driver@1.49
 
 RUN apt-get install -y python3-dev  python3-pip python3-numpy libgtk2.0-dev libgtk-3-0 libgtk-3-dev libavcodec-dev libavformat-dev libswscale-dev libhdf5-serial-dev libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libxvidcore-dev libatlas-base-dev gfortran libgdal-dev exiftool libzbar-dev zbar-tools cmake
 
-RUN pip3 install --upgrade pip
-RUN pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
-    && pip3 install -U keras-tuner
+# Install python packages, strip unneeded symbols, clear cache
+RUN pip3 install --upgrade pip \
+    && pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
+    && pip3 install -U keras-tuner \
+    && find /usr/local/lib/python*/dist-packages -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded \
+    && rm -rf /root/.cache/pip
+
+# npm install needs a non-root user (new in latest version)
+#
+RUN adduser --disabled-password --gecos "" -u 1250 production
 
 # copy some tools that don't have a Debian package
 #
@@ -113,7 +156,7 @@ COPY tools/sreformat /usr/local/bin/
 # copy code repos.
 # This also adds the Mason website skins
 #
-ADD cxgn /home/production/cxgn
+COPY --chown=production:production --from=build /cxgn /home/production/cxgn
 
 # move this here so it is not clobbered by the cxgn move
 #
@@ -127,10 +170,6 @@ COPY sgn_local.conf /home/production/cxgn/sgn/sgn_local.conf
 #
 RUN cd /home/production/cxgn/gtsimsrch/src; make; cd -;
 RUN cd /home/production/cxgn/sgn/programs/; make; cd -;
- 
-# npm install needs a non-root user (new in latest version)
-#
-RUN adduser --disabled-password --gecos "" -u 1250 production && chown -R production /home/production
 
 WORKDIR /home/production/cxgn/sgn
 
