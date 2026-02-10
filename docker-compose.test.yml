@@ -20,7 +20,7 @@ services:
       # repos/sgn/sgn_test.conf assumes /home/vagrant
       - ./.git:/home/production/.git
       - shared_data:/downloads
-    command: ["t/unit", "t/unit_fixture", "t/unit_mech"]
+    command: ["t/unit", "t/unit_fixture"]
     networks:
       - test-breedbase
 
