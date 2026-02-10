@@ -44,61 +44,40 @@ jobs:
       - name: Run mech tests
         run: $RUN_TEST_CMD '--nopatch t/unit_mech 2>/dev/null'
 
-      - name: Run selenium tests list
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/01_list 2>/dev/null'
-
-      - name: Run selenium tests trial
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/02_trial 2>/dev/null'
-
-      - name: Run selenium tests dataset
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/03_dataset 2>/dev/null'
-
-      - name: Run selenium tests breeders
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/breeders 2>/dev/null'
-
-      - name: Run selenium tests onto
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/onto 2>/dev/null'
-
-      - name: Run selenium tests search
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/search 2>/dev/null'
-
-      - name: Run selenium tests stock
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/stock 2>/dev/null'
-
-      - name: Run selenium tests tools
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/tools 2>/dev/null'
+      - name: Run selenium lists
+        run: $RUN_TEST_CMD '--nopatch t/selenium2 2>/dev/null'
 
       # -----------------------------------------------------------------------
       # Check production deployment
   
-      # - name: Start production
-      #   run: docker compose -f docker-compose.yml -f production.yml up -d
+      - name: Start production
+        run: docker compose -f docker-compose.yml -f production.yml up -d
 
-      # - name: Healthcheck production
-      #   uses: stringbean/docker-healthcheck-action@v3
-      #   with:
-      #     container: breedbase
-      #     wait-time: 300
-      #     require-status: running
-      #     require-healthy: true
+      - name: Healthcheck production
+        uses: stringbean/docker-healthcheck-action@v3
+        with:
+          container: breedbase
+          wait-time: 300
+          require-status: running
+          require-healthy: true
 
-      # - name: Stop production
-      #   run: docker compose -f docker-compose.yml -f production.yml down
+      - name: Stop production
+        run: docker compose -f docker-compose.yml -f production.yml down
 
       # -----------------------------------------------------------------------
       # Check development deployment
   
-      # - name: Start development
-      #   run: docker compose up -d
+      - name: Start development
+        run: docker compose up -d
 
-      # - name: Healthcheck development
-      #   uses: stringbean/docker-healthcheck-action@v3
-      #   with:
-      #     container: breedbase
-      #     wait-time: 300
-      #     require-status: running
-      #     require-healthy: true
+      - name: Healthcheck development
+        uses: stringbean/docker-healthcheck-action@v3
+        with:
+          container: breedbase
+          wait-time: 300
+          require-status: running
+          require-healthy: true
 
-      # - name: Stop development
-      #   run: docker compose down
+      - name: Stop development
+        run: docker compose down
         
