@@ -11,5 +11,4 @@ services:
   breedbase_db:
     restart: always
     environment:
-      POSTGRES_DB: ${PGDATABASE:?}
       POSTGRES_PASSWORD: ${PGPASSWORD:?}

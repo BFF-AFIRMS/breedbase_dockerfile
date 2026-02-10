@@ -35,7 +35,6 @@ services:
 
   breedbase_db:
     environment:
-      POSTGRES_DB: breedbase
       POSTGRES_PASSWORD: postgres
 
 volumes:
