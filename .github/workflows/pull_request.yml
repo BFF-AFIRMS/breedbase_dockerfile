@@ -26,9 +26,12 @@ jobs:
       # Testing
 
       # Patch database, and dump to file, build node modules, print versions
-      # Just using a simple sh entrypoint
+      # Because it doesn't use the usual entrypoint, we need to do the work
+      # work around for run_all_patches.pl "what the heck - no TTY??" error
+      # https://github.com/actions/runner/issues/241#issuecomment-842566950
       - name: Load/dump fixture database and build node modules
         run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c 'echo "--version" > ~/.proverc && perl t/test_fixture.pl --dumpupdatedfixture'
+        shell: 'script --flush --quiet --return --command "bash --noprofile --norc -eo pipefail {0}"'
 
       # Unit tests don't need a database or a server
       - name: Run unit tests
