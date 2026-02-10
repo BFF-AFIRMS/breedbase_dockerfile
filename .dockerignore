@@ -1,1 +1,4 @@
 **/.git
+cxgn/sgn/js/node_modules
+cxgn/sgn/js/build
+cxgn/sgn/db/delete_nd_experiment_ids

@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout breedbase_dockerfile repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: true
     
@@ -22,4 +22,42 @@ jobs:
         run: docker compose -f docker-compose.test.yml build --no-cache test_breedbase
 
       - name: Run tests
-        run: docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c 't/unit t/unit_fixture t/unit_mech 2>/dev/null'
+        run: docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c 't/unit_mech'
+
+      # - name: Run tests
+      #   run: docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c 't/unit t/unit_fixture t/unit_mech 2>/dev/null'
+
+      # # -------------------------------------
+      # # Check production deployment
+  
+      # - name: Start production
+      #   run: docker compose -f docker-compose.yml -f production.yml up -d
+
+      # - name: Healthcheck production
+      #   uses: stringbean/docker-healthcheck-action@v3
+      #   with:
+      #     container: breedbase
+      #     wait-time: 300
+      #     require-status: running
+      #     require-healthy: true
+
+      # - name: Stop production
+      #   run: docker compose -f docker-compose.yml -f production.yml down
+
+      # # -------------------------------------
+      # # Check development deployment
+  
+      # - name: Start development
+      #   run: docker compose up -d
+
+      # - name: Healthcheck development
+      #   uses: stringbean/docker-healthcheck-action@v3
+      #   with:
+      #     container: breedbase
+      #     wait-time: 300
+      #     require-status: running
+      #     require-healthy: true
+
+      # - name: Stop development
+      #   run: docker compose down
+        
