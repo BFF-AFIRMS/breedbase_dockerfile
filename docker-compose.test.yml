@@ -24,9 +24,22 @@ services:
     networks:
       - test-breedbase
 
+  novnc:
+    image: theasp/novnc:latest
+    environment:
+      DISPLAY_WIDTH: 1600
+      DISPLAY_HEIGHT: 968
+      RUN_XTERM: no
+    ports:
+      - "8081:8080"
+    networks:
+      - test-breedbase
+
   selenium:
     image: selenium/standalone-firefox:3.141.59
     shm_size: '2gb'
+    depends_on:
+      - novnc
     healthcheck:
       test: "curl --silent --head http://localhost:4444 || exit 1"
     networks:
@@ -36,6 +49,8 @@ services:
         source: ./cxgn/sgn/t/data
         target: /home/production/cxgn/sgn/t/data
       - shared_data:/downloads
+    environment:
+      DISPLAY: novnc:0.0
     ports:
        - 5900:5900
        - 4444:4444
