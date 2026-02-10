@@ -25,7 +25,7 @@ services:
       - test-breedbase
 
   selenium:
-    image: selenium/standalone-firefox:97.0
+    image: selenium/standalone-firefox:3.141.59
     shm_size: '2gb'
     healthcheck:
       test: "curl --silent --head http://localhost:4444 || exit 1"

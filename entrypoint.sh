@@ -10,8 +10,20 @@ chown 106 /etc/munge/munge.key
 
 chown root /etc/crontab # in case it was mounted from local dir
 
+# A wrapper for perl commands that require a TTY
+# (ex. piping db credentials into patching scripts or mx-run)
+tty_wrapper() {
+    command=$1
+    wrapper="script --log-out /tmp/typescript --flush --quiet --return --command \"bash --noprofile --norc -eo pipefail -c '$command'\""
+    echo "Running tty_wrapper: $wrapper"
+    eval $wrapper
+}
+
 if [ "${MODE}" = 'TESTING' ]; then
-    exec perl t/test_fixture.pl --carpalways -v "${@}"
+    # Expand out the args first, otherwise only the first arg is captured
+    args="${@}"
+    tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"
+    exit $?
 fi
 
 umask 002
@@ -31,11 +43,14 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER}  | cut -d '|' -f1  | sed 's/^[[:blan
     then
 	echo "LOADING empty_breedbase dump...";
 	psql -f /db_dumps/empty_breedbase.sql
-    script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 'db/run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e admin'"
+    tty_wrapper "db/run_all_patches.pl -e admin -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE}"
     else
 	echo "LOADING cxgn_fixture.sql dump...";
 	psql -f t/data/fixture/cxgn_fixture.sql
-    script --log-out /tmp/typescript --flush --quiet --return --command "bash --noprofile --norc -eo pipefail -c 't/data/fixture/patches/run_fixture_and_db_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e janedoe -s 157'"
+    # The first patch the cxgn_fixture needs is 158 (AddCascadeDeletes. But that patch
+    # fails for the test fixture (currently). Since the run_all_patches.pl script will
+    # die immediately after a patch fails. Starting on patch 159 ensures it works.
+    tty_wrapper "db/run_all_patches.pl -e janedoe -s 159 -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE}"
     fi
     
     
@@ -76,7 +91,7 @@ then
     then
         mkdir /home/production/volume/public/images
         chown www-data /home/production/volume/public/images
-	chmod 770 /home/production/volume/images
+	chmod 770 /home/production/volume/public/images
     fi
 
     if [[ ! -e /home/production/volume/tmp ]]
