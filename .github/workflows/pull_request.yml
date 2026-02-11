@@ -58,6 +58,9 @@ jobs:
       - name: Stop production
         run: docker compose -f docker-compose.yml -f production.yml down
 
+      - name: Clean production volumes
+        run: docker volume prune -a
+
       # -----------------------------------------------------------------------
       # Check development deployment
   
@@ -74,6 +77,9 @@ jobs:
 
       - name: Stop development
         run: docker compose down
+
+      - name: Clean development volumes
+        run: docker volume prune -a
 
       # -----------------------------------------------------------------------
       # Testing
