@@ -8,6 +8,12 @@ services:
     depends_on:
       - breedbase_db
     container_name: breedbase_web
+    healthcheck:
+      test: curl -I localhost:8080
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   breedbase_db:
     volumes:
@@ -15,8 +21,10 @@ services:
     image: postgres:12.7
     container_name: breedbase_db
     healthcheck:
-      test: "pg_isready -U postgres -d $${POSTGRES_DB} || exit 1"
-      interval: 10s
+      test: [ "CMD-SHELL", "psql -U postgres -q postgres -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
 volumes:
   webdata:

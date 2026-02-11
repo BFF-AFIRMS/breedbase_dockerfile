@@ -23,6 +23,12 @@ services:
     command: ["t/unit", "t/unit_fixture"]
     networks:
       - test-breedbase
+    healthcheck:
+      test: curl -I localhost:8080
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   novnc:
     image: theasp/novnc:latest
@@ -65,6 +71,11 @@ services:
       interval: 10s
     networks:
       - test-breedbase
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q postgres -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
 volumes:
   shared_data:
