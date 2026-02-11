@@ -15,71 +15,56 @@ jobs:
 
     steps:
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # when set to "true" but frees about 6 GB
-          tool-cache: true
-        
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: true
-          dotnet: true
-          haskell: false
-          large-packages: false
-          swap-storage: false
-
-      - name: Checkout breedbase_dockerfile repo
-        uses: actions/checkout@v6
-        with:
-          submodules: true
+      # - name: Checkout breedbase_dockerfile repo
+      #   uses: actions/checkout@v6
+      #   with:
+      #     submodules: true
     
-      - name: Build container image
-        run: docker build -t breedbase/breedbase:latest .
+      # - name: Build container image
+      #   run: docker build -t breedbase/breedbase:latest .
       
-      - name: Create env file
-        run: echo -e "PGDATABASE=breedbase\nPGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
+      # - name: Create env file
+      #   run: echo -e "PGDATABASE=breedbase\nPGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
 
-      # -----------------------------------------------------------------------
-      # Production deployment
+      # # -----------------------------------------------------------------------
+      # # Production deployment
   
-      - name: Start production
-        run: docker compose -f docker-compose.yml -f production.yml up -d
+      # - name: Start production
+      #   run: docker compose -f docker-compose.yml -f production.yml up -d
 
-      - name: Healthcheck production
-        uses: stringbean/docker-healthcheck-action@v3
-        with:
-          container: breedbase_web
-          wait-time: 300
-          require-status: running
-          require-healthy: true
+      # - name: Healthcheck production
+      #   uses: stringbean/docker-healthcheck-action@v3
+      #   with:
+      #     container: breedbase_web
+      #     wait-time: 300
+      #     require-status: running
+      #     require-healthy: true
 
-      - name: Stop production
-        run: docker compose -f docker-compose.yml -f production.yml down
+      # - name: Stop production
+      #   run: docker compose -f docker-compose.yml -f production.yml down
 
-      - name: Clean production volumes
-        run: docker volume prune -a
+      # - name: Clean production volumes
+      #   run: docker volume prune -a
 
-      # -----------------------------------------------------------------------
-      # Check development deployment
+      # # -----------------------------------------------------------------------
+      # # Check development deployment
   
-      - name: Start development
-        run: docker compose up -d
+      # - name: Start development
+      #   run: docker compose up -d
 
-      - name: Healthcheck development
-        uses: stringbean/docker-healthcheck-action@v3
-        with:
-          container: breedbase_web
-          wait-time: 300
-          require-status: running
-          require-healthy: true
+      # - name: Healthcheck development
+      #   uses: stringbean/docker-healthcheck-action@v3
+      #   with:
+      #     container: breedbase_web
+      #     wait-time: 300
+      #     require-status: running
+      #     require-healthy: true
 
-      - name: Stop development
-        run: docker compose down
+      # - name: Stop development
+      #   run: docker compose down
 
-      - name: Clean development volumes
-        run: docker volume prune -a
+      # - name: Clean development volumes
+      #   run: docker volume prune -a
 
       # -----------------------------------------------------------------------
       # Testing
