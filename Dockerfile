@@ -45,16 +45,6 @@ ENV CPANMIRROR=http://cpan.cpantesters.org
 #
 EXPOSE 8080
 
-# create directory layout
-#
-RUN mkdir -p /home/production/public/sgn_static_content
-RUN mkdir -p /home/production/cxgn
-RUN mkdir -p /home/production/cxgn/local-lib
-RUN mkdir /etc/starmachine
-RUN mkdir /var/log/sgn
-
-WORKDIR /home/production/cxgn
-
 # install system dependencies
 #
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -144,7 +134,9 @@ RUN pip3 install --upgrade pip \
 
 # npm install needs a non-root user (new in latest version)
 #
-RUN adduser --disabled-password --gecos "" -u 1250 production
+RUN adduser --disabled-password --gecos "" -u 1250 production \
+  && mkdir -p /home/production/public/sgn_static_content \
+  && chown -R production:production /home/production
 
 # copy some tools that don't have a Debian package
 #
@@ -158,6 +150,13 @@ COPY tools/sreformat /usr/local/bin/
 # This also adds the Mason website skins
 #
 COPY --chown=production:production --from=build /cxgn /home/production/cxgn
+
+WORKDIR /home/production/cxgn
+
+# create directory layout
+#
+RUN mkdir /etc/starmachine
+RUN mkdir /var/log/sgn
 
 # move this here so it is not clobbered by the cxgn move
 #
