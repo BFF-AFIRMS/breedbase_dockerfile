@@ -34,7 +34,7 @@ jobs:
       - name: Healthcheck production
         uses: stringbean/docker-healthcheck-action@v3
         with:
-          container: breedbase
+          container: breedbase_web
           wait-time: 300
           require-status: running
           require-healthy: true
@@ -51,7 +51,7 @@ jobs:
       - name: Healthcheck development
         uses: stringbean/docker-healthcheck-action@v3
         with:
-          container: breedbase
+          container: breedbase_web
           wait-time: 300
           require-status: running
           require-healthy: true
