@@ -36,7 +36,7 @@ jobs:
           submodules: true
     
       - name: Build container image
-        run: docker compose -f docker-compose.test.yml build --no-cache test_breedbase
+        run: docker build -t breedbase/breedbase:latest .
       
       - name: Create env file
         run: echo -e "PGDATABASE=breedbase\nPGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
