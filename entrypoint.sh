@@ -22,7 +22,18 @@ tty_wrapper() {
 if [ "${MODE}" = 'TESTING' ]; then
     # Expand out the args first, otherwise only the first arg is captured
     args="${@}"
-    tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"
+    if [[ $args == "--interactive" ]]; then
+        echo "No testing arguments were given, setting up interactive mode."
+
+        echo "Patching database and building node modules."
+        echo "--version" > ~/.proverc
+        tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture"
+        rm -f ~/.proverc
+
+        tail -f /dev/null
+    else
+        tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"
+    fi
     exit $?
 fi
 

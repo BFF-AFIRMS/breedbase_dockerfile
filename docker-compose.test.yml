@@ -15,12 +15,14 @@ services:
         condition: service_healthy
       selenium:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
     volumes:
       - ./cxgn:/home/production/cxgn
       # repos/sgn/sgn_test.conf assumes /home/vagrant
       - ./.git:/home/production/.git
       - shared_data:/downloads
-    command: ["t/unit", "t/unit_fixture"]
+    command: ["--interactive"]
     networks:
       - test-breedbase
     healthcheck:
@@ -29,6 +31,8 @@ services:
       timeout: 5s
       retries: 30
       start_period: 30s
+    ports:
+      - 3010:3010
 
   novnc:
     image: theasp/novnc:latest
@@ -44,8 +48,6 @@ services:
   selenium:
     image: selenium/standalone-firefox:3.141.59
     shm_size: '2gb'
-    depends_on:
-      - novnc
     healthcheck:
       test: "curl --silent --head http://localhost:4444 || exit 1"
     networks:
@@ -61,7 +63,6 @@ services:
        - 5900:5900
        - 4444:4444
 
-
   breedbase_db:
     image: postgres:12.7
     environment:
@@ -73,6 +74,56 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+
+  keycloak_db:
+    image: postgres:13.0
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - test-breedbase
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.1-0
+    depends_on:
+      keycloak_db:
+        condition: service_healthy
+    environment:
+      # Database connection
+      KC_DB:              postgres
+      KC_DB_URL:          jdbc:postgresql://keycloak_db:5432/keycloak
+      KC_DB_USERNAME:     postgres
+      KC_DB_PASSWORD:     postgres
+      # Admin credentials
+      KC_BOOTSTRAP_ADMIN_USERNAME:     admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD:     password
+      # Networking
+      KC_HTTP_ENABLED:                 true
+      KC_HTTP_PORT:                    9080
+      KC_HOSTNAME:                     http://keycloak:9080/auth
+      KC_HTTP_RELATIVE_PATH:           /auth
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
+      KC_PROXY_HEADERS:                xforwarded
+    entrypoint: ["/entrypoint.sh"]
+    volumes:
+      - ./cxgn/sgn/.github/keycloak/themes:/opt/keycloak/themes
+      - ./cxgn/sgn/.github/keycloak/import:/opt/keycloak/data/import
+      - ./cxgn/sgn/.github/keycloak/entrypoint.sh:/entrypoint.sh
+    networks:
+      - test-breedbase
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/localhost/9080'
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    ports:
+      - "9080:9080"
 
 volumes:
   shared_data:

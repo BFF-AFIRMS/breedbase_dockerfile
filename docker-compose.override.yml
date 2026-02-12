@@ -1,4 +1,9 @@
 services:
+
+  breedbase_db:
+    environment:
+      POSTGRES_PASSWORD: postgres
+
   breedbase:
     volumes:
       - type: bind
@@ -23,6 +28,7 @@ services:
       DBIC_TRACE: 0
 
   novnc:
+    container_name: novnc
     image: theasp/novnc:latest
     environment:
       DISPLAY_WIDTH: 1600
@@ -34,23 +40,67 @@ services:
   selenium:
     container_name: selenium
     image: selenium/standalone-firefox:3.141.59
-    depends_on:
-      - novnc
+    shm_size: '2gb'
+    healthcheck:
+      test: "curl --silent --head http://localhost:4444 || exit 1"
     volumes:
       - type: bind
         source: ./cxgn/sgn/t/data
         target: /home/production/cxgn/sgn/t/data
       - shared_data:/downloads
+    environment:
+      DISPLAY: novnc:0.0
     ports:
       - 5900:5900
       - 4444:4444
 
-    healthcheck:
-      test: "curl --silent --head http://localhost:4444 || exit 1"
-
-  breedbase_db:
+  keycloak_db:
+    container_name: keycloak_db
+    image: postgres:13.0
     environment:
+      POSTGRES_DB: keycloak
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:26.5.1-0
+    depends_on:
+      keycloak_db:
+        condition: service_healthy
+    environment:
+      # Database connection
+      KC_DB:              postgres
+      KC_DB_URL:          jdbc:postgresql://keycloak_db:5432/keycloak
+      KC_DB_USERNAME:     postgres
+      KC_DB_PASSWORD:     postgres
+      # Admin credentials
+      KC_BOOTSTRAP_ADMIN_USERNAME:     admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD:     password
+      # Networking
+      KC_HTTP_ENABLED:                 true
+      KC_HTTP_PORT:                    9080
+      KC_HOSTNAME:                     http://keycloak:9080/auth
+      KC_HTTP_RELATIVE_PATH:           /auth
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
+      KC_PROXY_HEADERS:                xforwarded
+    volumes:
+      - ./cxgn/sgn/.github/keycloak/themes:/opt/keycloak/themes
+      - ./cxgn/sgn/.github/keycloak/import:/opt/keycloak/data/import
+      - ./cxgn/sgn/.github/keycloak/entrypoint.sh:/entrypoint.sh
+    entrypoint: ["/entrypoint.sh"]
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/localhost/9080'
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    ports:
+      - "9080:9080"
 
 volumes:
   shared_data:
