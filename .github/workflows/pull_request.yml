@@ -15,13 +15,13 @@ jobs:
 
     steps:
 
-      # - name: Checkout breedbase_dockerfile repo
-      #   uses: actions/checkout@v6
-      #   with:
-      #     submodules: true
+      - name: Checkout breedbase_dockerfile repo
+        uses: actions/checkout@v6
+        with:
+          submodules: true
     
-      # - name: Build container image
-      #   run: docker build -t breedbase/breedbase:latest .
+      - name: Build container image
+        run: docker build -t breedbase/breedbase:latest .
       
       # - name: Create env file
       #   run: echo -e "PGDATABASE=breedbase\nPGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
