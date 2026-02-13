@@ -110,8 +110,14 @@ You need to write an `sgn_local.conf` file specific to your service. A [template
     If you haven't done so already, setup keys with GitHub following the instructions at https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account .
 
     ```bash
-    git clone --recursive git@github.com:solgenomics/breedbase_dockerfile
+    git clone --recursive https://github.com/solgenomics/breedbase_dockerfile
     cd breedbase_dockerfile
+    ```
+
+    If the submodule directories appear empty, try:
+
+    ```bash
+    git submodule update --init --recursive --progress
     ```
    
    This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`.

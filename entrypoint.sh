@@ -10,8 +10,27 @@ chown 106 /etc/munge/munge.key
 
 chown root /etc/crontab # in case it was mounted from local dir
 
+# A wrapper for perl commands that require a TTY
+# (ex. piping db credentials into patching scripts or mx-run)
+tty_wrapper() {
+    command=$1
+    wrapper="script --log-out /tmp/typescript --flush --quiet --return --command \"bash --noprofile --norc -eo pipefail -c '$command'\""
+    echo "Running tty_wrapper: $wrapper"
+    eval $wrapper
+}
+
 if [ "${MODE}" = 'TESTING' ]; then
-    exec perl t/test_fixture.pl --carpalways -v "${@}"
+    # Expand out the args first, otherwise only the first arg is captured
+    args="${@}"
+    if [[ $args == "--interactive" ]]; then
+        echo "No testing arguments were given, setting up interactive mode."
+
+        echo "Patching database and starting test server."
+        tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture t/interactive.t"
+    else
+        tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"
+    fi
+    exit $?
 fi
 
 umask 002
@@ -31,11 +50,14 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER}  | cut -d '|' -f1  | sed 's/^[[:blan
     then
 	echo "LOADING empty_breedbase dump...";
 	psql -f /db_dumps/empty_breedbase.sql
-	(cd db && ./run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e admin )
+    tty_wrapper "db/run_all_patches.pl -e admin -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE}"
     else
 	echo "LOADING cxgn_fixture.sql dump...";
 	psql -f t/data/fixture/cxgn_fixture.sql
-	(cd db && ./run_all_patches.pl -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE} -e janedoe )
+    # The first patch the cxgn_fixture needs is 158 (AddCascadeDeletes. But that patch
+    # fails for the test fixture (currently). Since the run_all_patches.pl script will
+    # die immediately after a patch fails. Starting on patch 159 ensures it works.
+    tty_wrapper "db/run_all_patches.pl -e janedoe -s 159 -u ${PGUSER} -p ${PGPASSWORD} -h ${PGHOST} -d ${PGDATABASE}"
     fi
     
     
@@ -76,7 +98,7 @@ then
     then
         mkdir /home/production/volume/public/images
         chown www-data /home/production/volume/public/images
-	chmod 770 /home/production/volume/images
+	chmod 770 /home/production/volume/public/images
     fi
 
     if [[ ! -e /home/production/volume/tmp ]]

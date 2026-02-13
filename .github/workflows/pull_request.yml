@@ -11,15 +11,106 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: 1
+      RUN_TEST_CMD: docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c
 
     steps:
+
       - name: Checkout breedbase_dockerfile repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: true
     
       - name: Build container image
-        run: docker compose -f docker-compose.test.yml build --no-cache test_breedbase
+        run: docker build -t breedbase/breedbase:latest .
+      
+      # - name: Create env file
+      #   run: echo -e "PGDATABASE=breedbase\nPGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
 
-      - name: Run tests
-        run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c '/entrypoint.sh t/unit t/unit_fixture t/unit_mech 2>/dev/null'
+      # # -----------------------------------------------------------------------
+      # # Production deployment
+  
+      # - name: Start production
+      #   run: docker compose -f docker-compose.yml -f production.yml up -d
+
+      # - name: Healthcheck production
+      #   uses: stringbean/docker-healthcheck-action@v3
+      #   with:
+      #     container: breedbase_web
+      #     wait-time: 300
+      #     require-status: running
+      #     require-healthy: true
+
+      # - name: Stop production
+      #   run: docker compose -f docker-compose.yml -f production.yml down
+
+      # - name: Clean production volumes
+      #   run: docker volume prune -a
+
+      # # -----------------------------------------------------------------------
+      # # Check development deployment
+  
+      # - name: Start development
+      #   run: docker compose up -d
+
+      # - name: Healthcheck development
+      #   uses: stringbean/docker-healthcheck-action@v3
+      #   with:
+      #     container: breedbase_web
+      #     wait-time: 300
+      #     require-status: running
+      #     require-healthy: true
+
+      # - name: Stop development
+      #   run: docker compose down
+
+      # - name: Clean development volumes
+      #   run: docker volume prune -a
+
+      # -----------------------------------------------------------------------
+      # Testing
+
+      # Patch database, and dump to file, build node modules, print versions
+      # Because it doesn't use the usual entrypoint, we need to do the work
+      # work around for run_all_patches.pl "what the heck - no TTY??" error
+      # https://github.com/actions/runner/issues/241#issuecomment-842566950
+      - name: Load/dump fixture database and build node modules
+        run: docker compose -f docker-compose.test.yml run --use-aliases --entrypoint='/bin/sh' test_breedbase -c 'echo "--version" > ~/.proverc && perl t/test_fixture.pl --dumpupdatedfixture'
+        shell: 'script --flush --quiet --return --command "bash --noprofile --norc -eo pipefail {0}"'
+
+      # Unit tests don't need a database or a server
+      - name: Run unit tests
+        run: $RUN_TEST_CMD '--nopatch --noserver t/unit 2>/dev/null'
+
+      # Everything else needs a database and a server
+      - name: Run fixture tests
+        run: $RUN_TEST_CMD '--nopatch t/unit_fixture 2>/dev/null'
+
+      - name: Run mech tests
+        run: $RUN_TEST_CMD '--nopatch t/unit_mech 2>/dev/null'
+
+      # Run all selenium tests individually to avoid solgs for now
+      - name: Run selenium tests lists
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/01_list 2>/dev/null'
+
+      - name: Run selenium tests trial
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/02_trial 2>/dev/null'
+
+      - name: Run selenium tests dataset
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/03_dataset 2>/dev/null'
+
+      - name: Run selenium tests breeders
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/breeders 2>/dev/null'
+
+      - name: Run selenium tests onto
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/onto 2>/dev/null'
+
+      - name: Run selenium tests search
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/search 2>/dev/null'
+
+      - name: Run selenium tests stock
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/stock 2>/dev/null'
+
+      - name: Run selenium tests tools
+        run: $RUN_TEST_CMD '--nopatch t/selenium2/tools 2>/dev/null'
+
+        
