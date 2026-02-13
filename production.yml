@@ -1,3 +1,7 @@
+volumes:
+  staticdata:
+  jsdata:
+
 services:
   breedbase:
     restart: always
@@ -9,8 +13,13 @@ services:
       PGUSER: ${PGUSER:?}
     volumes:
       - ./db_dumps:/db_dumps
+      - ./data/web:/home/production/volume
+      - staticdata:/home/production/cxgn/sgn/static
+      - jsdata:/home/proudction/cxgn/js/static
 
   breedbase_db:
     restart: always
     environment:
       POSTGRES_PASSWORD: ${PGPASSWORD:?}
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
