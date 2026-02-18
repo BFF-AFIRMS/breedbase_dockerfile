@@ -41,7 +41,7 @@ services:
       - shared_data:/downloads
       - ./entrypoint.sh:/entrypoint.sh
       # interactive testing mode
-      - ./interactive.t:/home/production/cxgn/sgn/t/interactive.t
+      - ./interactive.t:/tmp/interactive.t
     command: ["--interactive"]
     networks:
       - test-breedbase
