@@ -64,12 +64,12 @@ USER_GROUP_ID=$(id -u):$(id -g)" > .env
 1. **Deploy with docker compose.**
 
     ```
-    docker compose -f docker-compose.yml -f production.yml up -d
+    docker compose -f docker-compose.production.yml up -d
     ```
 
     Follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment.
 
-    > Make sure to specify both the base yml file and the production yml file with your command. These will overwrite the default development settings found in `docker-compose.override.yml`, and instead use production settings. These settings include setting the env MODE to PRODUCTION rather than DEVELOPMENT, and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
+    > These settings include setting the env MODE to PRODUCTION rather than DEVELOPMENT, and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
 
 ### Deploy for Development
 

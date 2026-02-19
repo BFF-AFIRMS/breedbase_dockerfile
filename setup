@@ -1,0 +1,60 @@
+#!/bin/bash
+
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+NC="\e[0m" # No Color
+
+echo -e "-----------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tBeginning setup."
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tGenerating secure credentials: .env"
+
+if [[ ! -e .env ]]; then
+    {
+        echo PGHOST=breedbase_db        
+        echo PGDATABASE=breedbase
+        echo PGUSER=postgres        
+        echo PGPASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo ADMIN_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo WEB_USR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo USER_GROUP_ID=$(id -u):$(id -g)
+        echo DOMAIN_NAME=localhost
+    } > .env
+fi
+source .env
+USER_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 1)
+GROUP_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 2)
+
+if [[ ! -e .env.bak ]]; then
+    cp .env .env.bak
+fi
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating data directories: data/"
+
+# postgres
+mkdir -p data/postgres
+cd data/postgres
+mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
+cd ../..
+
+# breedbase
+mkdir -p data/breedbase
+touch data/breedbase/bash_history
+
+if [[ ! -e data/breedbase/sgn_local.conf ]]; then
+    sed \
+      -e "s/www-data/sgn/g" \
+      -e "s/dbpass.*/dbpass $WEB_USR_PASSWORD/g" \
+      sgn_local.conf > data/breedbase/sgn_local.conf
+fi
+
+if [[ ! -e data/breedbase/starmachine.conf ]]; then
+    sed "s/www-data/sgn/g" starmachine.conf > data/breedbase/starmachine.conf
+fi
+
+
+# downloads
+mkdir -p data/downloads
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
+echo -e "-----------------------------------------------------------------------------"

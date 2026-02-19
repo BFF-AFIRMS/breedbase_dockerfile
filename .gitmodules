@@ -117,3 +117,6 @@
 [submodule "cxgn/Bio-Chado-Schema"]
 	path = cxgn/bio-chado-schema
 	url = https://github.com/solgenomics/bio-chado-schema
+[submodule "postgres"]
+	path = postgres
+	url = https://github.com/BFF-AFIRMS/postgres
