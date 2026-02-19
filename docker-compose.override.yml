@@ -6,17 +6,12 @@ services:
 
   breedbase:
     volumes:
-      - type: bind
-        source: ./sgn_local.conf
-        target: /home/production/cxgn/sgn/sgn_local.conf
-      - type: bind
-        source: ./cxgn
-        target: /home/production/cxgn
+      - ./sgn_local.conf:/home/production/cxgn/sgn/sgn_local.conf
+      - ./cxgn:/home/production/cxgn
         # include .git dir that tracks all submodules in cxgn
-      - type: bind
-        source: .git
-        target: /home/production/.git
+      - ./.git:/home/production/.git
       - shared_data:/downloads
+      - ./run_all_patches.pl:/home/production/cxgn/sgn/db/run_all_patches.pl
     environment:
       MODE: 'DEVELOPMENT'
       PGDATABASE: breedbase

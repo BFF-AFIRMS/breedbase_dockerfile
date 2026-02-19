@@ -164,7 +164,7 @@ COPY tools/sreformat /usr/local/bin/
 # This also adds the Mason website skins
 #
 COPY --chown=production:production --from=build /cxgn /home/production/cxgn
-
+RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
 # create directory layout

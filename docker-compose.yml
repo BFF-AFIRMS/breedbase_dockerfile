@@ -4,7 +4,7 @@ services:
       - webdata:/home/production/volume
     ports:
       - 8080:8080
-    image: breedbase/breedbase:latest
+    image: bffafirms/breedbase:latest
     depends_on:
       - breedbase_db
     container_name: breedbase_web

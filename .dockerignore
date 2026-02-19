@@ -1,4 +1,5 @@
 **/.git
 cxgn/sgn/js/node_modules
 cxgn/sgn/js/build
+cxgn/sgn/js/package-lock.json
 cxgn/sgn/db/delete_nd_experiment_ids
