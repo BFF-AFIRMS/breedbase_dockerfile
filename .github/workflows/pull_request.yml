@@ -79,38 +79,38 @@ jobs:
 
       # Unit tests don't need a database or a server
       - name: Run unit tests
-        run: $RUN_TEST_CMD '--nopatch --noserver t/unit 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch --noserver t/unit 2>/dev/null
 
       # Everything else needs a database and a server
       - name: Run fixture tests
-        run: $RUN_TEST_CMD '--nopatch t/unit_fixture 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/unit_fixture 2>/dev/null
 
       - name: Run mech tests
-        run: $RUN_TEST_CMD '--nopatch t/unit_mech 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/unit_mech 2>/dev/null
 
       # Run all selenium tests individually to avoid solgs for now
       - name: Run selenium tests lists
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/01_list 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/01_list 2>/dev/null
 
       - name: Run selenium tests trial
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/02_trial 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/02_trial 2>/dev/null
 
       - name: Run selenium tests dataset
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/03_dataset 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/03_dataset 2>/dev/null
 
       - name: Run selenium tests breeders
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/breeders 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/breeders 2>/dev/null
 
       - name: Run selenium tests onto
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/onto 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/onto 2>/dev/null
 
       - name: Run selenium tests search
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/search 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/search 2>/dev/null
 
       - name: Run selenium tests stock
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/stock 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/stock 2>/dev/null
 
       - name: Run selenium tests tools
-        run: $RUN_TEST_CMD '--nopatch t/selenium2/tools 2>/dev/null'
+        run: $RUN_TEST_CMD --nopatch t/selenium2/tools 2>/dev/null
 
         
