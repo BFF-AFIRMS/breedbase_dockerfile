@@ -48,7 +48,7 @@ services:
     ports:
       - 3010:3010
     healthcheck:
-      test: curl -I localhost:8080
+      test: curl -I localhost:3010
       interval: 10s
       timeout: 5s
       retries: 30
