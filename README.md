@@ -27,18 +27,18 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 ## Install
 
-1. **Install `docker`.**
+1. **Install `docker`**
 
     Please follow the instructions at https://docs.docker.com/engine/install.
 
-1. **Install `docker compose`.**
+1. **Install `docker compose`**
 
     - Debian/Ubuntu: `apt install docker-compose`
     - Windows: It can be installed with [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install).
     -  Please noe that [Docker Desktop](https://www.docker.com/products/docker-desktop) requires a paid license for research and commercial use.
     - Installing docker natively in Windows will conflict with VMWare and Virtualbox virtualization settings.
 
-1. **Clone repository.**
+1. **Clone repository**
 
     ```bash
     git clone https://github.com/solgenomics/breedbase_dockerfile
@@ -49,19 +49,16 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 For all deployment methods, first create a `.env` file with:
 
-```bash
-echo "
-PGDATABASE=breedbase
-PGDATABASE=breedbase
-PGHOST=breedbase_db
-PGPASSWORD=postgres
-PGUSER=postgres
-USER_GROUP_ID=$(id -u):$(id -g)" > .env
-```
-
 ### Deploy for Production
 
-1. **Deploy with docker compose.**
+1. **Run setup**
+
+    > This will create data directories under `data/` and secure credentials in `.env`.
+    ```bash
+    ./setup
+    ```
+
+1. **Deploy with docker compose**
 
     ```
     docker compose -f docker-compose.production.yml up -d
@@ -69,11 +66,11 @@ USER_GROUP_ID=$(id -u):$(id -g)" > .env
 
     Follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment.
 
-    > These settings include setting the env MODE to PRODUCTION rather than DEVELOPMENT, and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
+    > These settings include setting the env MODE to PRODUCTION and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
 
 ### Deploy for Development
 
-1. **Clone the submodules.**
+1. **Clone the submodules**
 
     ```bash
     git submodule update --init --recursive --progress
@@ -81,7 +78,18 @@ USER_GROUP_ID=$(id -u):$(id -g)" > .env
    
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted onto the devel container during the compose step, but will still be accessible from the host for development work.
 
-2. **Deploy with docker compose.**
+2. **Create a `.env` file with dev credentials**
+
+    ```bash
+    echo "
+    PGDATABASE=breedbase
+    PGHOST=breedbase_db
+    PGPASSWORD=postgres
+    PGUSER=postgres" > .env
+    ```
+
+
+2. **Deploy with docker compose**
 
     ```
     docker compose up -d
@@ -93,7 +101,7 @@ USER_GROUP_ID=$(id -u):$(id -g)" > .env
 
 ### Deploy for Testing
 
-1. **Clone the submodules.**
+1. **Clone the submodules**
 
     ```bash
     git submodule update --init --recursive --progress
@@ -126,13 +134,13 @@ docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c "-
 
 Tests can be run in `interactive` mode, where the same database and web server are re-used between tests for quick iteration. This is particulary useful when writing and troubleshooting new tests.
 
-1. **Start up all containers with docker compose.**
+1. **Start up all containers with docker compose**
 
     ```bash
     docker compose -f docker-compose.test.yml up -d
     ```
 
-2. **Wait for the web server container to be healthy.**
+2. **Wait for the web server container to be healthy**
 
     ```bash
     docker compose -f docker-compose.test.yml ps test_breedbase
@@ -141,13 +149,13 @@ Tests can be run in `interactive` mode, where the same database and web server a
     breedbase_dockerfile-test_breedbase-1   breedbase/breedbase:latest   "/entrypoint.sh --in…"   test_breedbase   About a minute ago   Up About a minute (healthy)   0.0.0.0:3010->3010/tcp, [::]:3010->3010/tcp, 8080/tcp
     ```
 
-3. **Connect to the test container.**
+3. **Connect to the test container**
 
     ```bash
     docker compose -f docker-compose.test.yml exec test_breedbase bash
     ```
 
-4. **Run unit tests interactively.**
+4. **Run unit tests interactively**
 
     ```bash
     # Single
@@ -160,14 +168,14 @@ Tests can be run in `interactive` mode, where the same database and web server a
     prove --recurse t/unit/ prove --recurse t/unit/CXGN 2>/dev/null
     ```
 
-5. **Run server and database tests.**
+5. **Run server and database tests**
 
     ```bash
     perl t/test_fixture.pl --nopatch --noserver t/unit_fixture 2>/dev/null
     perl t/test_fixture.pl --nopatch --noserver t/unit_mech 2>/dev/null
     ```
 
-6. **Run browser tests.**
+6. **Run browser tests**
 
     > For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 

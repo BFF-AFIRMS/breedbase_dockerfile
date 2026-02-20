@@ -22,13 +22,13 @@ jobs:
     
       - name: Build container image
         run: docker build -t breedbase/breedbase:latest .
-      
-      - name: Create env file
-        run: echo -e "PGDATABASE=breedbase\nPGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
 
       # -----------------------------------------------------------------------
       # Production deployment
   
+      - name: Run setup
+        run: ./setup
+
       - name: Start production
         run: docker compose -f docker-compose.production.yml up -d
 
@@ -49,6 +49,9 @@ jobs:
       # -----------------------------------------------------------------------
       # Check development deployment
   
+      - name: Create env file
+        run: echo -e PGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
+
       - name: Start development
         run: docker compose up -d
 
