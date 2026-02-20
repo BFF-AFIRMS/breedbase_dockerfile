@@ -85,6 +85,11 @@ jobs:
           $RUN_TEST_CMD "--nopatch --noserver t/unit 2>/dev/null"
           $PRUNE_CMD
 
+      - name: Run selenium tests tools
+        run: |
+          $RUN_TEST_CMD "--nopatch t/selenium2/tools 2>/dev/null"
+          $PRUNE_CMD
+
       # Everything else needs a database and a server
       - name: Run fixture tests
         run: |
@@ -131,10 +136,3 @@ jobs:
         run: |
           $RUN_TEST_CMD "--nopatch t/selenium2/stock 2>/dev/null"
           $PRUNE_CMD
-
-      - name: Run selenium tests tools
-        run: |
-          $RUN_TEST_CMD "--nopatch t/selenium2/tools 2>/dev/null"
-          $PRUNE_CMD
-
-        
