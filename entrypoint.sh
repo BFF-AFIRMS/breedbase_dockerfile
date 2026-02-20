@@ -19,10 +19,25 @@ tty_wrapper() {
     eval $wrapper
 }
 
+if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" ]]; then
+    echo "-------------------------------------------------------------------------"
+    echo "Applying Site Overlay: $SITE_OVERLAY"
+    echo "-------------------------------------------------------------------------"
+
+    if [[ -e /home/production/cxgn/$SITE_OVERLAY ]]; then
+        rsync -av /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
+    fi
+fi
+
 if [ "${MODE}" = 'TESTING' ]; then
+
+    echo "-------------------------------------------------------------------------"
+    echo "Running in TESTING Mode"
+    echo "-------------------------------------------------------------------------"
+
     # Expand out the args first, otherwise only the first arg is captured
     args="${@}"
-    if [[ $args == "--interactive" ]]; then
+    if [[ $args == "--interactive" && -e "/tmp/interactive.t" ]]; then
         echo "No testing arguments were given, setting up interactive mode."
         tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture /tmp/interactive.t"
     else

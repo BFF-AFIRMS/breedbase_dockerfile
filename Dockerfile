@@ -70,7 +70,7 @@ RUN apt-get update --fix-missing -y
 
 RUN apt-get install -y aptitude
 
-RUN aptitude install -y libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-12 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink
+RUN aptitude install -y libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-12 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink rsync
 
 # Set the locale correclty to UTF-8
 RUN locale-gen en_US.UTF-8
@@ -118,7 +118,6 @@ RUN apt-get install libpq-dev -y
 RUN apt-get install libmoosex-runnable-perl -y
 
 RUN apt-get install libgdbm6 libgdm-dev -y
-RUN apt-get install nodejs -y
 
 RUN cpanm Selenium::Remote::Driver@1.49
 
@@ -167,6 +166,9 @@ COPY --chown=production:production --from=build /cxgn /home/production/cxgn
 RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
+# JS patches
+RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
+
 # create directory layout
 #
 RUN mkdir /etc/starmachine
@@ -198,16 +200,16 @@ ARG BUILD_VERSION
 ENV VERSION=${BUILD_VERSION}
 ENV BUILD_DATE=${CREATED}
 
-LABEL maintainer="lam87@cornell.edu"
+LABEL maintainer="kmeaton1@ualberta.ca"
 LABEL org.opencontainers.image.created=$CREATED
-LABEL org.opencontainers.image.url="https://breedbase.org/"
-LABEL org.opencontainers.image.source="https://github.com/solgenomics/breedbase_dockerfile"
+#LABEL org.opencontainers.image.url="https://breedbase.org/"
+LABEL org.opencontainers.image.source="https://github.com/bff-afirms/breedbase_dockerfile"
 LABEL org.opencontainers.image.version=$BUILD_VERSION
 LABEL org.opencontainers.image.revision=$REVISION
-LABEL org.opencontainers.image.vendor="Boyce Thompson Institute"
-LABEL org.opencontainers.image.title="breedbase/breedbase"
-LABEL org.opencontainers.image.description="Breedbase web server"
-LABEL org.opencontainers.image.documentation="https://solgenomics.github.io/sgn/"
+LABEL org.opencontainers.image.vendor="University of Alberta"
+LABEL org.opencontainers.image.title="bffafirms/breedbase"
+LABEL org.opencontainers.image.description="BFF-AFIRMS Breedbase web server"
+LABEL org.opencontainers.image.documentation="https://github.com/bff-afirms/breedbase_dockerfile/"
 
 
 

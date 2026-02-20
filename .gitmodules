@@ -120,3 +120,6 @@
 [submodule "postgres"]
 	path = postgres
 	url = https://github.com/BFF-AFIRMS/postgres
+[submodule "cxgn/treeimprovementbase"]
+	path = cxgn/treeimprovementbase
+	url = https://github.com/BFF-AFIRMS/treeimprovementbase

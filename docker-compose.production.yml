@@ -33,6 +33,7 @@ services:
       HOME:                     /home/production
       WEB_USR_PASSWORD:         ${WEB_USR_PASSWORD:?} # web_usr database password
       ADMIN_PASSWORD:           ${ADMIN_PASSWORD:?}   # admin web password
+      SITE_OVERLAY:             treeimprovementbase
     volumes:
       # required volumes
       - ./db_dumps:/db_dumps:ro                                      # Default fixture for PRODUCTION mode
@@ -45,9 +46,6 @@ services:
       - staticdata:/home/production/cxgn/sgn/static                  # Static files
       - jsdata:/home/production/cxgn/js/static                       # Unknown
       - ./data/downloads:/downloads
-      # dev
-      - ./entrypoint.sh:/entrypoint.sh:ro
-      - ./run_all_patches.pl:/home/production/cxgn/sgn/db/run_all_patches.pl:ro
     expose:
       - 8080
     ports: ["8080:8080"]

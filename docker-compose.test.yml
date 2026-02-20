@@ -18,15 +18,19 @@ services:
     build:
       context: .
       cache_from:
-        - breedbase/breedbase:latest
+        - bffafirms/breedbase:latest
     # Dev
-    image: breedbase/breedbase:latest
+    image: bffafirms/breedbase:latest
     environment:
       HOME: /root
       MODE: 'TESTING'
-      PGPASSWORD: postgres
+      PGHOST: breedbase_db
+      PGDATABASE: ${PGDATABASE:?}
+      PGUSER:     ${PGUSER:?}
+      PGPASSWORD: ${PGPASSWORD:?}
       SGN_TEST_SERVER: http://test_breedbase:3010
       SGN_REMOTE_SERVER_ADDR: selenium
+      SITE_OVERLAY: treeimprovementbase
     depends_on:
       breedbase_db:
         condition: service_healthy
@@ -39,9 +43,6 @@ services:
       # repos/sgn/sgn_test.conf assumes /home/vagrant
       - ./.git:/home/production/.git
       - shared_data:/downloads
-      - ./entrypoint.sh:/entrypoint.sh
-      # interactive testing mode
-      - ./interactive.t:/tmp/interactive.t
     command: ["--interactive"]
     networks:
       - test-breedbase
