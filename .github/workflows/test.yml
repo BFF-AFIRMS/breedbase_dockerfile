@@ -30,7 +30,7 @@ jobs:
       # Production deployment
   
       - name: Start production
-        run: docker compose -f docker-compose.yml -f production.yml up -d
+        run: docker compose -f docker-compose.production.yml up -d
 
       - name: Healthcheck production
         uses: stringbean/docker-healthcheck-action@v3
@@ -41,7 +41,7 @@ jobs:
           require-healthy: true
 
       - name: Stop production
-        run: docker compose -f docker-compose.yml -f production.yml down
+        run: docker compose -f docker-compose.production.yml down
 
       - name: Clean production volumes
         run: docker volume prune -a

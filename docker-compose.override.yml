@@ -11,6 +11,7 @@ services:
         # include .git dir that tracks all submodules in cxgn
       - ./.git:/home/production/.git
       - shared_data:/downloads
+      - ./entrypoint.sh:/entrypoint.sh
     environment:
       MODE: 'DEVELOPMENT'
       PGDATABASE: breedbase

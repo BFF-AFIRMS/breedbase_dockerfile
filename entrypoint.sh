@@ -53,7 +53,11 @@ umask 002
 echo "CHECKING IF A DATABASE NEEDS TO BE INSTALLED...";
 
 if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
-    echo "INSTALLING DATABASE...";
+
+    echo "-------------------------------------------------------------------------"
+    echo "INSTALLING DATABASE"
+    echo "-------------------------------------------------------------------------"
+    
     echo "CREATING web_usr...";
     if [[ -z $WEB_USR_PASSWORD ]]; then
         WEB_USR_PASSWORD="postgres"
@@ -72,14 +76,31 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | se
             echo "CREATING secure admin password";
             psql -c "update sgn_people.sp_person set password=sgn.crypt('$ADMIN_PASSWORD', sgn.gen_salt('bf', 6)) where first_name = 'admin'"
         fi
+        echo "RUNNING patches...";
         tty_wrapper "db/run_all_patches.pl -e admin"
+
+        if [[ $SITE_OVERLAY != "" && -e db/$SITE_OVERLAY ]]; then
+            echo "-------------------------------------------------------------------------"
+            echo "RUNNING $SITE_OVERLAY patches"
+            echo "-------------------------------------------------------------------------"
+            tty_wrapper "db/run_all_patches.pl -e admin -p db/$SITE_OVERLAY"
+        fi
+
     else
         echo "LOADING cxgn_fixture.sql dump...";
         psql -f t/data/fixture/cxgn_fixture.sql
         # The first patch the cxgn_fixture needs is 158 (AddCascadeDeletes. But that patch
         # fails for the test fixture (currently). Since the run_all_patches.pl script will
         # die immediately after a patch fails. Starting on patch 159 ensures it works.
+        echo "RUNNING patches...";
         tty_wrapper "db/run_all_patches.pl -e janedoe -s 159"
+
+        if [[ $SITE_OVERLAY != "" && -e db/$SITE_OVERLAY ]]; then
+            echo "-------------------------------------------------------------------------"
+            echo "RUNNING $SITE_OVERLAY patches"
+            echo "-------------------------------------------------------------------------"
+            tty_wrapper "db/run_all_patches.pl -e janedoe -p db/$SITE_OVERLAY"
+        fi
     fi
    
 fi

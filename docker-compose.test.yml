@@ -43,6 +43,7 @@ services:
       # repos/sgn/sgn_test.conf assumes /home/vagrant
       - ./.git:/home/production/.git
       - shared_data:/downloads
+      - ./entrypoint.sh:/entrypoint.sh
     command: ["--interactive"]
     networks:
       - test-breedbase
