@@ -26,8 +26,8 @@ services:
     container_name: novnc
     image: theasp/novnc:latest
     environment:
-      DISPLAY_WIDTH: 1600
-      DISPLAY_HEIGHT: 968
+      DISPLAY_WIDTH: 1920
+      DISPLAY_HEIGHT: 1080
       RUN_XTERM: no
     ports:
       - "8081:8080"
