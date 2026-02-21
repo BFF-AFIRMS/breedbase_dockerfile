@@ -37,7 +37,7 @@ services:
       - ./entrypoint.sh:/entrypoint.sh
     environment:
       MODE:                   DEVELOPMENT
-      HOME:                   /home/devel
+      HOME:                   /home/sgn
       PGDATABASE:             breedbase
       PGHOST:                 breedbase_db
       PGPASSWORD:             postgres
