@@ -3,3 +3,7 @@ cxgn/sgn/js/node_modules
 cxgn/sgn/js/build
 cxgn/sgn/js/package-lock.json
 cxgn/sgn/db/delete_nd_experiment_ids
+cxgn/sgn/logfile*
+cxgn/sgn/cover_db
+cxgn/sgn/sgn_fixture.conf
+cxgn/sgn/sgn_local.conf

@@ -12,15 +12,29 @@ services:
     container_name: breedbase
     image: bffafirms/breedbase:latest
     restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    # Minimum capabailities required for starting system services
+    cap_add:
+      - CAP_AUDIT_CONTROL
+      - CAP_AUDIT_READ
+      - CAP_AUDIT_WRITE
+      - CAP_CHOWN
+      - CAP_DAC_OVERRIDE
+      - CAP_FOWNER
+      - CAP_SETGID
+      - CAP_SETUID
     depends_on:
       breedbase_db:
         condition: service_healthy
     tty: true
-    # Note: container will start as root, and then switch to run as the
-    # the USER_GROUP_ID user.
     environment:
-      DOMAIN_NAME:              ${DOMAIN_NAME:-localhost}
       MODE:                     PRODUCTION
+      HOME:                     /home/production
+      DOMAIN_NAME:              ${DOMAIN_NAME:-localhost}
       # Database credentials
       PGHOST:                   breedbase_db
       PGSSLROOTCERT:            /data/certs/root.crt
@@ -30,20 +44,23 @@ services:
       PSQL_PAGER:               cat
       PGPASSWORD:               ${PGPASSWORD:?}
       HISTTIMEFORMAT:           "%Y-%m-%d %T "
-      HOME:                     /home/production
       WEB_USR_PASSWORD:         ${WEB_USR_PASSWORD:?} # web_usr database password
       ADMIN_PASSWORD:           ${ADMIN_PASSWORD:?}   # admin web password
       #SITE_OVERLAY:             treeimprovementbase  # Custom site overlay from cxgn dir
     volumes:
       # required volumes
-      - ./db_dumps:/db_dumps:ro                                      # Default fixture for PRODUCTION mode
-      - ./data/breedbase:/home/production/volume                     # Breedbase web data
-      - ./data/postgres/certs/root.crt:/data/certs/root.crt:ro       # SSL Certificates for database communication
+      - ./db_dumps:/db_dumps:ro                                                     # Default fixture for PRODUCTION mode
+      - ./data/postgres/certs/root.crt:/data/certs/root.crt:ro                      # SSL Certificates for database communication
+      - ./data/breedbase/volume:/home/production/volume                             # Breedbase web data
+      - ./sgn_local_template.conf:/home/production/cxgn/sgn/sgn_local_template.conf # Template config file
+      - ./sgn_local.conf:/home/production/cxgn/sgn/sgn_local.conf                   # Final config file
       # recommended volumes for persistence and quick start up 
-      - ./data/breedbase/bash_history:/home/production/.bash_history # Keep history of commands
-      - ./data/downloads:/downloads
-      - staticdata:/home/production/cxgn/sgn/static                  # Static files
-      - jsdata:/home/production/cxgn/js                              # Javascript files
+      - ./data/breedbase/bash_history:/home/production/.bash_history                # Keep history of commands
+      - ./data/breedbase/downloads:/downloads
+      - staticdata:/home/production/cxgn/sgn/static                                 # Static files
+      - jsdata:/home/production/cxgn/js                                             # Javascript files
+      # tmp
+      - ./entrypoint.sh:/entrypoint.sh
     expose:
       - 8080
     ports: ["8080:8080"]

@@ -1,0 +1,63 @@
+services:
+
+  # Adds testing mode and selenium dependency
+  breedbase:
+    hostname: test_breedbase
+    environment:
+      MODE:            TESTING
+      SGN_TEST_SERVER: http://test_breedbase:3010
+    depends_on:
+      selenium:
+        condition: service_healthy
+    command: ["--interactive"]
+    ports:
+      - 3010:3010
+    healthcheck:
+      test: curl -I localhost:3010
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # Visualizer for selenium browser automation
+  novnc:
+    hostname: novnc
+    container_name: novnc
+    image: theasp/novnc:latest
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    environment:
+      DISPLAY_WIDTH: 1920
+      DISPLAY_HEIGHT: 1080
+      RUN_XTERM: no
+    ports:
+      - "8081:8080"
+
+  # Browser automation
+  selenium:
+    hostname: selenium
+    container_name: selenium
+    image: selenium/standalone-firefox:3.141.59
+    shm_size: '2gb'
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    depends_on:
+      - novnc
+    healthcheck:
+      test: "curl --silent --head http://localhost:4444 || exit 1"
+    volumes:
+      - ./cxgn/sgn/t/data:/home/production/cxgn/sgn/t/data
+      - ./data/breedbase/downloads:/downloads
+    environment:
+      DISPLAY: novnc:0.0
+    ports:
+       - 5900:5900
+       - 4444:4444
+
+

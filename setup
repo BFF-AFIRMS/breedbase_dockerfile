@@ -38,11 +38,9 @@ mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
 cd ../..
 
 # breedbase
-mkdir -p data/breedbase
+mkdir -p data/breedbase/volume
 touch data/breedbase/bash_history
-
-# downloads
-mkdir -p data/downloads
+mkdir -p data/breedbase/downloads
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
 echo -e "-----------------------------------------------------------------------------"

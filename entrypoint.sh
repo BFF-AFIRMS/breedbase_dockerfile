@@ -31,6 +31,7 @@ start_system_services() {
     /etc/init.d/slurmd start
 
     chown root /etc/crontab # in case it was mounted from local dir
+
 }
 
 # Make sure the owner of the  conf file exists on the system
@@ -65,8 +66,8 @@ initialize_user() {
         useradd $user_name -u 1000 -g 1000 -m -s /bin/bash        
     fi
 
-    echo "Updating sgn_local.conf to run server as $user_name" 
-    sed -i -E "s/(www_user|www_group).*/\1  $user_name^C" sgn_local.conf
+    #echo "Updating sgn_local.conf to run server as $user_name" 
+    #sed -i -E "s/(www_user|www_group).*/\1  $user_name^C" sgn_local.conf
 
     echo "Config user:" $(getent passwd "$file_user")
     echo "Config group:" $(getent group "$file_group")
@@ -80,19 +81,6 @@ apply_site_overlay() {
         echo "-------------------------------------------------------------------------"
         echo "Applying Site Overlay: $SITE_OVERLAY"
         echo "-------------------------------------------------------------------------"
-
-        # Create config file from template
-        if [[ -e /home/production/cxgn/$SITE_OVERLAY/sgn_local_template.conf ]]; then
-            echo "Updating template file"
-            sed \
-              -e "s/{PGHOST}/$PGHOST}/g" \
-              -e "s/{PGDATABASE}/$PGDATABASE}/g" \
-              -e "s/{PGUSER}/$PGUSER}/g" \
-              -e "s/{PGPASSWORD}/$PGPASSWORD}/g" \
-              -e "s/{DOMAIN_NAME}/$DOMAIN_NAME}/g" \
-               /home/production/cxgn/$SITE_OVERLAY/sgn_local_template.conf \
-               > /home/production/cxgn/$SITE_OVERLAY/sgn_local.conf
-        fi
 
         # Symlink files from the site overlay, match the sgn directory user
         dir_user=$(ls -ld /home/production/cxgn/sgn | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
@@ -182,6 +170,8 @@ initialize_volumes() {
     # create necessary dirs/permissions if we have a docker volume dir
     # at /home/production/volume
 
+    # TBD: Think about static/documents/tempfiles
+
     echo "-------------------------------------------------------------------------"
     echo "Initializing Volumes"
     echo "-------------------------------------------------------------------------"
@@ -209,7 +199,18 @@ start_sgn_server() {
     echo "-------------------------------------------------------------------------"
     echo "Starting sgn server in $MODE mode."
     echo "-------------------------------------------------------------------------"
-    
+
+    # Update template file with credentials
+    if [[ -e sgn_local_template.conf ]]; then
+        echo "Updating template file"
+        sed \
+            -e "s/{PGDATABASE}/$PGDATABASE/g" \
+            -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
+            -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
+            sgn_local_template.conf \
+            > sgn_local.conf
+    fi
+
     if [ "$MODE" == "TESTING" ]; then
         # Expand out the args first, otherwise only the first arg is captured
         args="${@}"
@@ -236,7 +237,6 @@ start_sgn_server() {
 }
 
 _main() {
-
     start_system_services
     initialize_user
     apply_site_overlay

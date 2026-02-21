@@ -51,8 +51,7 @@ There are three different options for deployment: [Production](#deploy-for-produ
 
 If you are new to the Breedbase application, we recommend starting with [Production](#production). This method has the quickest start time, as it uses a pre-built docker image.
 
-
-### Deploy for Production
+If you are aiming to change the Breedbase application, then use [Development](#development) which will allow you to make changes to the frontend and backend with live updates.
 
 1. **Run setup**
 
@@ -61,10 +60,12 @@ If you are new to the Breedbase application, we recommend starting with [Product
     ./setup
     ```
 
+### Deploy for Production
+
 1. **Deploy with docker compose**
 
     ```
-    docker compose -f docker-compose.production.yml up -d
+    docker compose up -d
     ```
 
     Follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment.
@@ -81,20 +82,10 @@ If you are new to the Breedbase application, we recommend starting with [Product
    
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted onto the devel container during the compose step, but will still be accessible from the host for development work.
 
-2. **Create a `.env` file with dev credentials**
-
-    ```bash
-    echo "
-    PGDATABASE=breedbase
-    PGHOST=breedbase_db
-    PGPASSWORD=postgres
-    PGUSER=postgres" > .env
-    ```
-
-3. **Deploy with docker compose**
+2. **Deploy with docker compose**
 
     ```
-    docker compose -f docker-compose.development.yml up -d
+    docker compose -f docker-compose.yml -f development.yml up -d
     ```
 
     > This will deploy 2 containers, `breedbase_web` and `breedbase_db`, combined in a single service named `breedbase`. The deployment will set the container environment MODE to DEVELOPMENT, which will run the web server using Catalyst instead of Starman. In this configuration, the server will restart when any changes are detected in the config file or sgn perl libraries.

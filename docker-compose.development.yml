@@ -1,106 +1,25 @@
-volumes:
-  staticdata:
-  jsdata:
-  webdata:
-  dbdata:
-  shared_data:
+# modifications to existing services
+include:
+   - path:
+       - docker-compose.yml
+       - development.yml
 
+# New services
 services:
 
-  breedbase_db:
-    container_name: breedbase_db
-    volumes:
-      - dbdata:/var/lib/postgresql/data
-    image: postgres:12.7
-    environment:
-      POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "psql -U postgres -q postgres -c '\\dt'"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-
-  breedbase:
-    container_name: breedbase
-    build:
-      context: .
-    image: bffafirms/breedbase:latest
-    depends_on:
-      - breedbase_db
-    volumes:
-      - ./sgn_local.conf:/home/production/cxgn/sgn/sgn_local.conf
-      - ./cxgn:/home/production/cxgn
-        # include .git dir that tracks all submodules in cxgn
-      - ./.git:/home/production/.git
-      - shared_data:/downloads
-      - webdata:/home/production/volume
-      - ./entrypoint.sh:/entrypoint.sh
-    environment:
-      MODE:                   DEVELOPMENT
-      HOME:                   /home/sgn
-      PGDATABASE:             breedbase
-      PGHOST:                 breedbase_db
-      PGPASSWORD:             postgres
-      PGUSER:                 postgres
-      SGN_TEST_SERVER:        http://breedbase:3010
-      SGN_REMOTE_SERVER_ADDR: selenium
-      DBIC_TRACE:             0
-      SITE_OVERLAY:           treeimprovementbase
-    ports:
-      - 8080:8080
-    healthcheck:
-      test: curl -I localhost:8080
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
-
-  novnc:
-    container_name: novnc
-    image: theasp/novnc:latest
-    environment:
-      DISPLAY_WIDTH:  1920
-      DISPLAY_HEIGHT: 1080
-      RUN_XTERM:      no
-    ports:
-      - "8081:8080"
-
-  selenium:
-    container_name: selenium
-    image: selenium/standalone-firefox:3.141.59
-    shm_size: '2gb'
-    healthcheck:
-      test: "curl --silent --head http://localhost:4444 || exit 1"
-    volumes:
-      - type: bind
-        source: ./cxgn/sgn/t/data
-        target: /home/production/cxgn/sgn/t/data
-      - shared_data:/downloads
-    environment:
-      DISPLAY: novnc:0.0
-    ports:
-      - 5900:5900
-      - 4444:4444
-
-  keycloak_db:
-    container_name: keycloak_db
-    image: postgres:13.0
-    environment:
-      POSTGRES_DB:       keycloak
-      POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-
-    # Keycloak authentication
   keycloak:
+    hostname: keycloak
+    container_name: keycloak
     build:
       context: cxgn/sgn/.github/keycloak
     image: bffafirms/keycloak:26.5.1-0-breedbase-testing
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
     depends_on:
-      keycloak_db:
+      breedbase_db:
         condition: service_healthy
     environment:
       KC_DB_USERNAME:              postgres

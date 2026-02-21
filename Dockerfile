@@ -172,6 +172,7 @@ RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* /home/production/cx
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
 # Use the run_all_patches that doesn't leak credentials to log
 RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
+COPY sgn_local_template.conf /home/production/cxgn/sgn/sgn_local_template.conf
 
 # create directory layout
 #
