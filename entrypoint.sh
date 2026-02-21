@@ -35,16 +35,16 @@ start_system_services() {
 
 # Make sure the owner of the  conf file exists on the system
 initialize_user() {
-    file_path=$1
-    user_name=$2
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing user: sgn"
+    echo "-------------------------------------------------------------------------"
 
-    echo "-------------------------------------------------------------------------"
-    echo "Initializing user: $file_path"
-    echo "-------------------------------------------------------------------------"
+    user_name=sgn
 
     # make sure the file owner exists on the system
-    file_user=$(ls -l $file_path | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-    file_group=$(ls -l $file_path | sed -E 's/\s+/ /g' | cut -d ' ' -f 4)
+    # sgn_local.conf will always be mounted as the host user
+    file_user=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+    file_group=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 4)
 
     # Create group
     if [[ ! $(getent group "$file_group") ]]; then
@@ -52,6 +52,8 @@ initialize_user() {
         groupadd -g $file_group $user_name
     else
         echo "Group $file_group already exists"
+        echo "Creating $user_name group as 1000"
+        groupadd -g 1000 $user_name
     fi
 
     if [[ ! $(getent passwd "$file_user") ]]; then
@@ -59,10 +61,15 @@ initialize_user() {
         useradd $user_name -u $file_user -g $file_group -m -s /bin/bash
     else
         echo "User $file_user already exists"
+        echo "Creating $user_name user as 1000"
+        useradd $user_name -u 1000 -g 1000 -m -s /bin/bash        
     fi
 
-    echo "System user:" $(getent passwd "$file_user")
-    echo "System group:" $(getent group "$file_group")
+    echo "Updating sgn_local.conf to run server as $user_name" 
+    sed -i -E "s/(www_user|www_group).*/\1  $user_name^C" sgn_local.conf
+
+    echo "Config user:" $(getent passwd "$file_user")
+    echo "Config group:" $(getent group "$file_group")
 
 }
 
@@ -74,13 +81,25 @@ apply_site_overlay() {
         echo "Applying Site Overlay: $SITE_OVERLAY"
         echo "-------------------------------------------------------------------------"
 
-        # Match the conf user
-        conf_user=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-        echo "Symlinking files as $conf_user"
-        sudo -u $conf_user cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
+        # Create config file from template
+        if [[ -e /home/production/cxgn/$SITE_OVERLAY/sgn_local_template.conf ]]; then
+            echo "Updating template file"
+            sed \
+              -e "s/{PGHOST}/$PGHOST}/g" \
+              -e "s/{PGDATABASE}/$PGDATABASE}/g" \
+              -e "s/{PGUSER}/$PGUSER}/g" \
+              -e "s/{PGPASSWORD}/$PGPASSWORD}/g" \
+              -e "s/{DOMAIN_NAME}/$DOMAIN_NAME}/g" \
+               /home/production/cxgn/$SITE_OVERLAY/sgn_local_template.conf \
+               > /home/production/cxgn/$SITE_OVERLAY/sgn_local.conf
+        fi
 
-        # Javascript cannot be symlinked, must be fully copied
-        # match js user
+        # Symlink files from the site overlay, match the sgn directory user
+        dir_user=$(ls -ld /home/production/cxgn/sgn | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+        echo "Symlinking files as $dir_user"
+        sudo -u $dir_user cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
+
+        # Javascript cannot be symlinked, must be fully copied, match js user
         if [[ -d /home/production/cxgn/$SITE_OVERLAY/js/ ]]; then
             js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
             echo "Overwriting js files as $js_user"
@@ -162,6 +181,7 @@ initialize_javascript() {
 initialize_volumes() {
     # create necessary dirs/permissions if we have a docker volume dir
     # at /home/production/volume
+
     echo "-------------------------------------------------------------------------"
     echo "Initializing Volumes"
     echo "-------------------------------------------------------------------------"
@@ -176,10 +196,8 @@ initialize_volumes() {
         fi
         chmod 770 $dir_path
 
-        # Who should be owner? Whoever is runing the server?
-        #if [[ ! -z $USER_GROUP_ID ]]; then
-        #    chown -R $USER_GROUP_ID $dir_path
-        #fi
+        # Give ownership to the dynamically created sgn owner
+        chown -R sgn:sgn $dir_path
     done
 
     # Required otherwise the cache directory for solgs with have permissions errors
@@ -220,7 +238,7 @@ start_sgn_server() {
 _main() {
 
     start_system_services
-    initialize_user sgn_local.conf sgn
+    initialize_user
     apply_site_overlay
     initialize_database
     initialize_javascript

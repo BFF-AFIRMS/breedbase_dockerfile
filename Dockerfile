@@ -166,9 +166,12 @@ COPY --chown=production:production --from=build /cxgn /home/production/cxgn
 RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
-# Use the hardened Javascript patches from treeimprovementbases that resolve vulnerabilities
+# Use the hardened Javascript patches that fix vulnerabilities
 RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* /home/production/cxgn/sgn/js
+# Use the interactive test file for interactive testing
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
+# Use the run_all_patches that doesn't leak credentials to log
+RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
 
 # create directory layout
 #
