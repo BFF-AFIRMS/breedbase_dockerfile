@@ -47,7 +47,10 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 ## Deploy
 
-For all deployment methods, first create a `.env` file with:
+There are three different options for deployment: [Production](#deploy-for-production), [Development](#deploy-for-development), and [Testing](#deploy-for-testing).
+
+If you are new to the Breedbase application, we recommend starting with [Production](#production). This method has the quickest start time, as it uses a pre-built docker image.
+
 
 ### Deploy for Production
 
@@ -88,11 +91,10 @@ For all deployment methods, first create a `.env` file with:
     PGUSER=postgres" > .env
     ```
 
-
-2. **Deploy with docker compose**
+3. **Deploy with docker compose**
 
     ```
-    docker compose up -d
+    docker compose -f docker-compose.development.yml up -d
     ```
 
     > This will deploy 2 containers, `breedbase_web` and `breedbase_db`, combined in a single service named `breedbase`. The deployment will set the container environment MODE to DEVELOPMENT, which will run the web server using Catalyst instead of Starman. In this configuration, the server will restart when any changes are detected in the config file or sgn perl libraries.
@@ -153,6 +155,9 @@ Tests can be run in `interactive` mode, where the same database and web server a
 
     ```bash
     docker compose -f docker-compose.test.yml exec test_breedbase bash
+    psql -l
+    # Example
+    export TEST_DB_NAME=test_...
     ```
 
 4. **Run unit tests interactively**

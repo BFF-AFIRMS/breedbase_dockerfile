@@ -166,7 +166,8 @@ COPY --chown=production:production --from=build /cxgn /home/production/cxgn
 RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
-# JS patches
+# Use the hardened Javascript patches from treeimprovementbases that resolve vulnerabilities
+RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* /home/production/cxgn/sgn/js
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
 
 # create directory layout

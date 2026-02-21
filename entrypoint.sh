@@ -11,7 +11,7 @@ chown 106 /etc/munge/munge.key
 chown root /etc/crontab # in case it was mounted from local dir
 
 # A wrapper for perl commands that require a TTY
-# (ex. piping db credentials into patching scripts or mx-run)
+# (ex. piping db credentials into patching scripts for mx-run)
 tty_wrapper() {
     command=$1
     wrapper="script --log-out /tmp/typescript --flush --quiet --return --command \"bash --noprofile --norc -eo pipefail -c '$command'\""
@@ -19,15 +19,41 @@ tty_wrapper() {
     eval $wrapper
 }
 
-if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" ]]; then
+# Make sure the owner of the sgn_local.conf file exists on the system
+conf_user=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+conf_group=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 4)
+conf_username=$conf_user
+
+if ! getent passwd "$conf_user" &> /dev/null; then
+
+    conf_username=devel
+
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing user ( $conf_user:$conf_group ) as $conf_username"
+    echo "-------------------------------------------------------------------------"
+
+    echo "$conf_username:x:$conf_user:$conf_group:,,,:/home/devel:/usr/sbin/nologin" >> /etc/passwd
+    echo "$conf_username:x:$conf_group:" >> /etc/group
+    mkdir -p /home/devel
+    chown -R $conf_user:$conf_group /home/devel
+
+    echo "System user:" $(getent passwd "$conf_user")
+    echo "System group:" $(getent group "$conf_group")
+fi
+
+
+if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
     echo "-------------------------------------------------------------------------"
     echo "Applying Site Overlay: $SITE_OVERLAY"
     echo "-------------------------------------------------------------------------"
+    sudo -u $conf_username cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
 
-    if [[ -e /home/production/cxgn/$SITE_OVERLAY ]]; then
-        rsync -av /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
+    # Javascript cannot be symlinked, but be fully copied
+    if [[ -d /home/production/cxgn/$SITE_OVERLAY/js/ ]]; then
+        rsync -av /home/production/cxgn/$SITE_OVERLAY/js/* .
     fi
 fi
+
 
 if [ "${MODE}" = 'TESTING' ]; then
 
@@ -77,7 +103,7 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | se
             psql -c "update sgn_people.sp_person set password=sgn.crypt('$ADMIN_PASSWORD', sgn.gen_salt('bf', 6)) where first_name = 'admin'"
         fi
         echo "RUNNING patches...";
-        tty_wrapper "db/run_all_patches.pl -e admin"
+        tty_wrapper "db/run_all_patches.pl -e admin -p db"
 
         if [[ $SITE_OVERLAY != "" && -e db/$SITE_OVERLAY ]]; then
             echo "-------------------------------------------------------------------------"
@@ -93,7 +119,7 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | se
         # fails for the test fixture (currently). Since the run_all_patches.pl script will
         # die immediately after a patch fails. Starting on patch 159 ensures it works.
         echo "RUNNING patches...";
-        tty_wrapper "db/run_all_patches.pl -e janedoe -s 159"
+        tty_wrapper "db/run_all_patches.pl -e janedoe -s 159 -p db"
 
         if [[ $SITE_OVERLAY != "" && -e db/$SITE_OVERLAY ]]; then
             echo "-------------------------------------------------------------------------"
@@ -103,25 +129,6 @@ if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | se
         fi
     fi
    
-fi
-
-if [[ ! -z $USER_GROUP_ID ]]; then
-
-    echo "-------------------------------------------------------------------------"
-    echo "Initializing user ( $USER_GROUP_ID $whoami)"
-    echo "-------------------------------------------------------------------------"
-
-    USER_ID=$(echo "$USER_GROUP_ID" | cut -d ":" -f 1)
-    GROUP_ID=$(echo "$USER_GROUP_ID" | cut -d ":" -f 2)
-
-	if ! getent passwd "$USER_ID" &> /dev/null; then
-        echo "Adding user $USER_GROUP_ID to system as: sgn"
-        echo "sgn:x:$USER_ID:$GROUP_ID:,,,:/home/production:/usr/sbin/nologin" >> /etc/passwd
-        echo "sgn:x:$GROUP_ID:" >> /etc/group
-	fi
-
-    echo "System user:" $(getent passwd "$USER_ID")
-    echo "System group:" $(getent group "$USER_ID")
 fi
 
 # create necessary dirs/permissions if we have a docker volume dir

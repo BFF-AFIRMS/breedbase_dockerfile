@@ -1,3 +1,9 @@
+volumes:
+  shared_data:
+  
+networks:
+  test-breedbase:
+
 services:
 
   # Postgres database for breedbase web application
@@ -119,9 +125,3 @@ services:
       - test-breedbase
     ports:
       - "9080:9080"
-
-volumes:
-  shared_data:
-  
-networks:
-  test-breedbase:

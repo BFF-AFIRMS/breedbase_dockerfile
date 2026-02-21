@@ -9,6 +9,7 @@ services:
 
   breedbase:
     hostname: breedbase
+    container_name: breedbase
     image: bffafirms/breedbase:latest
     restart: unless-stopped
     depends_on:
@@ -44,7 +45,7 @@ services:
       # recommended volumes for persistence and quick start up 
       - ./data/breedbase/bash_history:/home/production/.bash_history # Keep history of commands
       - staticdata:/home/production/cxgn/sgn/static                  # Static files
-      - jsdata:/home/production/cxgn/js/static                       # Unknown
+      - jsdata:/home/production/cxgn/js                              # Javascript files
       - ./data/downloads:/downloads
     expose:
       - 8080
@@ -69,6 +70,7 @@ services:
 
   breedbase_db:
     hostname: breedbase_db
+    container_name: breedbase_db
     build:
       context: postgres
     image: bffafirms/postgres:latest

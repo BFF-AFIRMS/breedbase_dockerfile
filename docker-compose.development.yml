@@ -1,35 +1,67 @@
+volumes:
+  staticdata:
+  jsdata:
+  webdata:
+  dbdata:
+  shared_data:
+
 services:
 
   breedbase_db:
+    container_name: breedbase_db
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    image: postgres:12.7
     environment:
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q postgres -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
   breedbase:
+    container_name: breedbase
+    build:
+      context: .
+    image: bffafirms/breedbase:latest
+    depends_on:
+      - breedbase_db
     volumes:
       - ./sgn_local.conf:/home/production/cxgn/sgn/sgn_local.conf
       - ./cxgn:/home/production/cxgn
         # include .git dir that tracks all submodules in cxgn
       - ./.git:/home/production/.git
       - shared_data:/downloads
+      - webdata:/home/production/volume
       - ./entrypoint.sh:/entrypoint.sh
     environment:
-      MODE: 'DEVELOPMENT'
-      PGDATABASE: breedbase
-      PGHOST: breedbase_db
-      PGPASSWORD: postgres
-      PGUSER: postgres
-      SGN_TEST_SERVER: http://breedbase:3010
+      MODE:                   DEVELOPMENT
+      HOME:                   /home/devel
+      PGDATABASE:             breedbase
+      PGHOST:                 breedbase_db
+      PGPASSWORD:             postgres
+      PGUSER:                 postgres
+      SGN_TEST_SERVER:        http://breedbase:3010
       SGN_REMOTE_SERVER_ADDR: selenium
-      DBIC_TRACE: 0
-      SITE_OVERLAY: treeimprovementbase
+      DBIC_TRACE:             0
+      SITE_OVERLAY:           treeimprovementbase
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: curl -I localhost:8080
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   novnc:
     container_name: novnc
     image: theasp/novnc:latest
     environment:
-      DISPLAY_WIDTH: 1920
+      DISPLAY_WIDTH:  1920
       DISPLAY_HEIGHT: 1080
-      RUN_XTERM: no
+      RUN_XTERM:      no
     ports:
       - "8081:8080"
 
@@ -54,7 +86,7 @@ services:
     container_name: keycloak_db
     image: postgres:13.0
     environment:
-      POSTGRES_DB: keycloak
+      POSTGRES_DB:       keycloak
       POSTGRES_PASSWORD: postgres
     healthcheck:
       test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
@@ -76,6 +108,3 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: password
     ports:
       - "9080:9080"
-
-volumes:
-  shared_data:
