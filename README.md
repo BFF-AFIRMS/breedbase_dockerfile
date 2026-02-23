@@ -17,6 +17,7 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
     - [Install docker](#install-docker)
     - [Install docker compose](#install-docker-compose)
 2. [Deploy](#deploy)
+    - [Quick Start](#quick-start) 
     - [Deploy for Production](#deploy-for-production-with-docker-compose)   
     - [Deploy for Development](#deploy-for-development)
     - [Deploy for Testing](#deploy-for-testing)
@@ -47,17 +48,24 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 ## Deploy
 
+All deployment options involve first running setup to credentials in an `.env` file and `data/` directories.
+
+```bash
+./setup
+```
+
 There are three different options for deployment: [Production](#deploy-for-production), [Development](#deploy-for-development), and [Testing](#deploy-for-testing).
 
 If you are new to the Breedbase application, we recommend starting with [Production](#production). This method has the quickest start time, as it uses a pre-built docker image.
 
 If you are aiming to change the Breedbase application, then use [Development](#development) which will allow you to make changes to the frontend and backend with live updates.
 
-1. **Run setup**
+### Quick Start
 
-    > This will create data directories under `data/` and secure credentials in `.env`.
+1. **Deploy with docker compose**
+
     ```bash
-    ./setup
+    docker compose up -d
     ```
 
 ### Deploy for Production

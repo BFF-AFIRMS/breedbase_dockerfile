@@ -1,0 +1,120 @@
+# needs: db.yml
+
+volumes:
+  staticdata:
+  jsdata:
+
+services:
+
+  breedbase:
+    hostname: breedbase
+    container_name: breedbase
+    image: bffafirms/breedbase:latest
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    cap_add:
+      # Minimum capabailities required for starting system services
+      - CAP_AUDIT_CONTROL
+      - CAP_AUDIT_READ
+      - CAP_AUDIT_WRITE
+      - CAP_CHOWN
+      - CAP_DAC_OVERRIDE
+      - CAP_FOWNER
+      - CAP_SETGID
+      - CAP_SETUID
+    depends_on:
+      breedbase_db:
+        condition: service_healthy
+    tty: true
+    environment:
+      MODE:                     PRODUCTION
+      HOME:                     /home/production
+      #SITE_OVERLAY:             treeimprovementbase  # Custom site overlay from cxgn dir
+      DOMAIN_NAME:              ${DOMAIN_NAME:-localhost}
+      PSQL_PAGER:               cat
+      HISTTIMEFORMAT:           "%Y-%m-%d %T "
+      DBIC_TRACE:               0
+      # Database credentials
+      PGHOST:                   breedbase_db
+      PGSSLROOTCERT:            /data/certs/root.crt
+      PGSSLMODE:                verify-full
+      PGDATABASE:               breedbase
+      PGUSER:                   postgres
+      PGPASSWORD:               postgres
+      WEB_USR_PASSWORD:         web_usr    # web_usr database password
+      ADMIN_PASSWORD:           password   # admin web password in breedbase
+    expose:
+      - 8080
+    ports: ["8080:8080"]
+    healthcheck:
+      test: curl -I localhost:8080
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 2G
+        reservations:
+          cpus: 1
+          memory: 1G
+
+    volumes:
+      # Static and javascript files
+      - staticdata:/home/production/cxgn/sgn/static
+      - jsdata:/home/production/cxgn/js
+ 
+      # Default fixture for PRODUCTION mode
+      - type: bind
+        source: ../db_dumps
+        target: /db_dumps
+        bind:
+          create_host_path: false
+
+      # SSL Certificates for database communication
+      - type: bind
+        source: ../data/breedbase_db/certs
+        target: /data/certs
+        bind:
+          create_host_path: false
+
+      # Breedbase web data
+      - type: bind
+        source: ../data/breedbase/volume
+        target: /home/production/volume
+        bind:
+          create_host_path: false
+
+      # Template config file
+      - type: bind
+        source: ../sgn_local_template.conf
+        target: /home/production/cxgn/sgn/sgn_local_template.conf  
+        bind:
+          create_host_path: false
+
+      # Final config file (filed in template)  
+      - type: bind
+        source: ../data/breedbase/sgn_local.conf
+        target: /home/production/cxgn/sgn/sgn_local.conf 
+        bind:
+          create_host_path: false
+
+      # Keep history of commands
+      - type: bind
+        source: ../data/breedbase/bash_history
+        target: /home/production/.bash_history 
+        bind:
+          create_host_path: false
+
+      # ???
+      - type: bind
+        source: ../data/breedbase/downloads
+        target: /downloads
+        bind:
+          create_host_path: false

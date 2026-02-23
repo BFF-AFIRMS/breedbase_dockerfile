@@ -1,24 +1,5 @@
 services:
 
-  # Adds testing mode and selenium dependency
-  breedbase:
-    hostname: test_breedbase
-    environment:
-      MODE:            TESTING
-      SGN_TEST_SERVER: http://test_breedbase:3010
-    depends_on:
-      selenium:
-        condition: service_healthy
-    command: ["--interactive"]
-    ports:
-      - 3010:3010
-    healthcheck:
-      test: curl -I localhost:3010
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
-
   # Visualizer for selenium browser automation
   novnc:
     hostname: novnc
@@ -52,8 +33,19 @@ services:
     healthcheck:
       test: "curl --silent --head http://localhost:4444 || exit 1"
     volumes:
-      - ./cxgn/sgn/t/data:/home/production/cxgn/sgn/t/data
-      - ./data/breedbase/downloads:/downloads
+      # required volumes
+      - type: bind
+        source: ../cxgn/sgn/t/data
+        target: /home/production/cxgn/sgn/t/data
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/breedbase
+        target: /downloads
+        bind:
+          create_host_path: false
+
     environment:
       DISPLAY: novnc:0.0
     ports:

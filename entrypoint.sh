@@ -102,6 +102,10 @@ initialize_database() {
     echo "Initializing Database"
     echo "-------------------------------------------------------------------------"
 
+    # Use patched treeimprovementbase
+    echo "Using run_all_patches.pl from treeimprovementbase"
+    cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl
+
     # load empty fixture and run any missing patches
     if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
 
@@ -239,10 +243,10 @@ start_sgn_server() {
 _main() {
     start_system_services
     initialize_user
+    initialize_volumes
     apply_site_overlay
     initialize_database
     initialize_javascript
-    initialize_volumes
     start_sgn_server
 }
 

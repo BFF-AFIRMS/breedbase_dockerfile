@@ -31,16 +31,19 @@ if [[ ! -e .env.bak ]]; then
 fi
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating data directories: data/"
 
-# postgres
-mkdir -p data/postgres
-cd data/postgres
-mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
-cd ../..
+# Postgres databases
+for db in breedbase_db keycloak_db; do
+  mkdir -p data/$db
+  cd data/$db
+  mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
+  cd ../..
+done
 
 # breedbase
 mkdir -p data/breedbase/volume
-touch data/breedbase/bash_history
 mkdir -p data/breedbase/downloads
+touch data/breedbase/bash_history
+touch data/breedbase/sgn_local.conf
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
 echo -e "-----------------------------------------------------------------------------"

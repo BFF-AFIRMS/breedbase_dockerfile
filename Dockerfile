@@ -185,7 +185,6 @@ COPY slurm.conf /etc/slurm/slurm.conf
 COPY starmachine.conf /etc/starmachine/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-COPY sgn_local.conf /home/production/cxgn/sgn/sgn_local.conf
 
 WORKDIR /home/production/cxgn/sgn
 

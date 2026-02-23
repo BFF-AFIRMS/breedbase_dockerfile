@@ -1,4 +1,66 @@
-include:
-   - path:
-       - docker-compose.development.yml
-       - testing.yml
+volumes:
+  staticdata:
+  jsdata:
+
+services:
+
+  breedbase_db:
+    extends:
+      file: docker/db.yml
+      service: db
+    hostname: breedbase_db
+    container_name: breedbase_db
+    environment:
+      WEB_USR_PASSWORD: web_usr
+      TLS_DOMAIN: breedbase_db
+
+  keycloak_db:
+    container_name: keycloak_db
+    hostname: keycloak_db
+    extends:
+      file: docker/db.yml
+      service: db
+    environment:
+      KEYCLOAK_PASSWORD: keycloak
+      TLS_DOMAIN: keycloak_db
+
+  keycloak:
+    extends:
+      file: docker/keycloak.yml
+      service: keycloak
+    depends_on:
+      keycloak_db:
+        condition: service_healthy
+
+  test_breedbase:
+    extends:
+      file: docker/web.yml
+      service: breedbase
+    hostname: test_breedbase
+    container_name: test_breedbase
+    depends_on:
+      breedbase_db:
+        condition: service_healthy    
+      keycloak:
+        condition: service_healthy          
+    environment:
+      MODE:                   TESTING
+      HOME:                   /home/sgn
+      DBIC_TRACE:             0
+      SGN_TEST_SERVER:        http://test_breedbase:3010
+      SGN_REMOTE_SERVER_ADDR: selenium    
+    volumes:
+      # required volumes
+      - type: bind
+        source: ./cxgn
+        target: /home/production/cxgn
+        bind:
+          create_host_path: false
+
+        # include .git dir that tracks all submodules in cxgn
+      - type: bind
+        source: ./.git
+        target: /home/production/.git
+        bind:
+          create_host_path: false
+

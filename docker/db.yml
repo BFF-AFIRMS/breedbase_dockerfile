@@ -1,0 +1,73 @@
+services:  
+
+  db:
+    hostname: db
+    container_name: db
+    image: bffafirms/postgres:latest
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    # Run as the host user, so that when we mount the database files
+    # to a local path, they are also owned by the host user
+    user: ${USER_GROUP_ID}
+    environment:
+      TLS_DOMAIN:          db                     # Domain name for TLS certficates
+      USER_GROUP_ID:       ${USER_GROUP_ID:?}     # Ensure we have information about the host user
+      PGDATA:              /data/postgresql/main  # Install the database in a custom folder for non-root access
+      POSTGRES_USER:       postgres               # Create Postgres Superuser username
+      POSTGRES_PASSWORD:   postgres               # Createt Postgres Superuser password
+      PGUSER:              postgres               # Default connection username
+      PGPASSWORD:          postgres               # Default connection password
+      TZ:                  'America/Edmonton'     # Container timezone
+    volumes:
+      # required volumes
+      - type: bind
+        source: ../data/breedbase_db/db
+        target: /data/postgresql
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/breedbase_db/pgbackrest
+        target: /data/pgbackrest
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/breedbase_db/certs
+        target: /data/certs
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/breedbase_db/log
+        target: /data/log
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../pg_hba.conf
+        target: /etc/postgresql/pg_hba.conf
+        read_only: true
+        bind:
+          create_host_path: false
+
+    expose:
+      - "5432"
+    healthcheck:
+      # Check that the final database has been created
+      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 2G
+        reservations:
+          cpus: 1
+          memory: 1G
