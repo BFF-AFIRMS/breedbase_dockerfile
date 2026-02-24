@@ -145,6 +145,11 @@ RUN apt remove -y nodejs \
   && mkdir -p /home/production/.npm /home/production/.config \
   && touch /home/production/.npmrc
 
+# Install gosu
+RUN wget https://github.com/tianon/gosu/releases/download/1.19/gosu-amd64 \
+  && chmod +x gosu-amd64 \
+  && mv gosu-amd64 /usr/local/bin/gosu
+
 # npm install needs a non-root user (new in latest version)
 #
 RUN adduser --disabled-password --gecos "" -u 1250 production \
@@ -172,7 +177,7 @@ RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* /home/production/cx
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
 # Use the run_all_patches that doesn't leak credentials to log
 RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
-COPY sgn_local_template.conf /home/production/cxgn/sgn/sgn_local_template.conf
+COPY --chown=production:production sgn_local_template.conf /home/production/cxgn/sgn/sgn_local_template.conf
 
 # create directory layout
 #

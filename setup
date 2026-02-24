@@ -45,5 +45,8 @@ mkdir -p data/breedbase/downloads
 touch data/breedbase/bash_history
 touch data/breedbase/sgn_local.conf
 
+# caddy
+mkdir -p data/caddy
+
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
 echo -e "-----------------------------------------------------------------------------"

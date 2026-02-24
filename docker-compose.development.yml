@@ -70,6 +70,8 @@ services:
     environment:
       MODE:                   DEVELOPMENT
       HOME:                   /home/sgn
+      SGN_TEST_SERVER:        http://breedbase:3010
+      SGN_REMOTE_SERVER_ADDR: selenium
       DBIC_TRACE:             0
     volumes:
       # required volumes
@@ -86,8 +88,8 @@ services:
         bind:
           create_host_path: false
 
-      # - type: bind
-      #   source: ./entrypoint.sh
-      #   target: /entrypoint.sh
-      #   bind:
-      #     create_host_path: false
+      - type: bind
+        source: ./entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false

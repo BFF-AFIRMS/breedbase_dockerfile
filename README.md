@@ -2,9 +2,9 @@
   <img src="Breedbase.png">
 </p>
 
-This repo contains the Dockerfile for the breeDBase webserver, and the docker compose files for joint deployment of the breeDBase webserver and postgres database.
+This repo contains the Dockerfile for the BFF-AFIRMS Breedbase webserver, and the docker compose files for joint deployment of the webserver and postgres database.
 
-To learn more about breeDBase:
+To learn more about Breedbase:
 
 Access the [SGN repository](https://github.com/solgenomics/sgn) to contribute to the underlying codebase or submit new issues.    
 Access the [manual](https://solgenomics.github.io/sgn/) to learn how to use breeDBase's many features.    
@@ -36,8 +36,6 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
     - Debian/Ubuntu: `apt install docker-compose`
     - Windows: It can be installed with [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install).
-    -  Please noe that [Docker Desktop](https://www.docker.com/products/docker-desktop) requires a paid license for research and commercial use.
-    - Installing docker natively in Windows will conflict with VMWare and Virtualbox virtualization settings.
 
 1. **Clone repository**
 
@@ -48,17 +46,24 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 ## Deploy
 
-All deployment options involve first running setup to credentials in an `.env` file and `data/` directories.
+All deployment options involve first running setup to create credentials and data directories.
 
 ```bash
 ./setup
 ```
 
+```text
+-----------------------------------------------------------------------------
+2026-02-24 08:02:03     Beginning setup.
+2026-02-24 08:02:03     Generating secure credentials: .env
+2026-02-24 08:02:03     Creating data directories: data/
+2026-02-24 08:02:03     Completed setup.
+-----------------------------------------------------------------------------
+```
+
 There are three different options for deployment: [Production](#deploy-for-production), [Development](#deploy-for-development), and [Testing](#deploy-for-testing).
 
-If you are new to the Breedbase application, we recommend starting with [Production](#production). This method has the quickest start time, as it uses a pre-built docker image.
-
-If you are aiming to change the Breedbase application, then use [Development](#development) which will allow you to make changes to the frontend and backend with live updates.
+If you are new to the Breedbase application, we recommend starting with [Production](#production). This method has the quickest start time, as it uses a pre-built docker image. If you are aiming to change the Breedbase application, then use [Development](#development) which will allow you to make changes to the frontend and backend with live updates.
 
 ### Quick Start
 
@@ -67,6 +72,19 @@ If you are aiming to change the Breedbase application, then use [Development](#d
     ```bash
     docker compose up -d
     ```
+
+    > This will deploy 2 containers, `breedbase_db` and `breedbase`.
+
+
+### Development
+
+1. **Deploy with docker compose**
+
+    ```
+    docker compose up -f docker-compose.development.yml up -d
+    ```
+
+    > This will deploy 4 containers, `breedbase_db`, `breedbase`, `keycloak_db`, and `keycloak`.
 
 ### Deploy for Production
 

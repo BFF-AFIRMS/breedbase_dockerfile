@@ -180,7 +180,7 @@ initialize_volumes() {
     echo "Initializing Volumes"
     echo "-------------------------------------------------------------------------"
 
-    for dir_name in archive blast cache cluster logs pgdata public public/images tmp; do
+    for dir_name in archive blast cache cluster logs pgdata public public/images tmp tmp/breedbase-site/mason; do
         dir_path=/home/production/volume/${dir_name}
         if [[ ! -e $dir_path ]]; then
             echo "Creating volume: $dir_path"
@@ -213,6 +213,7 @@ start_sgn_server() {
             -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
             sgn_local_template.conf \
             > sgn_local.conf
+        chown sgn:sgn sgn_local.conf
     fi
 
     if [ "$MODE" == "TESTING" ]; then
