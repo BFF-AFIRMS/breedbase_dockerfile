@@ -226,3 +226,6 @@ LABEL org.opencontainers.image.documentation="https://github.com/bff-afirms/bree
 # start services when running container...
 #
 ENTRYPOINT ["/entrypoint.sh"]
+
+# With docker compose, we will run as the host user instead
+USER production
