@@ -64,12 +64,22 @@ services:
         reservations:
           cpus: 1
           memory: 1G
+    post_start:
+      - command: /tmp/web_post_start.sh
+        user: root
 
     volumes:
       # Static and javascript files
       - staticdata:/home/production/cxgn/sgn/static
       - jsdata:/home/production/cxgn/js
  
+      # post_start script
+      - type: bind
+        source: web_post_start.sh
+        target: /tmp/web_post_start.sh
+        bind:
+          create_host_path: false
+
       # Default fixture for PRODUCTION mode
       - type: bind
         source: ../db_dumps
