@@ -17,7 +17,7 @@ services:
     cap_drop:
       - ALL
     cap_add:
-      # Minimum capabailities required for starting system services
+      # Minimum capabilities required for post_start command
       - CAP_AUDIT_CONTROL
       - CAP_AUDIT_READ
       - CAP_AUDIT_WRITE

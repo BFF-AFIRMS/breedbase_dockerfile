@@ -17,3 +17,16 @@ services:
     extends:
       file: docker/web.yml
       service: breedbase
+    volumes:
+      - type: bind
+        source: ./docker/web_entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false
+
+      # TMP: web_setup script
+      - type: bind
+        source: ./docker/web_setup
+        target: /usr/local/bin/web_setup
+        bind:
+          create_host_path: false

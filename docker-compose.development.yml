@@ -87,9 +87,3 @@ services:
         target: /home/production/.git
         bind:
           create_host_path: false
-
-      - type: bind
-        source: ./entrypoint.sh
-        target: /entrypoint.sh
-        bind:
-          create_host_path: false

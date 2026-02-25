@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# A wrapper for perl commands that require a TTY
+# (ex. piping db credentials into patching scripts for mx-run)
+tty_wrapper() {
+    command=$1
+    wrapper="script --log-out /tmp/typescript --flush --quiet --return --command \"bash --noprofile --norc -eo pipefail -c '$command'\""
+    echo "Running tty_wrapper: $wrapper"
+    eval $wrapper
+}
+
 # An inelegent way to wait for the docker post_start 
 # command to finish setting up the container as root user
 wait_for_post_start() {

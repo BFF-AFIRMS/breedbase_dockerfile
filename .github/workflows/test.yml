@@ -10,7 +10,7 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: 1
-      RUN_TEST_CMD: docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c
+      RUN_TEST_CMD: docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c
       PRUNE_CMD: docker container prune -f
 
     steps:
@@ -21,18 +21,18 @@ jobs:
           submodules: true
     
       - name: Build container image
-        run: docker build -t breedbase/breedbase:latest .
+        run: docker build -t bffafirms/breedbase:latest .
 
       # -----------------------------------------------------------------------
-      # Production deployment
-  
-      - name: Run setup
+      # Quick start deployment
+
+      - name: Setup quickstart
         run: ./setup
 
-      - name: Start production
-        run: docker compose -f docker-compose.production.yml up -d
+      - name: Start quickstart
+        run: docker compose up -d
 
-      - name: Healthcheck production
+      - name: Healthcheck quickstart
         uses: stringbean/docker-healthcheck-action@v3
         with:
           container: breedbase
@@ -40,20 +40,23 @@ jobs:
           require-status: running
           require-healthy: true
 
-      - name: Stop production
-        run: docker compose -f docker-compose.production.yml down
+      - name: Stop quickstart
+        run: docker compose down
 
       - name: Clean production volumes
         run: docker volume prune -a
 
+      - name: Clean data directory
+        run: rm -rf data
+
       # -----------------------------------------------------------------------
       # Check development deployment
-  
-      - name: Create env file
-        run: echo -e PGDATABASE=breedbase\nPGHOST=breedbase_db\nPGPASSWORD=postgres\nPGUSER=postgres" > .env
+
+      - name: Setup development
+        run: ./setup
 
       - name: Start development
-        run: docker compose up -d
+        run: docker compose up -f docker-compose.development.yml up -d
 
       - name: Healthcheck development
         uses: stringbean/docker-healthcheck-action@v3
@@ -68,6 +71,9 @@ jobs:
 
       - name: Clean development volumes
         run: docker volume prune -a
+
+      - name: Clean data directory
+        run: rm -rf data
 
       # -----------------------------------------------------------------------
       # Testing
