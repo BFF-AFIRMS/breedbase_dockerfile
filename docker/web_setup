@@ -1,20 +1,14 @@
 #!/bin/bash
 
-umask 002
+setup_log="/tmp/web_setup.log"
 
-# Check who is the owner of the local conf file
-conf_user=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-conf_group=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 4)
-conf_username=$conf_user
+# https://serverfault.com/a/103569
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
 
-# A wrapper for perl commands that require a TTY
-# (ex. piping db credentials into patching scripts for mx-run)
-tty_wrapper() {
-    command=$1
-    wrapper="script --log-out /tmp/typescript --flush --quiet --return --command \"bash --noprofile --norc -eo pipefail -c '$command'\""
-    echo "Running tty_wrapper: $wrapper"
-    eval $wrapper
-}
+exec 1>${setup_log} 2>&1
+
+# Everything below will go to the file 'log.out':
 
 # start system daemons that require root
 start_system_services() {
@@ -32,6 +26,8 @@ start_system_services() {
 
     chown root /etc/crontab # in case it was mounted from local dir
 
+    echo ""
+
 }
 
 # Make sure the owner of the  conf file exists on the system
@@ -42,8 +38,7 @@ initialize_user() {
 
     user_name=sgn
 
-    # make sure the file owner exists on the system
-    # sgn_local.conf will always be mounted as the host user
+    # The sgn_local.conf file MUST ALWAYS be mounted from the host user
     file_user=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
     file_group=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 4)
 
@@ -58,7 +53,7 @@ initialize_user() {
     fi
 
     if [[ ! $(getent passwd "$file_user") ]]; then
-        echo "Creating user: $file_group:$user_name"
+        echo "Creating user:  $file_group:$user_name"
         useradd $user_name -u $file_user -g $file_group -m -s /bin/bash
     else
         echo "User $file_user already exists"
@@ -66,11 +61,47 @@ initialize_user() {
         useradd $user_name -u 1000 -g 1000 -m -s /bin/bash        
     fi
 
-    #echo "Updating sgn_local.conf to run server as $user_name" 
-    #sed -i -E "s/(www_user|www_group).*/\1  $user_name^C" sgn_local.conf
+    echo "Config user:   " $(getent passwd "$file_user")
+    echo "Config group:  " $(getent group "$file_group")
+}
 
-    echo "Config user:" $(getent passwd "$file_user")
-    echo "Config group:" $(getent group "$file_group")
+initialize_directories() {
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing Directories"
+    echo "-------------------------------------------------------------------------"
+
+    for dir_name in archive blast cache cluster logs pgdata public public/images tmp tmp/breedbase-site/mason; do
+        dir_path=/home/production/volume/${dir_name}
+        if [[ ! -e $dir_path ]]; then
+            echo "Creating volume: $dir_path"
+            mkdir -p $dir_path
+        else
+            echo "Located volume: $dir_path"
+        fi
+        chmod 770 $dir_path
+
+        # Give ownership to the dynamically created sgn owner
+        chown -R sgn:sgn $dir_path
+    done
+
+    # Required otherwise the cache directory for solgs with have permissions errors?
+    # chmod -R +r /data/breedbase/public/tmp
+
+    # Server logs for production mode
+    for log_file in error.log access.log; do
+        echo "Updating sgn log file: $log_file"
+        touch /var/log/sgn/$log_file
+        chmod 777 /var/log/sgn/$log_file
+        chown sgn:sgn /var/log/sgn/$log_file
+    done
+
+    echo "Updating starmachine directory"
+    chown -R sgn:sgn /home/production/cxgn/starmachine/
+
+    echo "Giving user sgn partial ownership of static to create symlinks"
+    chown sgn:sgn /home/production/cxgn/sgn/static
+    chown sgn:sgn /home/production/cxgn/sgn/static/documents
+    echo "Updating symlinks in static"
 
 }
 
@@ -164,91 +195,35 @@ initialize_javascript() {
     echo "Initializing javascript"
     echo "-------------------------------------------------------------------------"
 
+    js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+
+    # Use patched treeimprovementbase
+    echo "Using js patches from treeimprovementbase"
+    sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
+
+    # Cleanup old builds
+    if [[ -d js/build ]]; then rm -rf js/build; fi
+
     cd js
     js_user=$(ls -l package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-    sudo -u $js_user HOME=/tmp npm run build
+
+    sudo -u $js_user npm config set engine-strict true
+    echo "Install npm packages"
+    sudo -u $js_user HOME=/tmp npm install --loglevel info
+    echo "Running webpack build"
+    sudo -u $js_user HOME=/tmp node_modules/.bin/webpack --config build.webpack.config.js
+    #sudo -u $js_user HOME=/tmp npm run build
     cd -
-}
-
-initialize_volumes() {
-    # create necessary dirs/permissions if we have a docker volume dir
-    # at /home/production/volume
-
-    # TBD: Think about static/documents/tempfiles
-
-    echo "-------------------------------------------------------------------------"
-    echo "Initializing Volumes"
-    echo "-------------------------------------------------------------------------"
-
-    for dir_name in archive blast cache cluster logs pgdata public public/images tmp tmp/breedbase-site/mason; do
-        dir_path=/home/production/volume/${dir_name}
-        if [[ ! -e $dir_path ]]; then
-            echo "Creating volume: $dir_path"
-            mkdir -p $dir_path
-        else
-            echo "Located volume: $dir_path"
-        fi
-        chmod 770 $dir_path
-
-        # Give ownership to the dynamically created sgn owner
-        chown -R sgn:sgn $dir_path
-    done
-
-    # Required otherwise the cache directory for solgs with have permissions errors
-    # chmod -R +r /data/breedbase/public/tmp
-}
-
-start_sgn_server() {
-
-    echo "-------------------------------------------------------------------------"
-    echo "Starting sgn server in $MODE mode."
-    echo "-------------------------------------------------------------------------"
-
-    # Update template file with credentials
-    if [[ -e sgn_local_template.conf ]]; then
-        echo "Updating template file"
-        sed \
-            -e "s/{PGDATABASE}/$PGDATABASE/g" \
-            -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
-            -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
-            sgn_local_template.conf \
-            > sgn_local.conf
-        chown sgn:sgn sgn_local.conf
-    fi
-
-    if [ "$MODE" == "TESTING" ]; then
-        # Expand out the args first, otherwise only the first arg is captured
-        args="${@}"
-        if [[ $args == "--interactive" && -e "/tmp/interactive.t" ]]; then
-            echo "No testing arguments were given, setting up interactive mode."
-            tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture /tmp/interactive.t"
-        else
-            tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"
-        fi
-        exit $?
-
-    elif [ "$MODE" == "DEVELOPMENT" ]; then
-        /home/production/cxgn/sgn/bin/sgn_server.pl --fork -r -p 8080
-
-    elif [ "$MODE" == "PRODUCTION" ]; then
-        /etc/init.d/sgn start
-        touch /var/log/sgn/error.log
-        chmod 777 /var/log/sgn/error.log
-        tail -f /var/log/sgn/error.log
-    else
-        echo "Unknown server mode, exiting".
-        exit 1
-    fi
 }
 
 _main() {
     start_system_services
     initialize_user
-    initialize_volumes
+    initialize_directories
     apply_site_overlay
     initialize_database
     initialize_javascript
-    start_sgn_server
+    touch ${setup_log}.finished
 }
 
 # check to see if this file is being run or sourced from another script
@@ -259,6 +234,8 @@ _is_sourced() {
 		&& [ "${FUNCNAME[1]}" = 'source' ]
 }
 
+# start the main function in the background, so the docker
+# engine knows the container is started and won't hang
 if ! _is_sourced; then
-	_main "$@"
+	_main "$@" &
 fi

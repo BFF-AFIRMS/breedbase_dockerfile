@@ -30,7 +30,9 @@ services:
       breedbase_db:
         condition: service_healthy
     tty: true
+    user: ${USER_GROUP_ID}
     environment:
+      USER_GROUP_ID:            ${USER_GROUP_ID:?}     # Ensure we have information about the host user
       MODE:                     PRODUCTION
       HOME:                     /home/production
       #SITE_OVERLAY:             treeimprovementbase  # Custom site overlay from cxgn dir
@@ -65,21 +67,15 @@ services:
           cpus: 1
           memory: 1G
     post_start:
-      - command: /tmp/web_post_start.sh
+      # Run all neccessary setup commands as root
+      - command: web_setup
         user: root
 
     volumes:
       # Static and javascript files
       - staticdata:/home/production/cxgn/sgn/static
-      - jsdata:/home/production/cxgn/js
+      - jsdata:/home/production/cxgn/sgn/js
  
-      # post_start script
-      - type: bind
-        source: web_post_start.sh
-        target: /tmp/web_post_start.sh
-        bind:
-          create_host_path: false
-
       # Default fixture for PRODUCTION mode
       - type: bind
         source: ../db_dumps

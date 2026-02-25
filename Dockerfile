@@ -188,8 +188,9 @@ RUN mkdir /var/log/sgn
 #
 COPY slurm.conf /etc/slurm/slurm.conf
 COPY starmachine.conf /etc/starmachine/
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+
+COPY docker/web_entrypoint.sh /entrypoint.sh
+COPY docker/web_setup /usr/local/bin/web_setup
 
 WORKDIR /home/production/cxgn/sgn
 

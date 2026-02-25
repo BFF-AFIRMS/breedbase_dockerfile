@@ -49,7 +49,7 @@ services:
           create_host_path: false
 
       - type: bind
-        source: ../pg_hba.conf
+        source: ./pg_hba.conf
         target: /etc/postgresql/pg_hba.conf
         read_only: true
         bind:
