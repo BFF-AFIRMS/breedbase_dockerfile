@@ -176,7 +176,7 @@ RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* /home/production/cx
 # Use the interactive test file for interactive testing
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
 # Use test_fixture that doesn't hang 100% cpu on postgres v18
-RUN cp /home/production/cxgn/treeimprovementbase/t/test_fixture.t sgn/t/test_fixture.t
+RUN cp /home/production/cxgn/treeimprovementbase/t/test_fixture.pl sgn/t/test_fixture.pl
 # Use the run_all_patches that doesn't leak credentials to log
 RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
 COPY --chown=production:production sgn_local_template.conf /home/production/cxgn/sgn/sgn_local_template.conf

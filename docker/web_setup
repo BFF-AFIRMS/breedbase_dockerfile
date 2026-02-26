@@ -121,7 +121,18 @@ initialize_directories() {
     chown sgn:sgn /home/production
     chown sgn:sgn /home/production/cxgn/sgn/static
     chown sgn:sgn /home/production/cxgn/sgn/static/documents  
-    echo "Updating symlinks in static"
+
+    # Use treeimprovementbase necessary and QOL improvements
+    echo "Using run_all_patches.pl from treeimprovementbase"
+    cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl
+
+    echo "Using js patches from treeimprovementbase"
+    js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+    sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
+
+    echo "Using test_fixture.pl from treeimprovementbase"
+    cp -f /home/production/cxgn/treeimprovementbase/t/test_fixture.pl t/test_fixture.pl
+
 
 }
 
@@ -152,16 +163,6 @@ initialize_database() {
     echo "-------------------------------------------------------------------------"
     echo "Initializing Database"
     echo "-------------------------------------------------------------------------"
-
-    # Use treeimprovementbase necessary and QOL improvements
-    echo "Using run_all_patches.pl from treeimprovementbase"
-    cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl
-
-    echo "Using js patches from treeimprovementbase"
-    sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
-
-    echo "Using test_fixture.pl from treeimprovementbase"
-    cp -f /home/production/cxgn/treeimprovementbase/t/test_fixture.pl t/test_fixture.pl
 
     # load empty fixture and run any missing patches
     if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} postgres | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
@@ -241,8 +242,8 @@ initialize_javascript() {
 _main() {
     start_system_services
     initialize_user
+    apply_site_overlay    
     initialize_directories
-    apply_site_overlay
 
     if [[ $MODE != "TESTING" ]]; then
         initialize_database

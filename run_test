@@ -1,0 +1,7 @@
+#!/bin/bash
+
+args=$@
+
+sed -E "s|(\s+command).*|\1: \[\"$args\"\]|g" docker-compose.testing.yml > docker-compose.tmp.yml
+docker compose -f docker-compose.tmp.yml up test_breedbase
+docker compose -f docker-compose.tmp.yml down

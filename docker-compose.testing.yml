@@ -50,6 +50,7 @@ services:
     extends:
       file: docker/web.yml
       service: breedbase
+    restart: on-failure:3
     depends_on:
       breedbase_db:
         condition: service_healthy    
@@ -58,8 +59,7 @@ services:
     environment:
       MODE:                   TESTING
       SGN_TEST_SERVER:        http://test_breedbase:3010
-    #command: ["--interactive"]
-    command: ["t/unit/CXGN/String"]
+    command: ["--interactive"]
     ports:
       - 3010:3010
     healthcheck:
