@@ -80,15 +80,11 @@ jobs:
 
       # Patch database, and dump to file, build node modules
       - name: Load/dump fixture database and build node modules
-        run: |
-          ./run_test --dumpupdatefixture /unit/CXGN/String
-          $PRUNE_CMD
+        run: ./run_test --dumpupdatefixture t/unit/CXGN/String
 
       # Unit tests don't need a database or a server
       - name: Run unit tests
-        run: |
-          ./run_test --nopatch --noserver t/unit 2>/dev/null
-          $PRUNE_CMD
+        run: ./run_test --nopatch --noserver t/unit 2>/dev/null
 
       # # Everything else needs a database and a server
       # - name: Run fixture tests
