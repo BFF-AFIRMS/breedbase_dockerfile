@@ -1,0 +1,56 @@
+name: testing
+
+include:
+  - docker/breedbase_db.yml
+  - docker/keycloak.yml
+  - docker/web_volumes.yml
+  - docker/novnc.yml
+  - docker/selenium.yml 
+
+services:
+
+  breedbase:
+    hostname: test_breedbase
+    extends:
+      file: docker/web.yml
+      service: breedbase
+    restart: on-failure:3
+    depends_on:
+      breedbase_db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      MODE:            TESTING
+      SGN_TEST_SERVER: http://test_breedbase:3010
+    command: ["--interactive"]
+    ports:
+      - 3010:3010
+    healthcheck:
+      test: curl -I localhost:3010
+    volumes:
+
+      - type: bind
+        source: ./cxgn
+        target: /home/production/cxgn
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ./.git
+        target: /home/production/.git
+        bind:
+          create_host_path: false
+
+      # # mount scripts when developing the docker image itself
+      # - type: bind
+      #   source: ./docker/web_entrypoint.sh
+      #   target: /entrypoint.sh
+      #   bind:
+      #     create_host_path: false
+
+      # - type: bind
+      #   source: ./docker/web_setup
+      #   target: /usr/local/bin/web_setup
+      #   bind:
+      #     create_host_path: false 

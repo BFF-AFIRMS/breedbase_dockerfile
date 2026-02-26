@@ -1,14 +1,10 @@
-# needs: db.yml
-
-volumes:
-  staticdata:
-  jsdata:
+include:
+  - web_volumes.yml
 
 services:
 
   breedbase:
     hostname: breedbase
-    container_name: breedbase
     image: bffafirms/breedbase:latest
     restart: unless-stopped
     # Restrict security privileges
@@ -76,6 +72,7 @@ services:
       # Static and javascript files
       - staticdata:/home/production/cxgn/sgn/static
       - jsdata:/home/production/cxgn/sgn/js
+      - npmdata:/home/production/npm
  
       # Default fixture for PRODUCTION mode
       - type: bind

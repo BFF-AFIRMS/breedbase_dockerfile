@@ -70,7 +70,7 @@ RUN apt-get update --fix-missing -y
 
 RUN apt-get install -y aptitude
 
-RUN aptitude install -y libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-18 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink rsync
+RUN aptitude install -y libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-12 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink rsync
 
 # Set the locale correclty to UTF-8
 RUN locale-gen en_US.UTF-8
@@ -175,11 +175,12 @@ WORKDIR /home/production/cxgn
 RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* /home/production/cxgn/sgn/js
 # Use the interactive test file for interactive testing
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
-# Use test_fixture that doesn't hang 100% cpu on postgres v18
-RUN cp /home/production/cxgn/treeimprovementbase/t/test_fixture.pl sgn/t/test_fixture.pl
 # Use the run_all_patches that doesn't leak credentials to log
 RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
+# Use the custom template
 COPY --chown=production:production sgn_local_template.conf /home/production/cxgn/sgn/sgn_local_template.conf
+# Set npm cache to the volume mount location
+RUN npm config set cache /home/production/npm --global
 
 # create directory layout
 #

@@ -1,0 +1,26 @@
+name: production
+
+include:
+  - docker/web_volumes.yml
+  - docker/caddy.yml
+
+services:
+  breedbase_db:
+    extends:
+      file: docker/breedbase_db.yml
+      service: breedbase_db
+    environment:
+      POSTGRES_PASSWORD: ${PGPASSWORD}          # Create 'postgres' superuser with this password
+      PGPASSWORD:        ${PGPASSWORD}          # Default psql connection password
+      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD}    # Database password for 'web_usr'
+  
+  breedbase:
+    extends:
+      file: docker/web.yml
+      service: breedbase
+    environment:
+      MODE:              PRODUCTION             # SGN Server Mode
+      PGDATABASE:        ${PGDATABASE:?}        # Database name
+      PGPASSWORD:        ${PGPASSWORD:?}        # Database password for 'postgres' superuser
+      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Database password for 'web_usr'
+      ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user

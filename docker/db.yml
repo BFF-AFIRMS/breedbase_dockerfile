@@ -2,7 +2,6 @@ services:
 
   db:
     hostname: db
-    container_name: db
     image: bffafirms/postgres:latest
     restart: unless-stopped
     # Restrict security privileges

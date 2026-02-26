@@ -3,7 +3,6 @@ services:
   # Visualizer for selenium browser automation
   novnc:
     hostname: novnc
-    container_name: novnc
     image: theasp/novnc:latest
     # Restrict security privileges
     security_opt:

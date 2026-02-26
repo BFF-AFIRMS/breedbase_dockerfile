@@ -1,35 +1,11 @@
-volumes:
-  staticdata:
-  jsdata:
+name: development
+
+include:
+  - docker/breedbase_db.yml
+  - docker/keycloak.yml
+  - docker/web_volumes.yml
 
 services:
-
-  breedbase_db:
-    extends:
-      file: docker/db.yml
-      service: db
-    hostname: breedbase_db
-    container_name: breedbase_db
-    environment:
-      WEB_USR_PASSWORD: postgres
-      TLS_DOMAIN: breedbase_db
-    healthcheck:
-      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
-
-  keycloak_db:
-    container_name: keycloak_db
-    hostname: keycloak_db
-    extends:
-      file: docker/keycloak_db.yml
-      service: keycloak_db
-
-  keycloak:
-    extends:
-      file: docker/keycloak.yml
-      service: keycloak
-    depends_on:
-      keycloak_db:
-        condition: service_healthy
 
   breedbase:
     extends:
@@ -41,17 +17,15 @@ services:
       keycloak:
         condition: service_healthy
     environment:
-      MODE:                   DEVELOPMENT
-      SGN_TEST_SERVER:        http://breedbase:3010
+      MODE:            DEVELOPMENT
+      SGN_TEST_SERVER: http://breedbase:3010
     volumes:
-      # required volumes
       - type: bind
         source: ./cxgn
         target: /home/production/cxgn
         bind:
           create_host_path: false
 
-        # include .git dir that tracks all submodules in cxgn
       - type: bind
         source: ./.git
         target: /home/production/.git

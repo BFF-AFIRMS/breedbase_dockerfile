@@ -1,0 +1,4 @@
+volumes:
+  staticdata:
+  jsdata:
+  npmdata:

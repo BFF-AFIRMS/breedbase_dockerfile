@@ -5,9 +5,11 @@ volumes:
 services:
 
   caddy:
-    container_name: "caddy"
     hostname: caddy
-    image: caddy:2.10.2
+    build:
+      context: docker
+      dockerfile: Dockerfile.caddy
+    image: bffafirms/caddy:2.10.2
     restart: unless-stopped
     # Restrict security privileges
     security_opt:

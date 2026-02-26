@@ -66,7 +66,7 @@ initialize_user() {
     else
         echo "Group $file_group already exists"
         echo "Creating $user_name group as 1000"
-        groupadd -g 1000 $user_name
+        groupadd -g 1000 $user_name || true
     fi
 
     if [[ ! $(getent passwd "$file_user") ]]; then
@@ -75,7 +75,7 @@ initialize_user() {
     else
         echo "User $file_user already exists"
         echo "Creating $user_name user as 1000"
-        useradd $user_name -u 1000 -g 1000 -m -s /bin/bash        
+        useradd $user_name -u 1000 -g 1000 -m -s /bin/bash || true
     fi
 
     echo "Config user:   " $(getent passwd "$file_user")
@@ -122,6 +122,9 @@ initialize_directories() {
     chown sgn:sgn /home/production/cxgn/sgn/static
     chown sgn:sgn /home/production/cxgn/sgn/static/documents  
 
+    echo "Giving user sgn partial ownership of local-lib"
+    chown sgn:sgn /home/production/cxgn/local-lib/lib/perl5/
+
     # Use treeimprovementbase necessary and QOL improvements
     echo "Using run_all_patches.pl from treeimprovementbase"
     cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl
@@ -130,9 +133,9 @@ initialize_directories() {
     js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
     sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
 
-    echo "Using test_fixture.pl from treeimprovementbase"
-    cp -f /home/production/cxgn/treeimprovementbase/t/test_fixture.pl t/test_fixture.pl
-
+    echo "Creating npm cache directory"
+    mkdir -p /home/production/npm
+    chown production:production /home/production/npm
 
 }
 
@@ -247,8 +250,8 @@ _main() {
 
     if [[ $MODE != "TESTING" ]]; then
         initialize_database
-        initialize_javascript
     fi
+    initialize_javascript
     touch ${setup_log}.finished
 }
 

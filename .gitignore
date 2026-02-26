@@ -38,4 +38,4 @@ inc/
 /*.zip
 
 data/*
-docker-compose.tmp.yml
+*.tmp.yml
