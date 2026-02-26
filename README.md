@@ -17,11 +17,10 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
     - [Install docker](#install-docker)
     - [Install docker compose](#install-docker-compose)
 2. [Deploy](#deploy)
-    - [Quick Start](#quick-start) 
-    - [Deploy for Production](#deploy-for-production-with-docker-compose)   
-    - [Deploy for Development](#deploy-for-development)
-    - [Deploy for Testing](#deploy-for-testing)
-3. [Access and Configure](#access-and-configure)
+    - [Quick Start](#quick-start)
+    - [Production](#production)
+    - [Development](#development)
+    - [Testing](#testing)
 4. [Updating](#updating)
 4. [Debugging](#debugging)
 5. [Miscellaneous](#miscellaneous)
@@ -32,10 +31,19 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
     Please follow the instructions at https://docs.docker.com/engine/install.
 
+    You will probably also need to add your user to the docker group, and then restart your shell.
+
+    ```bash
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+    bash
+    docker run hello-world
+    ```
+
 1. **Install `docker compose`**
 
+    - Windows: Install with [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install).
     - Debian/Ubuntu: `apt install docker-compose`
-    - Windows: It can be installed with [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 1. **Clone repository**
 
@@ -61,44 +69,62 @@ All deployment options involve first running setup to create credentials and dat
 -----------------------------------------------------------------------------
 ```
 
-There are three different options for deployment: [Production](#deploy-for-production), [Development](#deploy-for-development), and [Testing](#deploy-for-testing).
+There are four different options for deployment:
 
-If you are new to the Breedbase application, we recommend starting with [Production](#production). This method has the quickest start time, as it uses a pre-built docker image. If you are aiming to change the Breedbase application, then use [Development](#development) which will allow you to make changes to the frontend and backend with live updates.
+- [Quickstart](#quick-start): For those new to breedbase.
+- [Production](#deploy-for-production): Run a secure, performant server.
+- [Development](#deploy-for-development): Make changes to the applications.
+- [Testing](#deploy-for-testing): Run the comprehensive test suite.
 
 ### Quick Start
 
-1. **Deploy with docker compose**
+1. **Deploy with docker compose.**
 
     ```bash
     docker compose up -d
     ```
 
-    > This will deploy 2 containers, `breedbase_db` and `breedbase`.
+1. **Wait for the container to be HEALTHY**.
 
+    Once the breedbase service has started, it must be in a healthy state before it can be accessed. This will take several minutes on first startup.
+
+    ```bash
+    docker compose ps breedbase
+    ```
+
+    ```text
+    NAME            IMAGE                        COMMAND            SERVICE     CREATED         STATUS                   PORTS
+    breedbase       bffafirms/breedbase:latest   "/entrypoint.sh"   breedbase   2 minutes ago   Up 2 minutes (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+    ```
+
+1. **Access the breedbase application at: <http://localhost:8080>**
+
+    Login with the following credentials.
+
+    | username | password | role      |
+    | -------- | -------- | --------- | 
+    | admin    | password | curator   | 
+
+
+### Production
+
+After quick-start, deploying for production is the next simplest. Production mode provides 3 features:
+
+- Randomly generated passwords for default db and web accounts.
+- Secures web application with HTTPS.
+- Serves static files and js with Caddy for optimal performance.
+
+1. **Deploy with docker compose**
+
+    ```
+    docker compose -f docker-compose.production.yml up -d
+    ```
+
+1. **Access the breedbase application at: <https://localhost>**
+
+    > The password to log in to the admin account is in the `.env` file as `ADMIN_PASSWORD`.
 
 ### Development
-
-1. **Deploy with docker compose**
-
-    ```
-    docker compose up -f docker-compose.development.yml up -d
-    ```
-
-    > This will deploy 4 containers, `breedbase_db`, `breedbase`, `keycloak_db`, and `keycloak`.
-
-### Deploy for Production
-
-1. **Deploy with docker compose**
-
-    ```
-    docker compose up -d
-    ```
-
-    Follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment.
-
-    > These settings include setting the env MODE to PRODUCTION and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
-
-### Deploy for Development
 
 1. **Clone the submodules**
 
@@ -106,19 +132,39 @@ If you are new to the Breedbase application, we recommend starting with [Product
     git submodule update --init --recursive --progress
     ```
    
-   > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted onto the devel container during the compose step, but will still be accessible from the host for development work.
+   > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted into the container during the compose step, but will still be accessible from the host for development work.
 
-2. **Deploy with docker compose**
+1. **Deploy with docker compose**
 
     ```
-    docker compose -f docker-compose.yml -f development.yml up -d
+    docker compose up -f docker-compose.development.yml up -d
     ```
 
-    > This will deploy 2 containers, `breedbase_web` and `breedbase_db`, combined in a single service named `breedbase`. The deployment will set the container environment MODE to DEVELOPMENT, which will run the web server using Catalyst instead of Starman. In this configuration, the server will restart when any changes are detected in the config file or sgn perl libraries.
+1. **Wait for the container to be HEALTHY**.
 
-    Then follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment!
+    Once the breedbase service has started, it must be in a healthy state before it can be accessed. This will take several minutes on first startup.
 
-### Deploy for Testing
+    ```bash
+    docker compose ps breedbase
+    ```
+
+1. **Access the applications via web browser.**
+
+    - Breedbase (Main Application): <http://localhost:8080>
+    - Keycloak (Single-Sign On/OIDC Testing): <http://localhost:9080>
+
+    Login with the following credentials.
+
+    | username | password | role            |
+    | -------- | -------- | --------------- | 
+    | admin    | password | curator/admin   | 
+
+1. **Make changes to the code under `cxgn/sgn`.**
+
+    - Changes to mason components (`mason`) will update on page refresh.
+    - Changes to config files or libraries (`lib`) will trigger the server to restart, with changes going live once the restart is complete.
+
+### Testing
 
 1. **Clone the submodules**
 
@@ -128,56 +174,47 @@ If you are new to the Breedbase application, we recommend starting with [Product
 
 Then choose either [Standalone](#standalone) or [Interactive](#interactive) mode.
 
-#### Standalone
-
-Tests can be run in `standalone` mode. For each test, a new database and web server will be created, ensuring reproducibility and isolation between tests.
-
-> Note: This mode can be very slow to start up and run.
-
-```bash
-docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c --nopatch --noserver t/unit
-docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c t/unit_fixture
-docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c t/unit_mech
-docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c t/selenium2/search
-```
-
-> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
-
-For less noisy output, cleanup `stderr` with:
-
-```bash
-docker compose -f docker-compose.test.yml run --use-aliases test_breedbase -c "--nopatch --noserver t/unit 2>/dev/null"
-```
-
 #### Interactive
 
 Tests can be run in `interactive` mode, where the same database and web server are re-used between tests for quick iteration. This is particulary useful when writing and troubleshooting new tests.
 
-1. **Start up all containers with docker compose**
+1. **Start up all containers with docker compose.**
 
     ```bash
-    docker compose -f docker-compose.test.yml up -d
+    docker compose -f docker-compose.testing.yml up -d
     ```
 
-2. **Wait for the web server container to be healthy**
+2. **Wait for the web server container to be healthy.**
 
     ```bash
-    docker compose -f docker-compose.test.yml ps test_breedbase
+    docker compose -f docker-compose.testing.yml ps test_breedbase
 
     NAME                                    IMAGE                        COMMAND                  SERVICE          CREATED              STATUS                        PORTS
-    breedbase_dockerfile-test_breedbase-1   breedbase/breedbase:latest   "/entrypoint.sh --in…"   test_breedbase   About a minute ago   Up About a minute (healthy)   0.0.0.0:3010->3010/tcp, [::]:3010->3010/tcp, 8080/tcp
+    breedbase_dockerfile-test_breedbase-1   bff-afirms/breedbase:latest   "/entrypoint.sh --in…"   test_breedbase   About a minute ago   Up About a minute (healthy)   0.0.0.0:3010->3010/tcp, [::]:3010->3010/tcp, 8080/tcp
     ```
 
-3. **Connect to the test container**
+4. **Browse the testing environment at: <http://localhost:3010>**
+
+    Login with the following credentials.
+
+    | username | password | role      |
+    | -------- | -------- | --------- | 
+    |janedoe   | secretpw | curator   | 
+    |johndoe   | secretpw | submitter | 
+    |freddy    | atgc     | user      |
+
+
+3. **Connect to the test container.**
+
 
     ```bash
-    docker compose -f docker-compose.test.yml exec test_breedbase bash
+    docker compose -f docker-compose.testing.yml exec test_breedbase bash
     psql -l
     # Example
-    export TEST_DB_NAME=test_...
+    export TEST_DB_NAME=test_db_2026_2_25_22_22794
     ```
 
-4. **Run unit tests interactively**
+4. **Run unit tests in the container.**
 
     ```bash
     # Single
@@ -190,20 +227,20 @@ Tests can be run in `interactive` mode, where the same database and web server a
     prove --recurse t/unit/ prove --recurse t/unit/CXGN 2>/dev/null
     ```
 
-5. **Run server and database tests**
+5. **Run server and database tests in the container.**
 
     ```bash
     perl t/test_fixture.pl --nopatch --noserver t/unit_fixture 2>/dev/null
     perl t/test_fixture.pl --nopatch --noserver t/unit_mech 2>/dev/null
     ```
 
-6. **Run browser tests**
+6. **Run browser tests in the container.**
 
     > For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 
     ```bash
     # Single
-    perl t/test_fixture --nopatch --noserver t/selenium2/search/stock.t
+    perl t/test_fixture.pl --nopatch --noserver t/selenium2/search/stock.t
 
     # Group
     perl t/test_fixture.pl --nopatch --noserver t/selenium2/01_list 2>/dev/null
@@ -216,44 +253,29 @@ Tests can be run in `interactive` mode, where the same database and web server a
     perl t/test_fixture.pl --nopatch --noserver t/selenium2/tools 2>/dev/null
     ```
 
-## Access and Configure
 
-Once the breedbase service has started, it must be in a healthy state before it can be accessed. This can take several minutes on first startup.
+#### Standalone
+
+Tests can be run in `standalone` mode. For each test, a new database and web server will be created, ensuring reproducibility and isolation between tests.
+
+> Note: This mode can be very slow to start up and run.
 
 ```bash
-docker compose ps breedbase
+export RUN_CMD="docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c"
+eval $RUN_CMD -c --nopatch --noserver t/unit
+docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c t/unit_fixture
+docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c t/unit_mech
+docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c t/selenium2/search
 ```
 
-```text
-NAME            IMAGE                        COMMAND            SERVICE     CREATED         STATUS                   PORTS
-breedbase_web   breedbase/breedbase:latest   "/entrypoint.sh"   breedbase   2 minutes ago   Up 2 minutes (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
+
+For less noisy output, cleanup `stderr` with:
+
+```bash
+docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c "--nopatch --noserver t/unit 2>/dev/null"
 ```
 
-Once your breedbase service is healthy, you can access the application at http://localhost:8080.
-
-### Production
-
-When running in `PRODUCTION` mode, one account is available at startup:
-
-| role      | username | password |
-| --------- | -------- | -------- |
-| curator   | admin    | password |
-
-Please login and change the password of the admin user.
-
-Most configuration is handled in the `sgn_local.conf` file. Just edit the corresponding configuration line in the file to change your database name, species, ontology, mason skin, etc.
-
-### Development
-
-When running in `DEVELOPMENT` mode, several accounts are available at startup:
-
-| role      | username | password |
-| --------- | -------- | -------- |
-| curator   | janedoe  | secretpw |
-| submitter | johndoe  | secretpw |
-| user      | freddy   | atgc     |
-
-The admin user `janedoe` can be used for creating new user accounts.
 
 ## Updating
 

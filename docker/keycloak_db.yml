@@ -1,0 +1,37 @@
+services:
+
+  keycloak_db:
+    container_name: keycloak_db
+    hostname: keycloak_db
+    extends:
+      file: db.yml
+      service: db
+    environment:
+      KEYCLOAK_PASSWORD: keycloak
+      TLS_DOMAIN: keycloak_db
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
+    volumes: !overrides
+      - type: bind
+        source: ../data/keycloak_db/db
+        target: /data/postgresql
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/keycloak_db/pgbackrest
+        target: /data/pgbackrest
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/keycloak_db/certs
+        target: /data/certs
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../data/keycloak_db/log
+        target: /data/log
+        bind:
+          create_host_path: false

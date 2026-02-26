@@ -34,11 +34,12 @@ services:
     environment:
       USER_GROUP_ID:            ${USER_GROUP_ID:?}     # Ensure we have information about the host user
       MODE:                     PRODUCTION
-      HOME:                     /home/production
+      HOME:                     /home/sgn
       #SITE_OVERLAY:             treeimprovementbase  # Custom site overlay from cxgn dir
       DOMAIN_NAME:              ${DOMAIN_NAME:-localhost}
       PSQL_PAGER:               cat
       HISTTIMEFORMAT:           "%Y-%m-%d %T "
+      SGN_REMOTE_SERVER_ADDR:   selenium
       DBIC_TRACE:               0
       # Database credentials
       PGHOST:                   breedbase_db
@@ -47,7 +48,7 @@ services:
       PGDATABASE:               breedbase
       PGUSER:                   postgres
       PGPASSWORD:               postgres
-      WEB_USR_PASSWORD:         web_usr    # web_usr database password
+      WEB_USR_PASSWORD:         postgres   # web_usr database password
       ADMIN_PASSWORD:           password   # admin web password in breedbase
     expose:
       - 8080
@@ -57,14 +58,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 5s
+      start_period: 30s
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 2
           memory: 2G
         reservations:
-          cpus: 1
+          cpus: 2
           memory: 1G
     post_start:
       # Run all neccessary setup commands as root

@@ -11,18 +11,17 @@ services:
     hostname: breedbase_db
     container_name: breedbase_db
     environment:
-      WEB_USR_PASSWORD: web_usr
+      WEB_USR_PASSWORD: postgres
       TLS_DOMAIN: breedbase_db
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
 
   keycloak_db:
     container_name: keycloak_db
     hostname: keycloak_db
     extends:
-      file: docker/db.yml
-      service: db
-    environment:
-      KEYCLOAK_PASSWORD: keycloak
-      TLS_DOMAIN: keycloak_db
+      file: docker/keycloak_db.yml
+      service: keycloak_db
 
   keycloak:
     extends:
@@ -32,12 +31,25 @@ services:
       keycloak_db:
         condition: service_healthy
 
+  novnc:
+    extends:
+      file: docker/novnc.yml
+      service: novnc
+
+  selenium:
+    extends:
+      file: docker/selenium.yml
+      service: selenium
+    depends_on:
+      novnc:
+        condition: service_started
+
   test_breedbase:
+    container_name: test_breedbase
+    hostname: test_breedbase
     extends:
       file: docker/web.yml
       service: breedbase
-    hostname: test_breedbase
-    container_name: test_breedbase
     depends_on:
       breedbase_db:
         condition: service_healthy    
@@ -45,10 +57,13 @@ services:
         condition: service_healthy          
     environment:
       MODE:                   TESTING
-      HOME:                   /home/sgn
-      DBIC_TRACE:             0
       SGN_TEST_SERVER:        http://test_breedbase:3010
-      SGN_REMOTE_SERVER_ADDR: selenium    
+    #command: ["--interactive"]
+    command: ["t/unit/CXGN/String"]
+    ports:
+      - 3010:3010
+    healthcheck:
+      test: curl -I localhost:3010   
     volumes:
       # required volumes
       - type: bind
@@ -63,4 +78,3 @@ services:
         target: /home/production/.git
         bind:
           create_host_path: false
-

@@ -45,6 +45,9 @@ start_sgn_server() {
     echo "Starting sgn server in $MODE mode."
     echo "-------------------------------------------------------------------------"
 
+    # Allow errors now to not stop the script
+    set +e
+
     # Update template file with credentials
     if [[ -e sgn_local_template.conf ]]; then
         echo "Updating template file: sgn_local_template.conf"
@@ -63,15 +66,24 @@ start_sgn_server() {
         if [[ $args == "--interactive" && -e "/tmp/interactive.t" ]]; then
             echo "No testing arguments were given, setting up interactive mode."
             tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture /tmp/interactive.t"
+            exit_status=$?
         else
             tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"
+            exit_status=$?
         fi
-        exit $?
+
+        echo "Exiting with status: $exit_status"
+        exit $exit_status
 
     elif [ "$MODE" == "DEVELOPMENT" ]; then
         /home/production/cxgn/sgn/bin/sgn_server.pl --fork -r -p 8080
 
     elif [ "$MODE" == "PRODUCTION" ]; then
+
+        echo "Updating main_production_site_url"
+        sed -i -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" sgn_local_template.conf
+        grep main_production_site_url sgn_local_template.conf || true
+
         /etc/init.d/sgn start
         touch /var/log/sgn/error.log
         chmod 777 /var/log/sgn/error.log
@@ -83,10 +95,10 @@ start_sgn_server() {
 }
 
 _main() {
+
     echo "Running the docker post_start command as root"
     wait_for_post_start
-    start_sgn_server
-    tail -f /dev/null
+    start_sgn_server $@
 }
 
 # check to see if this file is being run or sourced from another script

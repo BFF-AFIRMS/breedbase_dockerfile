@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# This script is run with docker_compose as post_start
+# It contains all the setup that is required as the root user
+# Non-root user commands (ex. starting the server) are
+# instead in the entrypoint
+
 set -e
 
 setup_log="/tmp/web_setup.log"
@@ -82,7 +87,7 @@ initialize_directories() {
     echo "Initializing Directories"
     echo "-------------------------------------------------------------------------"
 
-    for dir_name in archive blast cache cluster logs pgdata public public/images tmp tmp/breedbase-site; do
+    for dir_name in archive blast cache cluster logs pgdata public public/images tmp tmp/breedbase-site tmp/breedbase-site/mason; do
         dir_path=/home/production/volume/${dir_name}
         if [[ ! -e $dir_path ]]; then
             echo "Creating volume: $dir_path"
@@ -95,6 +100,8 @@ initialize_directories() {
         # Give ownership to the dynamically created sgn owner
         chown -R sgn:sgn $dir_path
     done
+
+    # Maybe create /home/production/tmp?
 
     # Required otherwise the cache directory for solgs with have permissions errors?
     # chmod -R +r /data/breedbase/public/tmp
@@ -111,8 +118,9 @@ initialize_directories() {
     chown -R sgn:sgn /home/production/cxgn/starmachine/
 
     echo "Giving user sgn partial ownership of static to create symlinks"
+    chown sgn:sgn /home/production
     chown sgn:sgn /home/production/cxgn/sgn/static
-    chown sgn:sgn /home/production/cxgn/sgn/static/documents
+    chown sgn:sgn /home/production/cxgn/sgn/static/documents  
     echo "Updating symlinks in static"
 
 }
@@ -145,12 +153,18 @@ initialize_database() {
     echo "Initializing Database"
     echo "-------------------------------------------------------------------------"
 
-    # Use patched treeimprovementbase
+    # Use treeimprovementbase necessary and QOL improvements
     echo "Using run_all_patches.pl from treeimprovementbase"
     cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl
 
+    echo "Using js patches from treeimprovementbase"
+    sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
+
+    echo "Using test_fixture.pl from treeimprovementbase"
+    cp -f /home/production/cxgn/treeimprovementbase/t/test_fixture.pl t/test_fixture.pl
+
     # load empty fixture and run any missing patches
-    if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} ${PGDATABASE} | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
+    if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} postgres | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
 
         # Create user
         echo "Creating database user: web_usr";
@@ -209,10 +223,6 @@ initialize_javascript() {
 
     js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
 
-    # Use patched treeimprovementbase
-    echo "Using js patches from treeimprovementbase"
-    sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
-
     # Cleanup old builds
     if [[ -d js/build ]]; then rm -rf js/build; fi
 
@@ -222,7 +232,7 @@ initialize_javascript() {
     sudo -u $js_user npm config set engine-strict true
     echo "Install npm packages"
     sudo -u $js_user HOME=/tmp npm install --loglevel info
-    echo "Running webpack build"
+    echo "Running webpack build..."
     sudo -u $js_user HOME=/tmp node_modules/.bin/webpack --config build.webpack.config.js
     #sudo -u $js_user HOME=/tmp npm run build
     cd -
@@ -233,8 +243,11 @@ _main() {
     initialize_user
     initialize_directories
     apply_site_overlay
-    initialize_database
-    initialize_javascript
+
+    if [[ $MODE != "TESTING" ]]; then
+        initialize_database
+        initialize_javascript
+    fi
     touch ${setup_log}.finished
 }
 

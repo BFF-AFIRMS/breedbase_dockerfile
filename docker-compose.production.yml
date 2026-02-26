@@ -10,24 +10,26 @@ services:
     hostname: breedbase_db
     container_name: breedbase_db
     environment:
-      TLS_DOMAIN:          breedbase_db           # Domain name for TLS certficates
-      USER_GROUP_ID:       ${USER_GROUP_ID:?}     # Ensure we have information about the host user
-      PGDATA:              /data/postgresql/main  # Install the database in a custom folder for non-root access
-      POSTGRES_USER:       postgres               # Create Postgres Superuser username
-      POSTGRES_PASSWORD:   ${PGPASSWORD}          # Createt Postgres Superuser password
-      PGUSER:              postgres               # Default connection username
-      PGPASSWORD:          ${PGPASSWORD}          # Default connection password
-      TZ:                  'America/Edmonton'     # Container timezone
-      WEB_USER_PASSWORD:   ${WEB_USR_PASSWORD}    # Web User Password
+      TLS_DOMAIN:        breedbase_db           # Domain name for TLS certficates
+      USER_GROUP_ID:     ${USER_GROUP_ID:?}     # Ensure we have information about the host user
+      POSTGRES_PASSWORD: ${PGPASSWORD}          # Createt Postgres Superuser password
+      PGPASSWORD:        ${PGPASSWORD}          # Default connection password
+      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD}    # Web User Password
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
   
   breedbase:
     extends:
       file: docker/web.yml
       service: breedbase
     environment:
-      MODE:                     PRODUCTION
-      HOME:                     /home/production
-      PGDATABASE:               ${PGDATABASE:?}
-      PGPASSWORD:               ${PGPASSWORD:?}
-      WEB_USR_PASSWORD:         ${WEB_USR_PASSWORD:?}
-      ADMIN_PASSWORD:           ${ADMIN_PASSWORD:?}      
+      MODE:              PRODUCTION             # SGN Server Mode
+      PGDATABASE:        ${PGDATABASE:?}        # Database name
+      PGPASSWORD:        ${PGPASSWORD:?}        # Password for postgres superuser
+      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Password for web_usr
+      ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Web Password for admin user
+
+  caddy:
+    extends:
+      file: docker/caddy.yml
+      service: caddy

@@ -59,15 +59,15 @@ services:
       - "5432"
     healthcheck:
       # Check that the final database has been created
-      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
+      test: [ "CMD-SHELL", "psql -U postgres -q postgres -c '\\dt'"]
       interval: 5s
       timeout: 5s
       retries: 30
     deploy:
       resources:
         limits:
-          cpus: 1
-          memory: 2G
+          cpus: 4
+          memory: 4G
         reservations:
-          cpus: 1
-          memory: 1G
+          cpus: 2
+          memory: 2G

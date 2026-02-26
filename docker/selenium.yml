@@ -1,22 +1,5 @@
 services:
 
-  # Visualizer for selenium browser automation
-  novnc:
-    hostname: novnc
-    container_name: novnc
-    image: theasp/novnc:latest
-    # Restrict security privileges
-    security_opt:
-      - "no-new-privileges=true"
-    cap_drop:
-      - ALL
-    environment:
-      DISPLAY_WIDTH: 1920
-      DISPLAY_HEIGHT: 1080
-      RUN_XTERM: no
-    ports:
-      - "8081:8080"
-
   # Browser automation
   selenium:
     hostname: selenium

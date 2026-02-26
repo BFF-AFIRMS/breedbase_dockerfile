@@ -10,23 +10,12 @@ services:
     hostname: breedbase_db
     container_name: breedbase_db
     environment:
-      WEB_USR_PASSWORD: web_usr
+      WEB_USR_PASSWORD: postgres
       TLS_DOMAIN: breedbase_db
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
   
   breedbase:
     extends:
       file: docker/web.yml
       service: breedbase
-    volumes:
-      - type: bind
-        source: ./docker/web_entrypoint.sh
-        target: /entrypoint.sh
-        bind:
-          create_host_path: false
-
-      # TMP: web_setup script
-      - type: bind
-        source: ./docker/web_setup
-        target: /usr/local/bin/web_setup
-        bind:
-          create_host_path: false
