@@ -10,7 +10,6 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: 1
-      RUN_TEST_CMD: docker compose -f docker-compose.testing.yml run --use-aliases test_breedbase -c
       PRUNE_CMD: docker container prune -f
 
     steps:
@@ -35,7 +34,7 @@ jobs:
       - name: Healthcheck quickstart
         uses: stringbean/docker-healthcheck-action@v3
         with:
-          container: breedbase
+          container: quickstart-breedbase-1
           wait-time: 600
           require-status: running
           require-healthy: true
@@ -44,7 +43,7 @@ jobs:
         run: docker compose down
 
       - name: Clean production volumes
-        run: docker volume prune -a
+        run: docker volume prune -af
 
       - name: Clean data directory
         run: rm -rf data
@@ -56,12 +55,12 @@ jobs:
         run: ./setup
 
       - name: Start development
-        run: docker compose up -f docker-compose.development.yml up -d
+        run: docker compose up -f compose.development.yml up -d
 
       - name: Healthcheck development
         uses: stringbean/docker-healthcheck-action@v3
         with:
-          container: breedbase
+          container: development-breedbase-1
           wait-time: 600
           require-status: running
           require-healthy: true
@@ -70,7 +69,7 @@ jobs:
         run: docker compose down
 
       - name: Clean development volumes
-        run: docker volume prune -a
+        run: docker volume prune -af
 
       - name: Clean data directory
         run: rm -rf data

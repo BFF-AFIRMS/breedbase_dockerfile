@@ -82,6 +82,29 @@ initialize_user() {
     echo "Config group:  " $(getent group "$file_group")
 }
 
+
+apply_site_overlay() {
+
+    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
+
+        echo "-------------------------------------------------------------------------"
+        echo "Applying Site Overlay: $SITE_OVERLAY"
+        echo "-------------------------------------------------------------------------"
+
+        # Symlink files from the site overlay, match the sgn directory user
+        dir_user=$(ls -ld /home/production/cxgn/sgn | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+        echo "Symlinking files as $dir_user"
+        sudo -u $dir_user cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
+
+        # Javascript cannot be symlinked, must be fully copied, match js user
+        if [[ -d /home/production/cxgn/$SITE_OVERLAY/js/ ]]; then
+            js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+            echo "Overwriting js files as $js_user"
+            sudo -u $js_user rsync -avI /home/production/cxgn/$SITE_OVERLAY/js/* js/
+        fi
+    fi
+}
+
 initialize_directories() {
     echo "-------------------------------------------------------------------------"
     echo "Initializing Directories"
@@ -131,39 +154,20 @@ initialize_directories() {
     chown sgn:sgn /home/production/cxgn/local-lib/lib/perl5/
 
     # Use treeimprovementbase necessary and QOL improvements
-    echo "Using run_all_patches.pl from treeimprovementbase"
+    echo "Using run_all_patches.pl from treeimprovementbase."
     cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl
 
-    echo "Using js patches from treeimprovementbase"
+    echo "Using cxgn_fixture.sql from treeimprovementbase."
+    cp -f /home/production/cxgn/treeimprovementbase/t/data/fixture/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql
+
+    echo "Using js patches from treeimprovementbase."
     js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
     sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/    
 
-    echo "Creating npm cache directory"
+    echo "Creating npm cache directory."
     mkdir -p /home/production/npm
     chown production:production /home/production/npm
 
-}
-
-apply_site_overlay() {
-
-    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
-
-        echo "-------------------------------------------------------------------------"
-        echo "Applying Site Overlay: $SITE_OVERLAY"
-        echo "-------------------------------------------------------------------------"
-
-        # Symlink files from the site overlay, match the sgn directory user
-        dir_user=$(ls -ld /home/production/cxgn/sgn | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-        echo "Symlinking files as $dir_user"
-        sudo -u $dir_user cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn
-
-        # Javascript cannot be symlinked, must be fully copied, match js user
-        if [[ -d /home/production/cxgn/$SITE_OVERLAY/js/ ]]; then
-            js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-            echo "Overwriting js files as $js_user"
-            sudo -u $js_user rsync -avI /home/production/cxgn/$SITE_OVERLAY/js/* js/
-        fi
-    fi
 }
 
 initialize_database() {
