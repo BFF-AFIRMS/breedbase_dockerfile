@@ -117,8 +117,13 @@ initialize_directories() {
     echo "Updating starmachine directory"
     chown -R sgn:sgn /home/production/cxgn/starmachine/
 
-    echo "Giving user sgn partial ownership of static to create symlinks"
+    # Not recursive change, because that's very slow, and we only really
+    # want to change ownership for the directories where the sgn
+    # user actually needs to write files to
+    echo "Giving user sgn partial ownership of home directory"
     chown sgn:sgn /home/production
+    chown sgn:sgn /home/production/cxgn
+    chown sgn:sgn /home/production/cxgn/sgn
     chown sgn:sgn /home/production/cxgn/sgn/static
     chown sgn:sgn /home/production/cxgn/sgn/static/documents  
 

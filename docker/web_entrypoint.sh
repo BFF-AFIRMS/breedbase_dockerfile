@@ -81,8 +81,8 @@ start_sgn_server() {
     elif [ "$MODE" == "PRODUCTION" ]; then
 
         echo "Updating main_production_site_url"
-        sed -i -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" sgn_local_template.conf
-        grep main_production_site_url sgn_local_template.conf || true
+        sed -i -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" sgn_local.conf
+        grep main_production_site_url sgn_local.conf || true
 
         /etc/init.d/sgn start
         touch /var/log/sgn/error.log

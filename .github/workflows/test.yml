@@ -36,7 +36,7 @@ jobs:
         uses: stringbean/docker-healthcheck-action@v3
         with:
           container: breedbase
-          wait-time: 300
+          wait-time: 600
           require-status: running
           require-healthy: true
 
@@ -62,7 +62,7 @@ jobs:
         uses: stringbean/docker-healthcheck-action@v3
         with:
           container: breedbase
-          wait-time: 300
+          wait-time: 600
           require-status: running
           require-healthy: true
 

@@ -2,7 +2,7 @@ services:
 
   db:
     hostname: db
-    image: bffafirms/postgres:latest
+    image: bffafirms/postgres:16.12
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
