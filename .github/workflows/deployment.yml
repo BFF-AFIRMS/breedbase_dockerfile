@@ -1,8 +1,11 @@
 # Re-usable workflow to test deployments
-name: Deployments
+name: Deployment
 
 on:
   workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 0'
 
 env:
   SITE_OVERLAY: treeimprovementbase
