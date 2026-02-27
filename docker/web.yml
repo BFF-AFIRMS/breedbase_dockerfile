@@ -31,7 +31,7 @@ services:
       USER_GROUP_ID:            ${USER_GROUP_ID:?}     # Ensure we have information about the host user
       MODE:                     PRODUCTION
       HOME:                     /home/sgn
-      SITE_OVERLAY:             ${SITE_OVERLAY:-}      # Custom site overlay from cxgn dir
+      SITE_OVERLAY:             ${SITE_OVERLAY:-sgn}   # Custom site overlay from cxgn dir
       DOMAIN_NAME:              ${DOMAIN_NAME:-localhost}
       PSQL_PAGER:               cat
       HISTTIMEFORMAT:           "%Y-%m-%d %T "

@@ -131,7 +131,7 @@ initialize_directories() {
 
 apply_site_overlay() {
 
-    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
+    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && $SITE_OVERLAY != "sgn" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
 
         echo "-------------------------------------------------------------------------"
         echo "Applying Site Overlay: $SITE_OVERLAY"
@@ -217,7 +217,7 @@ initialize_database() {
         tty_wrapper "db/run_all_patches.pl -e $patch_user -s $patch_start -p /home/production/cxgn/sgn/db/"
 
         # Run site overlay patches
-        if [[ $SITE_OVERLAY != "" && -e /home/production/cxgn/$SITE_OVERLAY/patches ]]; then
+        if [[ $SITE_OVERLAY != "" && $SITE_OVERLAY != "sgn" && -e /home/production/cxgn/$SITE_OVERLAY/patches ]]; then
             echo "Running $SITE_OVERLAY patches"
             tty_wrapper "db/run_all_patches.pl -e $patch_user -p /home/production/cxgn/$SITE_OVERLAY/patches"
         fi
