@@ -1,3 +1,11 @@
+# Breedbase
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bff-afirms/breedbase_dockerfile/blob/master/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/bff-afirms/breedbase_dockerfile.svg)](https://github.com/phac-nml/rebar/issues)
+[![Test CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml)
+[![Deployment CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml)
+
+
 <p align="center">
   <img src="Breedbase.png">
 </p>
@@ -24,6 +32,7 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 4. [Updating](#updating)
 4. [Debugging](#debugging)
 5. [Miscellaneous](#miscellaneous)
+6. [Credits](#credits)
 
 ## Install
 
@@ -335,60 +344,27 @@ Code updates sometimes require the database schema to be updated. This is done u
 The db patches can be run individually by changing into the specific directory, and then running the script using ```mx-run```, using the parameters as described in the ```perldoc``` for the scripts.
 
 The database can be updated to the current level in one step (recommended method) by running the ```run_all_patches.pl``` script in the ```db/``` directory, which calls all the db patches individually. If you are using the standard docker compose setup, the command line is (options in square brackets are optional):
+
 ```
-    cd db;
-    perl run_all_patches.pl -u postgres -p postgres -h breedbase_db -d
-    breedbase -e admin [-s <startfrom>] [--test]
+cd db;
+perl run_all_patches.pl -u postgres -p postgres -h breedbase_db -d
+breedbase -e admin [-s <startfrom>] [--test]
 ```
 
 Note that for this to work, the $PERL5LIB environment variable should have the current directory included. If it isn't, run:
+
 ```
-    export PERL5LIB=$PERL5LIB:.
+export PERL5LIB=$PERL5LIB:.
 ```
 
-### Deploying Services Individually
+## Credits
 
- * Individual deployment is generally not necessary or recommended. When possible deploy jointly with docker compose *
+The original [breedbase_dockerfile repository](https://github.com/solgenomics/breedbase_dockerfile) is built by Dr. Lukas Mueller's lab at the [Boyce Thompson Institute](https://btiscience.org/). For a full list of contributors, please  see [this link](https://github.com/solgenomics/breedbase_dockerfile/graphs/contributors).
 
-1. Install docker
+This fork is maintained by [Katherine Eaton](https://ktmeaton.github.io/) through Dr. Barb Thomas's [Tree Improvement Lab](https://people.ales.ualberta.ca/barbthomas/) at the [University of Alberta](https://www.ualberta.ca/).
 
-  Debian/Ubuntu: `sudo apt install docker.io`
+## License
 
-  For Mac/Windows: [Docker Desktop](https://www.docker.com/products/docker-desktop)
+Copyright 2026 University of Alberta
 
-2. Deploy a Web Server
-
-  This will create a Breedbase web server container. The -v flag is used to mount a local conf file and a couple of dirs from the host. Create the file and ris on your host if they don't exist and update the paths before running the command.
-
-  ```
-  docker run -d --name breedbase_web -p 8080:8080 -v /host/path/to/sgn_local.conf:/home/production/cxgn/sgn/sgn_local.conf -v /host/path/to/archive:/home/production/archive -v /host/path/to/public_breedbase:/home/production/public breedbase/breedbase:latest
-  ```
-
-3. Deploy a Postgres Database
-
-  This will create an empty Breedbase postgres database container.
-
-  ```
-  docker run -d --name breedbase_db -p 5432:5432 breedbase/pg:latest
-  ```
-
-  For more information, visit: https://github.com/solgenomics/postgres_dockerfile
-
-4. Connect containers via Docker Network
-
-  Assuming you've named the Breedbase database container `breedbase_db`, in your `sgn_local.conf`, set the following:
-
-  ```
-  dbhost breedbase_db
-  dbport 5432
-  ```
-
-  Create a network and add your containers
-
-  ```
-  docker network create -d bridge bb_bridge_network
-  docker network connect bb_bridge_network breedbase_db
-  docker network connect bb_bridge_network breedbase_web
-  ```
-
-  Finally access the application at http://localhost:8080
+Licensed under the MIT License.
