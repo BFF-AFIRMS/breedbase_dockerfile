@@ -1,5 +1,5 @@
-# Re-usable workflow to run tests
-name: Test
+# Re-usable workflow to build image and run tests
+name: Build
 
 on:
   workflow_call:
@@ -89,7 +89,7 @@ jobs:
 
       # Patch database, and dump to file, build node modules
       - name: Load/dump fixture database and build node modules
-        run: ./run_test --dumpupdatefixture t/unit/CXGN/String
+        run: ./run_test --dumpupdatedfixture t/unit/CXGN/String
 
       # Unit tests don't need a database or a server
       - name: Run unit tests
