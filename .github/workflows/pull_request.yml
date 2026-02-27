@@ -6,5 +6,8 @@ on:
       - '.gitignore'
     
 jobs:
+  deployment:
+    uses: ./.github/workflows/deployment.yml
+
   test:
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/test.yml
