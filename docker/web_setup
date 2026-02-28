@@ -103,6 +103,8 @@ initialize_directories() {
     done
 
     # Maybe create /home/production/tmp?
+    mkdir -p /home/production/tmp
+    chown -R sgn:sgn /home/production/tmp
 
     # Required otherwise the cache directory for solgs with have permissions errors?
     # chmod -R +r /data/breedbase/public/tmp
