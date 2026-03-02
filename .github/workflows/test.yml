@@ -34,42 +34,63 @@ jobs:
       # -----------------------------------------------------------------------
       # Testing
 
-      # Patch database, and dump to file, build node modules
-      - name: Load/dump fixture database and build node modules
-        run: ./run_test --dumpupdatedfixture t/unit/CXGN/String
+      - name: Run quick setup
+        run: |
+          ./run_test t/unit/CXGN/String
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
-      # Unit tests don't need a database or a server
       - name: Run unit tests
-        run: ./run_test "--nopatch --noserver t/unit 2>/dev/null"
+        run: |
+          ./run_test "t/unit 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
-      # Everything else needs a database and a server
       - name: Run fixture tests
-        run: ./run_test "--nopatch t/unit_fixture 2>/dev/null"
+        run: |
+          ./run_test "t/unit_fixture 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run mech tests
-        run: ./run_test "--nopatch t/unit_mech 2>/dev/null"
+        run: |
+          ./run_test "t/unit_mech 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       # Run all selenium tests individually to avoid solgs for now
       - name: Run selenium tests lists
-        run: ./run_test "--nopatch t/selenium2/01_list 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/01_list 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests trial
-        run: ./run_test "--nopatch t/selenium2/02_trial 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/02_trial 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests dataset
-        run: ./run_test "--nopatch t/selenium2/03_dataset 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/03_dataset 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests breeders
-        run: ./run_test "--nopatch t/selenium2/breeders 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/breeders 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests onto
-        run: ./run_test "--nopatch t/selenium2/onto 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/onto 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests search
-        run: ./run_test "--nopatch t/selenium2/search 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/search 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests stock
-        run: ./run_test "--nopatch t/selenium2/stock 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/stock 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests tools
-        run: ./run_test "--nopatch t/selenium2/tools 2>/dev/null"
+        run: |
+          ./run_test "t/selenium2/tools 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')

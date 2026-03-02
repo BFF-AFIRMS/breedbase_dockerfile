@@ -14,7 +14,7 @@ services:
     extends:
       file: docker/web.yml
       service: breedbase
-    restart: on-failure:3
+    restart: no
     depends_on:
       breedbase_db:
         condition: service_healthy
