@@ -13,6 +13,23 @@
 
 {$DOMAIN_NAME} {
 
+	# ---------------------------------------------------------------------
+	# Jbrowse: Genome Browser and file server
+
+	redir /jbrowse /jbrowse/
+	redir /jbrowse/data /jbrowse/data/
+	handle_path /jbrowse/* {
+
+		handle_path /data/* {
+			root * /data/jbrowse
+			file_server browse
+		}
+		handle {
+			root * /srv/www/jbrowse2
+			file_server
+		}
+	}
+
 	handle {
 		@static path /css/* /documents/* /img/*
 		handle @static {

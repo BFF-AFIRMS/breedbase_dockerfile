@@ -23,22 +23,6 @@ services:
     environment:
       USER_GROUP_ID:   ${USER_GROUP_ID:?}
       DOMAIN_NAME:     ${DOMAIN_NAME:-localhost}
-    volumes:
-
-      - staticdata:/data/breedbase/static
-      - jsdata:/data/breedbase/js
-
-      - type: bind
-        source: ./Caddyfile
-        target: /etc/caddy/Caddyfile
-        bind:
-          create_host_path: false
-
-      - type: bind
-        source: ../data/caddy
-        target: /data/caddy
-        bind:
-          create_host_path: false
     expose:
       - 80
       - 443
@@ -57,3 +41,33 @@ services:
         reservations:
           cpus: '0.25'
           memory: 128M
+    volumes:
+
+      - staticdata:/data/breedbase/static
+      - jsdata:/data/breedbase/js
+
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/caddy
+        target: /data/caddy
+        bind:
+          create_host_path: false
+
+      # Jbrowse web application
+      - type: bind
+        source: $PWD/data/jbrowse/app
+        target: /srv/www/jbrowse2
+        bind:
+          create_host_path: false
+
+      # Jbrowse genomic data
+      - type: bind
+        source: $PWD/data/jbrowse/data
+        target: /data/jbrowse
+        bind:
+          create_host_path: false

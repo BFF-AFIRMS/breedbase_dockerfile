@@ -168,6 +168,9 @@ apply_patches() {
     js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
     sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/ 2>/dev/null || true
 
+    echo "Using CXGN/Contact.pm from treeimprovementbase."
+    cp -f /home/production/cxgn/treeimprovementbase/lib/CXGN/Contact.pm lib/CXGN/Contact.pm 2>/dev/null || true
+
 }
 
 initialize_database() {

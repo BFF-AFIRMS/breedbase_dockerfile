@@ -1,11 +1,13 @@
 include:
-  - keycloak_db.yml
+  - db.yml
 
 services:
 
   keycloak:
     hostname: keycloak
     image: bffafirms/keycloak:26.5.1-0-breedbase-testing
+    build:
+      context: .
     # Restrict security privileges
     security_opt:
       - "no-new-privileges=true"
@@ -27,7 +29,7 @@ services:
     entrypoint: /entrypoint.sh
     volumes:
       - type: bind
-        source: ../docker/keycloak_entrypoint.sh
+        source: ./web_entrypoint.sh
         target: /entrypoint.sh
         bind:
           create_host_path: false

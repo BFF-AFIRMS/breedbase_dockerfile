@@ -1,37 +1,36 @@
 services:
 
-  breedbase_db:
-    hostname: breedbase_db
+  keycloak_db:
+    hostname: keycloak_db
     extends:
-      file: db.yml
+      file: ../postgres/db.yml
       service: db
     environment:
-      WEB_USR_PASSWORD: postgres
-      TLS_DOMAIN:       breedbase_db
+      KEYCLOAK_PASSWORD: keycloak
+      TLS_DOMAIN: keycloak_db
     healthcheck:
-      test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
+      test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
     volumes: !overrides
-
       - type: bind
-        source: ../data/breedbase_db/db
+        source: $PWD/data/keycloak_db/db
         target: /data/postgresql
         bind:
           create_host_path: false
 
       - type: bind
-        source: ../data/breedbase_db/pgbackrest
+        source: $PWD/data/keycloak_db/pgbackrest
         target: /data/pgbackrest
         bind:
           create_host_path: false
 
       - type: bind
-        source: ../data/breedbase_db/certs
+        source: $PWD/data/keycloak_db/certs
         target: /data/certs
         bind:
           create_host_path: false
 
       - type: bind
-        source: ../data/breedbase_db/log
+        source: $PWD/data/keycloak_db/log
         target: /data/log
         bind:
           create_host_path: false

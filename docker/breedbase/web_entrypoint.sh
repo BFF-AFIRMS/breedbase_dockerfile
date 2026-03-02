@@ -61,6 +61,7 @@ start_sgn_server() {
     fi
 
     if [ "$MODE" == "TESTING" ]; then
+
         # Expand out the args first, otherwise only the first arg is captured
         args="${@}"
         if [[ $args == "--interactive" && -e "/tmp/interactive.t" ]]; then

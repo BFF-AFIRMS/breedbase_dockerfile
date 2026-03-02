@@ -1,22 +1,23 @@
 name: production
 
 include:
-  - docker/web_volumes.yml
-  - docker/caddy.yml
+  - docker/breedbase/web_volumes.yml # Breedbase Web Volumes
+  - docker/caddy/caddy.yml           # Caddy File Server and Reverse Proxy
 
 services:
   breedbase_db:
     extends:
-      file: docker/breedbase_db.yml
+      file: docker/breedbase/db.yml
       service: breedbase_db
     environment:
       POSTGRES_PASSWORD: ${PGPASSWORD}          # Create 'postgres' superuser with this password
       PGPASSWORD:        ${PGPASSWORD}          # Default psql connection password
       WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD}    # Database password for 'web_usr'
+      MATHESAR_PASSWORD:  ${MATHESAR_PASSWORD}  # Database password for 'mathesar'
   
   breedbase:
     extends:
-      file: docker/web.yml
+      file: docker/breedbase/web.yml
       service: breedbase
     environment:
       MODE:              PRODUCTION             # SGN Server Mode

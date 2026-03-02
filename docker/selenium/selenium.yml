@@ -17,13 +17,13 @@ services:
     volumes:
       # required volumes
       - type: bind
-        source: ../cxgn/sgn/t/data
+        source: ../../cxgn/sgn/t/data
         target: /home/production/cxgn/sgn/t/data
         bind:
           create_host_path: false
 
       - type: bind
-        source: ../data/breedbase
+        source: $PWD/data/breedbase
         target: /downloads
         bind:
           create_host_path: false

@@ -158,9 +158,9 @@ RUN adduser --disabled-password --gecos "" -u 1250 production \
 
 # copy some tools that don't have a Debian package
 #
-COPY tools/gcta/gcta64  /usr/local/bin/
-COPY tools/quicktree /usr/local/bin/
-COPY tools/sreformat /usr/local/bin/
+COPY docker/breedbase/tools/gcta/gcta64  /usr/local/bin/
+COPY docker/breedbase/tools/quicktree /usr/local/bin/
+COPY docker/breedbase/tools/sreformat /usr/local/bin/
 
 
 
@@ -175,7 +175,7 @@ WORKDIR /home/production/cxgn
 # Use the run_all_patches that doesn't leak credentials to log
 RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
 # Use the custom template
-COPY --chown=production:production sgn_local_template.conf sgn/sgn_local_template.conf
+COPY --chown=production:production docker/breedbase/sgn_local_template.conf sgn/sgn_local_template.conf
 # Set npm cache to the volume mount location
 RUN npm config set cache /home/production/npm --global
 # Use the testing data fixture that works for postgres >= 17
@@ -195,11 +195,11 @@ RUN mkdir /var/log/sgn
 
 # move this here so it is not clobbered by the cxgn move
 #
-COPY slurm.conf /etc/slurm/slurm.conf
-COPY starmachine.conf /etc/starmachine/
+COPY docker/breedbase/slurm.conf /etc/slurm/slurm.conf
+COPY docker/breedbase/starmachine.conf /etc/starmachine/
 
-COPY docker/web_entrypoint.sh /entrypoint.sh
-COPY docker/web_setup /usr/local/bin/web_setup
+COPY docker/breedbase/web_entrypoint.sh /entrypoint.sh
+COPY docker/breedbase/web_setup /usr/local/bin/web_setup
 
 WORKDIR /home/production/cxgn/sgn
 

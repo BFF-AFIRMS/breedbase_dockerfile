@@ -76,49 +76,49 @@ services:
  
       # Default fixture for PRODUCTION mode
       - type: bind
-        source: ../db_dumps
+        source: ../../db_dumps
         target: /db_dumps
+        bind:
+          create_host_path: false
+
+      # Template config file
+      - type: bind
+        source: ./sgn_local_template.conf
+        target: /home/production/cxgn/sgn/sgn_local_template.conf  
         bind:
           create_host_path: false
 
       # SSL Certificates for database communication
       - type: bind
-        source: ../data/breedbase_db/certs
+        source: $PWD/data/breedbase_db/certs
         target: /data/certs
         bind:
           create_host_path: false
 
       # Breedbase web data
       - type: bind
-        source: ../data/breedbase/volume
+        source: $PWD/data/breedbase/volume
         target: /home/production/volume
-        bind:
-          create_host_path: false
-
-      # Template config file
-      - type: bind
-        source: ../sgn_local_template.conf
-        target: /home/production/cxgn/sgn/sgn_local_template.conf  
         bind:
           create_host_path: false
 
       # Final config file (filed in template)  
       - type: bind
-        source: ../data/breedbase/sgn_local.conf
+        source: $PWD/data/breedbase/sgn_local.conf
         target: /home/production/cxgn/sgn/sgn_local.conf 
         bind:
           create_host_path: false
 
       # Keep history of commands
       - type: bind
-        source: ../data/breedbase/bash_history
+        source: $PWD/data/breedbase/bash_history
         target: /home/production/.bash_history 
         bind:
           create_host_path: false
 
       # ???
       - type: bind
-        source: ../data/breedbase/downloads
+        source: $PWD/data/breedbase/downloads
         target: /downloads
         bind:
           create_host_path: false
