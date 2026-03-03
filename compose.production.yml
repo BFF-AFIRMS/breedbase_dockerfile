@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}          # Create 'postgres' superuser with this password
       PGPASSWORD:        ${PGPASSWORD}          # Default psql connection password
       WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD}    # Database password for 'web_usr'
-      MATHESAR_PASSWORD:  ${MATHESAR_PASSWORD}  # Database password for 'mathesar'
+      MATHESAR_PASSWORD: ${MATHESAR_PASSWORD}  # Database password for 'mathesar'
 
   breedbase:
     extends:

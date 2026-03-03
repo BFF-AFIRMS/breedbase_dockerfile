@@ -10,7 +10,7 @@ services:
       TLS_DOMAIN:       breedbase_db
     healthcheck:
       test: [ "CMD-SHELL", "psql -U postgres -q web_usr -c '\\dt'"]
-    volumes: !override
+    volumes:
 
       - type: bind
         source: $PWD/data/breedbase_db/db
@@ -33,5 +33,12 @@ services:
       - type: bind
         source: $PWD/data/breedbase_db/log
         target: /data/log
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ../postgres/pg_hba.conf
+        target: /etc/postgresql/pg_hba.conf
+        read_only: true
         bind:
           create_host_path: false
