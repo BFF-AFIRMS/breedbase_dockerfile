@@ -158,18 +158,24 @@ apply_site_overlay() {
 apply_patches() {
 
     # Use treeimprovementbase necessary and QOL improvements
-    echo "Using run_all_patches.pl from treeimprovementbase."
-    cp -f /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl db/run_all_patches.pl 2>/dev/null || true
 
-    echo "Using cxgn_fixture.sql from treeimprovementbase."
-    cp -f /home/production/cxgn/treeimprovementbase/t/data/fixture/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql 2>/dev/null || true
+    tibase_dir=/home/production/cxgn/treeimprovementbase
 
-    echo "Using js patches from treeimprovementbase."
+    echo "Using db/run_all_patches.pl from treeimprovementbase."
+    cp -f $tibase_dir/db/run_all_patches.pl db/run_all_patches.pl 2>/dev/null || true
+
+    echo "Using t/data/fixture/cxgn_fixture.sql from treeimprovementbase."
+    cp -f $tibase_dir/t/data/fixture/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql 2>/dev/null || true
+
+    echo "Using lib/CXGN/Contact.pm from treeimprovementbase."
+    cp -f $tibase_dir/lib/CXGN/Contact.pm lib/CXGN/Contact.pm 2>/dev/null || true
+
+    echo "Using lib/CXGN/BrAPI/v2/ExternalReferences.pm from treeimprovementbase."
+    cp -f $tibase_dir/lib/CXGN/BrAPI/v2/ExternalReferences.pm lib/CXGN/BrAPI/v2/ExternalReferences.pm 2>/dev/null || true
+
+    echo "Using js/ from treeimprovementbase."
     js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
-    sudo -u $js_user rsync -avI /home/production/cxgn/treeimprovementbase/js/* js/ 2>/dev/null || true
-
-    echo "Using CXGN/Contact.pm from treeimprovementbase."
-    cp -f /home/production/cxgn/treeimprovementbase/lib/CXGN/Contact.pm lib/CXGN/Contact.pm 2>/dev/null || true
+    sudo -u $js_user rsync -avI $tibase_dir/js/* js/ 2>/dev/null || true
 
 }
 

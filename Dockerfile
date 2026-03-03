@@ -172,20 +172,12 @@ RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
 # [REQUIRED]
-# Use the run_all_patches that doesn't leak credentials to log
-RUN cp /home/production/cxgn/treeimprovementbase/db/run_all_patches.pl sgn/db/run_all_patches.pl
 # Use the custom template
 COPY --chown=production:production docker/breedbase/sgn_local_template.conf sgn/sgn_local_template.conf
-# Set npm cache to the volume mount location
-RUN npm config set cache /home/production/npm --global
-# Use the testing data fixture that works for postgres >= 17
-RUN cp -f /home/production/cxgn/treeimprovementbase/t/data/fixture/cxgn_fixture.sql sgn/t/data/fixture/cxgn_fixture.sql
-
-# [OPTIONAL]
-# Use the hardened Javascript patches that fix vulnerabilities
-RUN rsync -av /home/production/cxgn/treeimprovementbase/js/* sgn/js
 # Use the interactive test file for interactive testing
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
+# Set npm cache to the volume mount location
+RUN npm config set cache /home/production/npm --global
 
 
 # create directory layout

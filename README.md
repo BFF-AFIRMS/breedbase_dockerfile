@@ -182,35 +182,30 @@ Then choose either [Standalone](#standalone) or [Interactive](#interactive) mode
 
 Tests can be run in `standalone` mode. For each test, a new database and web server will be created, ensuring reproducibility and isolation between tests.
 
-> Note: This mode can be very slow to start up and run.
+> This mode can be very slow to start up and run.    
+> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 
 ```bash
 # Single
 ./run_test t/unit/CXGN/String
+./run_test t/selenium2/search/stock.t
 
 # Group
 ./run_test t/unit/CXGN
+./run_test t/selenium2/search
 
 # Category
 ./run_test t/unit/
-
-./run_test t/unit/CXGN/String
-
-export RUN_CMD="docker compose -f compose.testing.yml run --use-aliases test_breedbase -c"
-eval $RUN_CMD -c --nopatch --noserver t/unit
-docker compose -f compose.testing.yml run --use-aliases test_breedbase -c t/unit_fixture
-docker compose -f compose.testing.yml run --use-aliases test_breedbase -c t/unit_mech
-docker compose -f compose.testing.yml run --use-aliases test_breedbase -c t/selenium2/search
+./run_test t/unit_fixture
+./run_test t/unit_mech
+./run_test t/selenium2
 ```
-
-> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 
 For less noisy output, cleanup `stderr` with:
 
 ```bash
-docker compose -f compose.testing.yml run --use-aliases test_breedbase -c "--nopatch --noserver t/unit 2>/dev/null"
+./run_test "t/unit_fixture 2>/dev/null"
 ```
-
 
 #### Interactive
 
@@ -219,16 +214,18 @@ Tests can be run in `interactive` mode, where the same database and web server a
 1. **Start up all containers with docker compose.**
 
     ```bash
-    docker compose -f compose.testing.yml up -d
+    ./run_test /tmp/interactive.t
     ```
+
+1. **Open a separate terminal to run the remaining commands.**
 
 2. **Wait for the web server container to be healthy.**
 
     ```bash
-    docker compose -f compose.testing.yml ps test_breedbase
+    docker compose -f compose.testing.yml ps breedbase
 
     NAME                                    IMAGE                        COMMAND                  SERVICE          CREATED              STATUS                        PORTS
-    breedbase_dockerfile-test_breedbase-1   bff-afirms/breedbase:latest   "/entrypoint.sh --in…"   test_breedbase   About a minute ago   Up About a minute (healthy)   0.0.0.0:3010->3010/tcp, [::]:3010->3010/tcp, 8080/tcp
+    breedbase_dockerfile-breedbase-1   bff-afirms/breedbase:latest   "/entrypoint.sh --in…"   breedbase   About a minute ago   Up About a minute (healthy)   0.0.0.0:3010->3010/tcp, [::]:3010->3010/tcp, 8080/tcp
     ```
 
 4. **Browse the testing environment at: <http://localhost:3010>**
@@ -246,49 +243,34 @@ Tests can be run in `interactive` mode, where the same database and web server a
 
 
     ```bash
-    docker compose -f compose.testing.yml exec test_breedbase bash
+    docker compose -f compose.testing.yml exec breedbase bash
+
+    # Find the name of the test database
     psql -l
-    # Example
+
+    # Export the db as a variable (example)
     export TEST_DB_NAME=test_db_2026_2_25_22_22794
     ```
 
-4. **Run unit tests in the container.**
-
-    ```bash
-    # Single
-    prove t/unit/CXGN/String
-
-    # Group
-    prove --recurse t/unit/CXGN 2>/dev/null
-
-    # All
-    prove --recurse t/unit/ prove --recurse t/unit/CXGN 2>/dev/null
-    ```
-
-5. **Run server and database tests in the container.**
-
-    ```bash
-    perl t/test_fixture.pl --nopatch --noserver t/unit_fixture 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/unit_mech 2>/dev/null
-    ```
-
-6. **Run browser tests in the container.**
+4. **Run tests in the container.**
 
     > For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 
     ```bash
     # Single
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/search/stock.t
+    perl t/test_fixture.pl t/unit/CXGN/String
+    perl t/test_fixture.pl t/selenium2/search/stock.t
 
     # Group
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/01_list 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/02_trial 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/03_dataset 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/breeders 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/onto 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/search 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/stock 2>/dev/null
-    perl t/test_fixture.pl --nopatch --noserver t/selenium2/tools 2>/dev/null
+    perl t/test_fixture.pl t/unit/CXGN 2>/dev/null
+    perl t/test_fixture.pl t/selenium2/search
+
+    # Category
+    perl t/test_fixture.pl t/unit/ 2>/dev/null
+    perl t/test_fixture.pl t/unit_fixture 2>/dev/null
+    perl t/test_fixture.pl t/unit_mech 2>/dev/null
+    perl t/test_fixture.pl t/selenium2/01_list 2>/dev/null
+    perl t/test_fixture.pl t/selenium2/02_trial 2>/dev/null
     ```
 
 ## Updating
