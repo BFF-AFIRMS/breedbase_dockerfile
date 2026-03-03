@@ -14,7 +14,7 @@ if [[ ! -e .env ]]; then
     {
         echo USER_GROUP_ID=$(id -u):$(id -g)
         echo DOMAIN_NAME=localhost
-        echo PGHOST=breedbase_db        
+        echo PGHOST=breedbase_db
         echo PGDATABASE=breedbase
         echo PGUSER=postgres
         echo PGPASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)

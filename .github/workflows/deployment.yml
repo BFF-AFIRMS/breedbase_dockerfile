@@ -30,7 +30,7 @@ jobs:
           - mode: development
           - mode: production
           - mode: testing
-        
+
     steps:
 
       - name: Checkout breedbase_dockerfile repo
@@ -41,7 +41,7 @@ jobs:
       - name: Link compose file
         run: |
           ln -s compose.yml compose.quickstart.yml
-   
+
       - name: Build container image
         run: docker build -t bffafirms/breedbase:latest .
 
@@ -72,7 +72,7 @@ jobs:
         run: rm -rf data
 
       # ---------------------------------------------------------------------------
-      # Site Overlay 
+      # Site Overlay
 
 
       - name: Setup overlay
@@ -99,4 +99,4 @@ jobs:
         run: docker volume prune -af
 
       - name: Clean data overlay
-        run: rm -rf data             
+        run: rm -rf data

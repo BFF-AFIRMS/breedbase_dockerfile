@@ -224,7 +224,7 @@ initialize_database() {
         fi
 
         # Run default patches
-        echo "Running default patches.";     
+        echo "Running default patches.";
         tty_wrapper "db/run_all_patches.pl -e $patch_user -s $patch_start -p /home/production/cxgn/sgn/db/"
 
         # Run site overlay patches
@@ -262,7 +262,7 @@ initialize_javascript() {
 
 _main() {
     start_system_services
-    initialize_user  
+    initialize_user
     initialize_directories
     apply_site_overlay
     apply_patches

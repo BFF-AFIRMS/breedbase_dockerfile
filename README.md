@@ -5,31 +5,27 @@
 [![Test CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml)
 [![Deployment CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml)
 
-
 <p align="center">
-  <img src="Breedbase.png">
+  <img src="Breedbase.png" alt="breedbase logo">
 </p>
 
 This repo contains the Dockerfile for the BFF-AFIRMS Breedbase webserver, and the docker compose files for joint deployment of the webserver and postgres database.
 
 To learn more about Breedbase:
 
-Access the [SGN repository](https://github.com/solgenomics/sgn) to contribute to the underlying codebase or submit new issues.    
-Access the [manual](https://solgenomics.github.io/sgn/) to learn how to use breeDBase's many features.    
+Access the [SGN repository](https://github.com/solgenomics/sgn) to contribute to the underlying codebase or submit new issues.  
+Access the [manual](https://solgenomics.github.io/sgn/) to learn how to use breeDBase's many features.  
 Access [breedbase.org](https://breedbase.org/) to explore a default instance of breeDBase.
 
 ## Table of Contents
 
 1. [Install](#install)
-    - [Clone Repository](#clone-repository)
-    - [Install docker](#install-docker)
-    - [Install docker compose](#install-docker-compose)
 2. [Deploy](#deploy)
     - [Quick Start](#quick-start)
     - [Production](#production)
     - [Development](#development)
     - [Testing](#testing)
-4. [Updating](#updating)
+3. [Updating](#updating)
 4. [Debugging](#debugging)
 5. [Miscellaneous](#miscellaneous)
 6. [Credits](#credits)
@@ -38,9 +34,8 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 
 1. **Install `docker`**
 
-    Please follow the instructions at https://docs.docker.com/engine/install.    
+    Please follow the instructions at https://docs.docker.com/engine/install.  
     You will probably also need to [add your user to the docker group](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
-
 
 1. **Install `docker compose`**
 
@@ -73,9 +68,9 @@ All deployment options involve first running setup to create credentials and dat
 There are four different options for deployment:
 
 - [Quickstart](#quick-start): For those new to breedbase.
-- [Production](#deploy-for-production): Run a secure, performant server.
-- [Development](#deploy-for-development): Make changes to the applications.
-- [Testing](#deploy-for-testing): Run the comprehensive test suite.
+- [Production](#production): Run a secure, performant server.
+- [Development](#development): Make changes to the applications.
+- [Testing](#testing): Run the comprehensive test suite.
 
 ### Quick Start
 
@@ -109,9 +104,8 @@ There are four different options for deployment:
     Login with the following credentials.
 
     | username | password | role      |
-    | -------- | -------- | --------- | 
-    | admin    | password | curator   | 
-
+    | -------- | -------- | --------- |
+    | admin    | password | curator   |
 
 ### Production
 
@@ -123,7 +117,7 @@ After quick-start, deploying for production is the most straightforward simplest
 
 1. **Deploy with docker compose**
 
-    ```
+    ```bash
     docker compose -f compose.production.yml up -d
     ```
 
@@ -140,12 +134,12 @@ Development mode will allow you to make changes to the application in real-time.
     ```bash
     git submodule update --init --recursive --progress
     ```
-   
+
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted into the container during the compose step, but will still be accessible from the host for development work.
 
 1. **Deploy with docker compose**
 
-    ```
+    ```bash
     docker compose up -f compose.development.yml up -d
     ```
 
@@ -157,8 +151,8 @@ Development mode will allow you to make changes to the application in real-time.
     Login with the following credentials.
 
     | username | password | role            |
-    | -------- | -------- | --------------- | 
-    | admin    | password | curator/admin   | 
+    | -------- | -------- | --------------- |
+    | admin    | password | curator/admin   |
 
 1. **Make changes to the code under `cxgn/sgn`.**
 
@@ -177,12 +171,11 @@ Testing mode is for writing and debugging new tests.
 
 Then choose either [Standalone](#standalone) or [Interactive](#interactive) mode from below.
 
-
 #### Standalone
 
 Tests can be run in `standalone` mode. For each test, a new database and web server will be created, ensuring reproducibility and isolation between tests.
 
-> This mode can be very slow to start up and run.    
+> This mode can be very slow to start up and run.  
 > For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 
 ```bash
@@ -217,9 +210,9 @@ Tests can be run in `interactive` mode, where the same database and web server a
     ./run_test /tmp/interactive.t
     ```
 
-1. **Open a separate terminal to run the remaining commands.**
+2. **Open a separate terminal to run the remaining commands.**
 
-2. **Wait for the web server container to be healthy.**
+3. **Wait for the web server container to be healthy.**
 
     ```bash
     docker compose -f compose.testing.yml ps breedbase
@@ -233,14 +226,12 @@ Tests can be run in `interactive` mode, where the same database and web server a
     Login with the following credentials.
 
     | username | password | role      |
-    | -------- | -------- | --------- | 
-    |janedoe   | secretpw | curator   | 
-    |johndoe   | secretpw | submitter | 
+    | -------- | -------- | --------- |
+    |janedoe   | secretpw | curator   |
+    |johndoe   | secretpw | submitter |
     |freddy    | atgc     | user      |
 
-
-3. **Connect to the test container.**
-
+5. **Connect to the test container.**
 
     ```bash
     docker compose -f compose.testing.yml exec breedbase bash
@@ -252,7 +243,7 @@ Tests can be run in `interactive` mode, where the same database and web server a
     export TEST_DB_NAME=test_db_2026_2_25_22_22794
     ```
 
-4. **Run tests in the container.**
+6. **Run tests in the container.**
 
     > For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
 
@@ -289,11 +280,14 @@ Docker has a [wealth of command-line options](https://docs.docker.com/engine/ref
 `docker compose down`   Will remove both containers, but only if run within the breedbase_dockerfile directory.<br>
 
 You can find the container id using
-```
+
+``` bash
 docker ps
 ```
+
 then
-```
+
+``` bash
 docker exec -it <container_id> bash
 ```
 
@@ -301,23 +295,7 @@ You can use `lynx localhost:8080` to see if the server is running correctly with
 
 You can of course also find the IP address of the running container either in the container using `ip address` or from the host using `docker inspect <container_id>`.
 
-
 ## Miscellaneous
-
-### Running Breedbase behind a proxy server
-
-In many situations, the Breedbase server will be installed behind a proxy server. While everything should run normally, there is an issue with ```npm```, and it needs to be specially configured. Create a file on the host server, let's say, ```npm_config.txt```, with the following lines in it:
-
-```
-strict-ssl=false
-registry=http://registry.npmjs.org/
-proxy=http://yourproxy.server.org:3128
-https-proxy=http://yourproxy.server.org:3128
-maxsockets=1
-```
-Of course, replace ```yourproxy.server.org:3128``` with your correct proxy server hostname and port.
-
-When running the docker, mount this file (using the ```volumes``` option in ```docker compose``` or ```-v``` with ```docker run``` etc.) at the location ```/home/production/.npmrc``` in the docker. Then start your docker and now npm should be able to fetch dependencies from the registry.
 
 ### Updating the database schema from the docker
 
@@ -327,15 +305,14 @@ The db patches can be run individually by changing into the specific directory, 
 
 The database can be updated to the current level in one step (recommended method) by running the ```run_all_patches.pl``` script in the ```db/``` directory, which calls all the db patches individually. If you are using the standard docker compose setup, the command line is (options in square brackets are optional):
 
-```
+```bash
 cd db;
-perl run_all_patches.pl -u postgres -p postgres -h breedbase_db -d
-breedbase -e admin [-s <startfrom>] [--test]
+perl db/run_all_patches.pl -e admin [-s <startfrom>] [--test]
 ```
 
 Note that for this to work, the $PERL5LIB environment variable should have the current directory included. If it isn't, run:
 
-```
+```bash
 export PERL5LIB=$PERL5LIB:.
 ```
 

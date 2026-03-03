@@ -10,7 +10,7 @@ services:
       TLS_DOMAIN: keycloak_db
     healthcheck:
       test: [ "CMD-SHELL", "psql -U postgres -q keycloak -c '\\dt'"]
-    volumes: !overrides
+    volumes: !override
       - type: bind
         source: $PWD/data/keycloak_db/db
         target: /data/postgresql

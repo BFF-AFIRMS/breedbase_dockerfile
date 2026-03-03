@@ -9,7 +9,7 @@ tty_wrapper() {
     eval $wrapper
 }
 
-# An inelegent way to wait for the docker post_start 
+# An inelegent way to wait for the docker post_start
 # command to finish setting up the container as root user
 wait_for_post_start() {
 
