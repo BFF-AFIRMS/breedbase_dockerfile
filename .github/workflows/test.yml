@@ -1,0 +1,108 @@
+# Re-usable workflow to run tests
+name: Test
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 0'
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Test Suite
+
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_BUILDKIT: 1
+
+    steps:
+
+      - name: Checkout breedbase_dockerfile repo
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Build container image
+        run: docker build -t bffafirms/breedbase:latest .
+
+      - name: Setup
+        run: ./setup
+
+      # -----------------------------------------------------------------------
+      # Testing
+
+      - name: Run quick setup
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test t/unit/CXGN/String
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run unit tests
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/unit 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run fixture tests
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/unit_fixture 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run mech tests
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/unit_mech 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      # Run all selenium tests individually to avoid solgs for now
+      - name: Run selenium tests lists
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/01_list 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests trial
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/02_trial 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests dataset
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/03_dataset 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests breeders
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/breeders 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests onto
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/onto 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests search
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/search 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests stock
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/stock 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests tools
+        if: ${{ !cancelled() }}
+        run: |
+          ./run_test "t/selenium2/tools 2>/dev/null"
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')

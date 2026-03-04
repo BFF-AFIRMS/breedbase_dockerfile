@@ -1,4 +1,42 @@
-FROM debian:bullseye
+#syntax=docker/dockerfile:1
+
+# -----------------------------------------------------------------------------
+# A temporary build stage for copying over files and compiling programs.
+# Only the essential directories will be copied over to the final image
+
+FROM debian:bullseye AS build
+
+# install system dependencies
+RUN apt update && apt install binutils gcc libgd-dev make -y
+
+# Copy code source
+COPY cxgn /cxgn
+
+# Shrink cxgn R_libs from 2.2 GB -> 0.84 GB
+# Strip unneeded symbols: https://dirk.eddelbuettel.com/blog/2017/08/20/#010_stripping_shared_libraries
+# Could be --strip-debug instead of strip-unneeded, to be more conservative
+RUN find cxgn/R_libs -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded
+
+# Compile gtsimsrch
+RUN cd /cxgn/gtsimsrch/src && make
+
+# Compile contigalign (tiny, no need for aggresive cleaning)
+RUN cd /cxgn/sgn/programs/ && make
+
+# [RECOMMENDED] CLEANUPS
+# Clean gtsimsrch testing and example data (~100MB)
+RUN cd /cxgn/gtsimsrch/ && rm -rf data/ example/ testing/
+# Clean R package docs (doc, help, html) (~100MB)
+RUN rm -rf /cxgn/R_libs/*/doc /cxgn/R_libs/*/help /cxgn/R_libs/*/html
+
+# [OPTIONAL] CLEANUPS
+# Clean sgn non-html docs (~100MB)
+# RUN rm -rf /cxgn/sgn/docs/BreedbaseManual.pdf /cxgn/sgn/docs/r_markdown_docs
+
+# -----------------------------------------------------------------------------
+# Final Image
+
+FROM debian:bullseye AS final
 
 ENV CPANMIRROR=http://cpan.cpantesters.org
 # based on the vagrant provision.sh script by Nick Morales <nm529@cornell.edu>
@@ -6,16 +44,6 @@ ENV CPANMIRROR=http://cpan.cpantesters.org
 # open port 8080
 #
 EXPOSE 8080
-
-# create directory layout
-#
-RUN mkdir -p /home/production/public/sgn_static_content
-RUN mkdir -p /home/production/cxgn
-RUN mkdir -p /home/production/cxgn/local-lib
-RUN mkdir /etc/starmachine
-RUN mkdir /var/log/sgn
-
-WORKDIR /home/production/cxgn
 
 # install system dependencies
 #
@@ -42,7 +70,7 @@ RUN apt-get update --fix-missing -y
 
 RUN apt-get install -y aptitude
 
-RUN aptitude install -y npm libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-12 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink
+RUN aptitude install -y libimage-magick-perl libimage-exiftool-perl libterm-readline-zoid-perl nginx starman emacs gedit vim less sudo htop git dkms linux-headers-generic perl-doc ack make xutils-dev nfs-common lynx xvfb ncbi-blast+ primer3 libmunge-dev libmunge2 munge slurm-wlm slurmctld slurmd libslurm-perl libssl-dev graphviz lsof imagemagick mrbayes muscle clustalw bowtie bowtie2 postfix mailutils libcupsimage2 postgresql-client-18 libglib2.0-dev libglib2.0-bin screen apt-transport-https libgdal-dev libproj-dev libudunits2-dev locales locales-all rsyslog cron libnlopt0 plink rsync
 
 # Set the locale correclty to UTF-8
 RUN locale-gen en_US.UTF-8
@@ -90,7 +118,6 @@ RUN apt-get install libpq-dev -y
 RUN apt-get install libmoosex-runnable-perl -y
 
 RUN apt-get install libgdbm6 libgdm-dev -y
-RUN apt-get install nodejs -y
 
 RUN cpanm Selenium::Remote::Driver@1.49
 
@@ -98,39 +125,73 @@ RUN cpanm Selenium::Remote::Driver@1.49
 
 RUN apt-get install -y python3-dev  python3-pip python3-numpy libgtk2.0-dev libgtk-3-0 libgtk-3-dev libavcodec-dev libavformat-dev libswscale-dev libhdf5-serial-dev libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libxvidcore-dev libatlas-base-dev gfortran cmake libgdal-dev exiftool libzbar-dev zbar-tools libbarcode-zbar-perl libtext-multimarkdown-perl
 
-RUN pip3 install --upgrade pip
-RUN pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
-    && pip3 install -U keras-tuner
+# Install python packages, strip unneeded symbols, clear cache
+RUN pip3 install --upgrade pip \
+    && pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
+    && pip3 install -U keras-tuner \
+    && rm -rf /root/.cache/pip
+
+# Install node
+RUN apt remove -y nodejs \
+  && wget https://nodejs.org/dist/v25.6.1/node-v25.6.1-linux-x64.tar.xz \
+  && tar -xvf node-v25.6.1-linux-x64.tar.xz \
+  && rm -f node-v25.6.1-linux-x64.tar.xz \
+  && mkdir -p /opt/node \
+  && mv node-v25.6.1-linux-x64 /opt/node/25.6.1 \
+  && ln -f -s /opt/node/25.6.1/bin/node /usr/bin/node \
+  && ln -f -s /opt/node/25.6.1/bin/npm /usr/bin/npm \
+  && ln -f -s /opt/node/25.6.1/bin/npx /usr/bin/npx \
+  && ln -f -s /opt/node/25.6.1/bin/corepack /usr/bin/corepack \
+  && mkdir -p /home/production/.npm /home/production/.config \
+  && touch /home/production/.npmrc
+
+# Install gosu
+RUN wget https://github.com/tianon/gosu/releases/download/1.19/gosu-amd64 \
+  && chmod +x gosu-amd64 \
+  && mv gosu-amd64 /usr/local/bin/gosu
+
+# npm install needs a non-root user (new in latest version)
+#
+RUN adduser --disabled-password --gecos "" -u 1250 production \
+  && mkdir -p /home/production/public/sgn_static_content \
+  && chown -R production:production /home/production
 
 # copy some tools that don't have a Debian package
 #
-COPY tools/gcta/gcta64  /usr/local/bin/
-COPY tools/quicktree /usr/local/bin/
-COPY tools/sreformat /usr/local/bin/
+COPY docker/breedbase/tools/gcta/gcta64  /usr/local/bin/
+COPY docker/breedbase/tools/quicktree /usr/local/bin/
+COPY docker/breedbase/tools/sreformat /usr/local/bin/
 
 
 
 # copy code repos.
 # This also adds the Mason website skins
 #
-ADD cxgn /home/production/cxgn
+COPY --chown=production:production --from=build /cxgn /home/production/cxgn
+RUN git config --global --add safe.directory /home/production/cxgn/sgn
+WORKDIR /home/production/cxgn
+
+# [REQUIRED]
+# Use the custom template
+COPY --chown=production:production docker/breedbase/sgn_local_template.conf sgn/sgn_local_template.conf
+# Use the interactive test file for interactive testing
+RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
+# Set npm cache to the volume mount location
+RUN npm config set cache /home/production/npm --global
+
+
+# create directory layout
+#
+RUN mkdir /etc/starmachine
+RUN mkdir /var/log/sgn
 
 # move this here so it is not clobbered by the cxgn move
 #
-COPY slurm.conf /etc/slurm/slurm.conf
-COPY starmachine.conf /etc/starmachine/
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-COPY sgn_local.conf /home/production/cxgn/sgn/sgn_local.conf
+COPY docker/breedbase/slurm.conf /etc/slurm/slurm.conf
+COPY docker/breedbase/starmachine.conf /etc/starmachine/
 
-# compile the simsearch and contigalign tools
-#
-RUN cd /home/production/cxgn/gtsimsrch/src; make; cd -;
-RUN cd /home/production/cxgn/sgn/programs/; make; cd -;
-
-# npm install needs a non-root user (new in latest version)
-#
-RUN adduser --disabled-password --gecos "" -u 1250 production && chown -R production /home/production
+COPY docker/breedbase/web_entrypoint.sh /entrypoint.sh
+COPY docker/breedbase/web_setup /usr/local/bin/web_setup
 
 WORKDIR /home/production/cxgn/sgn
 
@@ -150,19 +211,22 @@ ARG BUILD_VERSION
 ENV VERSION=${BUILD_VERSION}
 ENV BUILD_DATE=${CREATED}
 
-LABEL maintainer="lam87@cornell.edu"
+LABEL maintainer="kmeaton1@ualberta.ca"
 LABEL org.opencontainers.image.created=$CREATED
-LABEL org.opencontainers.image.url="https://breedbase.org/"
-LABEL org.opencontainers.image.source="https://github.com/solgenomics/breedbase_dockerfile"
+#LABEL org.opencontainers.image.url="https://breedbase.org/"
+LABEL org.opencontainers.image.source="https://github.com/bff-afirms/breedbase_dockerfile"
 LABEL org.opencontainers.image.version=$BUILD_VERSION
 LABEL org.opencontainers.image.revision=$REVISION
-LABEL org.opencontainers.image.vendor="Boyce Thompson Institute"
-LABEL org.opencontainers.image.title="breedbase/breedbase"
-LABEL org.opencontainers.image.description="Breedbase web server"
-LABEL org.opencontainers.image.documentation="https://solgenomics.github.io/sgn/"
+LABEL org.opencontainers.image.vendor="University of Alberta"
+LABEL org.opencontainers.image.title="bffafirms/breedbase"
+LABEL org.opencontainers.image.description="BFF-AFIRMS Breedbase web server"
+LABEL org.opencontainers.image.documentation="https://github.com/bff-afirms/breedbase_dockerfile/"
 
 
 
 # start services when running container...
 #
 ENTRYPOINT ["/entrypoint.sh"]
+
+# With docker compose, we will run as the host user instead
+USER production

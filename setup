@@ -1,0 +1,74 @@
+#!/bin/bash
+
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+NC="\e[0m" # No Color
+
+echo -e "-----------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tBeginning setup."
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tGenerating secure credentials: .env"
+
+if [[ ! -e .env ]]; then
+    {
+        echo USER_GROUP_ID=$(id -u):$(id -g)
+        echo DOMAIN_NAME=localhost
+        echo PGHOST=breedbase_db
+        echo PGDATABASE=breedbase
+        echo PGUSER=postgres
+        echo PGPASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo ADMIN_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo WEB_USR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo SITE_OVERLAY=sgn
+        echo SECRET_KEY=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
+        echo MATHESAR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+    } > .env
+fi
+source .env
+USER_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 1)
+GROUP_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 2)
+
+if [[ ! -e .env.bak ]]; then
+    cp .env .env.bak
+fi
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating data directories: data/"
+
+# Postgres databases
+for db in breedbase_db keycloak_db; do
+  mkdir -p data/$db
+  cd data/$db
+  mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
+  cd ../..
+done
+
+# breedbase
+mkdir -p data/breedbase/volume
+mkdir -p data/breedbase/downloads
+touch data/breedbase/bash_history
+touch data/breedbase/sgn_local.conf
+
+# caddy
+mkdir -p data/caddy
+
+# jbrowse static files
+if [[ ! -d data/jbrowse ]]; then
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tDownloading jbrowse files: data/jbrowse"
+  mkdir -p data/jbrowse/app data/jbrowse/data
+
+  cd data/jbrowse/app
+  wget -q https://github.com/GMOD/jbrowse-components/releases/download/v4.1.13/jbrowse-web-v4.1.13.zip
+  unzip -q jbrowse-web-v4.1.13.zip
+  rm -f jbrowse-web-v4.1.13.zip
+
+  if [[ ! -e config.json ]]; then
+    sed "s/{DOMAIN_NAME}/${DOMAIN_NAME}/g" ../../../docker/jbrowse/config.template.json > config.json
+  fi
+
+  cd ..
+  cp -r ../../docker/jbrowse/*demo data/
+  cd ../..
+fi
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
+echo -e "-----------------------------------------------------------------------------"

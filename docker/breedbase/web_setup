@@ -1,0 +1,289 @@
+#!/bin/bash
+
+# This script is run with docker_compose as post_start
+# It contains all the setup that is required as the root user
+# Non-root user commands (ex. starting the server) are
+# instead in the entrypoint
+
+set -e
+
+setup_log="/tmp/web_setup.log"
+
+# https://serverfault.com/a/103569
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
+
+exec 1>${setup_log} 2>&1
+
+# Everything below will go to the file 'log.out':
+
+
+# A wrapper for perl commands that require a TTY
+# (ex. piping db credentials into patching scripts for mx-run)
+tty_wrapper() {
+    command=$1
+    wrapper="script --log-out /tmp/typescript --flush --quiet --return --command \"bash --noprofile --norc -eo pipefail -c '$command'\""
+    echo "Running tty_wrapper: $wrapper"
+    eval $wrapper
+}
+
+# start system daemons that require root
+start_system_services() {
+    echo "-------------------------------------------------------------------------"
+    echo "Starting system services"
+    echo "-------------------------------------------------------------------------"
+
+    sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
+    /etc/init.d/postfix start
+    /etc/init.d/cron start
+    chown 106 /etc/munge/munge.key
+    /etc/init.d/munge start
+    /etc/init.d/slurmctld start
+    /etc/init.d/slurmd start
+
+    chown root /etc/crontab # in case it was mounted from local dir
+
+    echo ""
+
+}
+
+# Make sure the owner of the  conf file exists on the system
+initialize_user() {
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing user: sgn"
+    echo "-------------------------------------------------------------------------"
+
+    user_name=sgn
+
+    # The sgn_local.conf file MUST ALWAYS be mounted from the host user
+    file_user=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+    file_group=$(ls -l sgn_local.conf | sed -E 's/\s+/ /g' | cut -d ' ' -f 4)
+
+    # Create group
+    if [[ ! $(getent group "$file_group") ]]; then
+        echo "Creating group: $file_group:$user_name"
+        groupadd -g $file_group $user_name
+    else
+        echo "Group $file_group already exists"
+        echo "Creating $user_name group as 1000"
+        groupadd -g 1000 $user_name || true
+    fi
+
+    if [[ ! $(getent passwd "$file_user") ]]; then
+        echo "Creating user:  $file_group:$user_name"
+        useradd $user_name -u $file_user -g $file_group -m -s /bin/bash
+    else
+        echo "User $file_user already exists"
+        echo "Creating $user_name user as 1000"
+        useradd $user_name -u 1000 -g 1000 -m -s /bin/bash || true
+    fi
+
+    echo "Config user:   " $(getent passwd "$file_user")
+    echo "Config group:  " $(getent group "$file_group")
+}
+
+
+initialize_directories() {
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing Directories"
+    echo "-------------------------------------------------------------------------"
+
+    for dir_name in archive blast cache cluster logs pgdata public public/images tmp tmp/breedbase-site tmp/breedbase-site/mason; do
+        dir_path=/home/production/volume/${dir_name}
+        if [[ ! -e $dir_path ]]; then
+            echo "Creating volume: $dir_path"
+            mkdir -p $dir_path
+        else
+            echo "Located volume: $dir_path"
+        fi
+        chmod 770 $dir_path
+
+        # Give ownership to the dynamically created sgn owner
+        chown -R sgn:sgn $dir_path
+    done
+
+    # Maybe create /home/production/tmp?
+    mkdir -p /home/production/tmp
+    chown -R sgn:sgn /home/production/tmp
+
+    # Required otherwise the cache directory for solgs with have permissions errors?
+    # chmod -R +r /data/breedbase/public/tmp
+
+    # Server logs for production mode
+    for log_file in error.log access.log; do
+        echo "Updating sgn log file: $log_file"
+        touch /var/log/sgn/$log_file
+        chmod 777 /var/log/sgn/$log_file
+        chown sgn:sgn /var/log/sgn/$log_file
+    done
+
+    mkdir -p /home/production/npm
+
+    echo "Giving user sgn partial ownership of home directory"
+    chown sgn:sgn /home/production
+    chown sgn:sgn /home/production/cxgn
+    chown sgn:sgn /home/production/cxgn/local-lib/lib/perl5/
+    chown sgn:sgn /home/production/cxgn/starmachine/
+    chown sgn:sgn /home/production/npm
+
+    echo "Giving user sgn full ownership of sgn directory"
+    chown -R sgn:sgn /home/production/cxgn/sgn
+
+}
+
+apply_site_overlay() {
+
+    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && $SITE_OVERLAY != "sgn" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
+
+        echo "-------------------------------------------------------------------------"
+        echo "Applying Site Overlay: $SITE_OVERLAY"
+        echo "-------------------------------------------------------------------------"
+
+        # Symlink files from the site overlay, match the sgn directory user
+        dir_user=$(ls -ld /home/production/cxgn/sgn | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+        echo "Symlinking files as $dir_user"
+
+        # Might get errors about conf template files, because those are managed by docker
+        sudo -u $dir_user cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn 2>/dev/null || true
+
+        # Javascript cannot be symlinked, must be fully copied, match js user
+        if [[ -d /home/production/cxgn/$SITE_OVERLAY/js/ ]]; then
+            js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+            echo "Overwriting js files as $js_user"
+            sudo -u $js_user rsync -avI /home/production/cxgn/$SITE_OVERLAY/js/* js/
+        fi
+    fi
+}
+
+apply_patches() {
+
+    # Use treeimprovementbase necessary and QOL improvements
+
+    tibase_dir=/home/production/cxgn/treeimprovementbase
+
+    echo "Using db/run_all_patches.pl from treeimprovementbase."
+    cp -f $tibase_dir/db/run_all_patches.pl db/run_all_patches.pl 2>/dev/null || true
+
+    echo "Using t/data/fixture/cxgn_fixture.sql from treeimprovementbase."
+    cp -f $tibase_dir/t/data/fixture/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql 2>/dev/null || true
+
+    echo "Using lib/CXGN/Contact.pm from treeimprovementbase."
+    cp -f $tibase_dir/lib/CXGN/Contact.pm lib/CXGN/Contact.pm 2>/dev/null || true
+
+    echo "Using lib/CXGN/BrAPI/v2/ExternalReferences.pm from treeimprovementbase."
+    cp -f $tibase_dir/lib/CXGN/BrAPI/v2/ExternalReferences.pm lib/CXGN/BrAPI/v2/ExternalReferences.pm 2>/dev/null || true
+
+    echo "Using js/ from treeimprovementbase."
+    js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+    sudo -u $js_user rsync -avI $tibase_dir/js/* js/ 2>/dev/null || true
+
+}
+
+initialize_database() {
+
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing Database"
+    echo "-------------------------------------------------------------------------"
+
+    # load empty fixture and run any missing patches
+    if [[ $(psql -lqt -h ${PGHOST} -U ${PGUSER} postgres | cut -d '|' -f1  | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//;' |  grep -w breedbase ) = '' ]]; then
+
+        # Create user
+        echo "Creating database user: web_usr";
+        if [[ -z $WEB_USR_PASSWORD || $WEB_USR_PASSWORD == "" ]]; then
+            WEB_USR_PASSWORD="postgres"
+        fi
+        psql -d postgres -c "CREATE USER web_usr PASSWORD '$WEB_USR_PASSWORD';" || true
+
+        # Create database
+        echo "Creating database: $PGDATABASE";
+        psql -d postgres -c "CREATE DATABASE $PGDATABASE;" || true
+
+        # Load starting db
+        patch_user=""
+        patch_start=""
+        if [ -e '/db_dumps/empty_breedbase.sql' ]
+        then
+            echo "Loading empty_breedbase dump";
+            psql -f /db_dumps/empty_breedbase.sql
+
+            if [[ ! -z $ADMIN_PASSWORD && $ADMIN_PASSWORD != "" ]]; then
+                echo "Creating secure admin password";
+                psql -c "update sgn_people.sp_person set password=sgn.crypt('$ADMIN_PASSWORD', sgn.gen_salt('bf', 6)) where first_name = 'admin'"
+            fi
+            patch_user="admin"
+            patch_start="1"
+        else
+            echo "Loading cxgn_fixture dump";
+            psql -f t/data/fixture/cxgn_fixture.sql
+            # The first patch the cxgn_fixture needs is 158 (AddCascadeDeletes. But that patch
+            # fails for the test fixture (currently). Since the run_all_patches.pl script will
+            # die immediately after a patch fails. Starting on patch 159 ensures it works.
+            patch_user="janedoe"
+            patch_start="159"
+        fi
+
+        # Run default patches
+        echo "Running default patches.";
+        tty_wrapper "db/run_all_patches.pl -e $patch_user -s $patch_start -p /home/production/cxgn/sgn/db/"
+
+        # Run site overlay patches
+        if [[ $SITE_OVERLAY != "" && $SITE_OVERLAY != "sgn" && -e /home/production/cxgn/$SITE_OVERLAY/patches ]]; then
+            echo "Running $SITE_OVERLAY patches"
+            tty_wrapper "db/run_all_patches.pl -e $patch_user -p /home/production/cxgn/$SITE_OVERLAY/patches"
+        fi
+    else
+        echo "Database $PGDATABASE already exists.";
+    fi
+}
+
+initialize_javascript() {
+
+    echo "-------------------------------------------------------------------------"
+    echo "Initializing javascript"
+    echo "-------------------------------------------------------------------------"
+
+    js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+
+    # Cleanup old builds
+    if [[ -d js/build ]]; then rm -rf js/build; fi
+
+    cd js
+    js_user=$(ls -l package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+
+    sudo -u $js_user npm config set engine-strict true
+    echo "Install npm packages"
+    sudo -u $js_user HOME=/tmp npm install --loglevel info
+    echo "Running webpack build..."
+    sudo -u $js_user HOME=/tmp node_modules/.bin/webpack --config build.webpack.config.js
+    #sudo -u $js_user HOME=/tmp npm run build
+    cd -
+}
+
+_main() {
+    start_system_services
+    initialize_user
+    initialize_directories
+    apply_site_overlay
+    apply_patches
+
+    if [[ $MODE != "TESTING" ]]; then
+        initialize_database
+    fi
+    initialize_javascript
+    touch ${setup_log}.finished
+}
+
+# check to see if this file is being run or sourced from another script
+_is_sourced() {
+	# https://unix.stackexchange.com/a/215279
+	[ "${#FUNCNAME[@]}" -ge 2 ] \
+		&& [ "${FUNCNAME[0]}" = '_is_sourced' ] \
+		&& [ "${FUNCNAME[1]}" = 'source' ]
+}
+
+# start the main function in the background, so the docker
+# engine knows the container is started and won't hang
+if ! _is_sourced; then
+	_main "$@" &
+fi
