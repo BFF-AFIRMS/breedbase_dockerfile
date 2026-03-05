@@ -6,8 +6,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        exclude: db_dumps/empty_breedbase.sql
 
       - id: end-of-file-fixer
+        exclude: db_dumps/empty_breedbase.sql
 
       - id: check-yaml
         args: ['--unsafe'] # Allow custom tags like !override
