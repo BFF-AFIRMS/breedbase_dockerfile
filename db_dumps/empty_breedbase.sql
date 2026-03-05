@@ -164,7 +164,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner:
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
@@ -178,7 +178,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA sgn;
 
 
 --
--- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner:
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
@@ -192,7 +192,7 @@ CREATE EXTENSION IF NOT EXISTS tablefunc WITH SCHEMA sgn;
 
 
 --
--- Name: EXTENSION tablefunc; Type: COMMENT; Schema: -; Owner:
+-- Name: EXTENSION tablefunc; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION tablefunc IS 'functions that manipulate whole tables, including crosstab';
@@ -250,7 +250,7 @@ CREATE FUNCTION public.create_materialized_markerview(refresh boolean) RETURNS b
 		emptyquery TEXT;
 		matviewquery TEXT;
 	BEGIN
-
+	
 		-- Remove exsiting materialized view, if it exists
 		DROP MATERIALIZED VIEW IF EXISTS public.materialized_markerview;
 
@@ -263,11 +263,11 @@ CREATE FUNCTION public.create_materialized_markerview(refresh boolean) RETURNS b
 				) AS species_abbreviation,
 				value->>'reference_genome_name' AS reference_genome,
 				replace(replace(value->>'reference_genome_name', '_', ''), ' ', '') AS reference_genome_cleaned
-			FROM nd_protocolprop
+			FROM nd_protocolprop 
 			WHERE type_id = (SELECT cvterm_id FROM public.cvterm WHERE name = 'vcf_map_details')
 			GROUP BY species, reference_genome
 		)
-
+		
 		-- Loop through each unique combination of species / reference genome and build the marker query
 		LOOP
 			querystr := 'SELECT nd_protocolprop.nd_protocol_id, ''' || maprow.species || ''' AS species_name, ''' || maprow.reference_genome || ''' AS reference_genome_name, s.value->>''name'' AS marker_name, s.value->>''chrom'' AS chrom, cast(coalesce(nullif(s.value->>''pos'',''''),NULL) as numeric) AS pos, s.value->>''ref'' AS ref, s.value->>''alt'' AS alt, CASE WHEN s.value->>''alt'' < s.value->>''ref'' THEN concat(''' || maprow.species_abbreviation || ''', ''' || maprow.reference_genome_cleaned || ''', ''_'', REGEXP_REPLACE(s.value->>''chrom'', ''^chr?'', ''''), ''_'', s.value->>''pos'', ''_'', s.value->>''alt'', ''_'', s.value->>''ref'') ELSE concat(''' || maprow.species_abbreviation || ''', ''' || maprow.reference_genome_cleaned || ''', ''_'', REGEXP_REPLACE(s.value->>''chrom'', ''^chr?'', ''''), ''_'', s.value->>''pos'', ''_'', s.value->>''ref'', ''_'', s.value->>''alt'') END AS variant_name FROM nd_protocolprop, LATERAL jsonb_each(nd_protocolprop.value) s(key, value) WHERE type_id = (SELECT cvterm_id FROM public.cvterm WHERE name = ''vcf_map_details_markers'') AND nd_protocol_id IN (SELECT nd_protocol_id FROM nd_protocolprop WHERE value->>''species_name'' = ''' || maprow.species || ''' and value->>''reference_genome_name'' = ''' || maprow.reference_genome || ''' AND type_id = (SELECT cvterm_id FROM public.cvterm WHERE name = ''vcf_map_details''))';
@@ -278,7 +278,7 @@ CREATE FUNCTION public.create_materialized_markerview(refresh boolean) RETURNS b
 		-- Add an empty query in case there is no existing marker data
 		emptyquery := 'SELECT column1::int AS nd_protocol_id, column2::text AS species_name, column3::text AS reference_genome_name, column4::text AS marker_name, column5::text AS chrom, column6::numeric AS pos, column7::text AS ref, column8::text AS alt, column9::text AS variant_name FROM (values (null,null,null,null,null,null,null,null,null)) AS x WHERE false';
 		queries := array_append(queries, emptyquery);
-
+		
 		-- Combine queries with a UNION
 		matviewquery := array_to_string(queries, ' UNION ');
 
@@ -708,8 +708,8 @@ ALTER FUNCTION public.featureloc_slice(integer, integer) OWNER TO postgres;
 
 CREATE FUNCTION public.featureloc_slice(integer, integer, integer) RETURNS SETOF public.featureloc
     LANGUAGE sql
-    AS $_$SELECT *
-   FROM featureloc
+    AS $_$SELECT * 
+   FROM featureloc 
    WHERE boxquery($2, $3) @ boxrange(fmin,fmax)
    AND srcfeature_id = $1 $_$;
 
@@ -722,8 +722,8 @@ ALTER FUNCTION public.featureloc_slice(integer, integer, integer) OWNER TO postg
 
 CREATE FUNCTION public.featureloc_slice(character varying, integer, integer) RETURNS SETOF public.featureloc
     LANGUAGE sql
-    AS $_$SELECT featureloc.*
-   FROM featureloc
+    AS $_$SELECT featureloc.* 
+   FROM featureloc 
    INNER JOIN feature AS srcf ON (srcf.feature_id = featureloc.srcfeature_id)
    WHERE boxquery($2, $3) @ boxrange(fmin,fmax)
    AND srcf.name = $1 $_$;
@@ -756,11 +756,11 @@ CREATE FUNCTION public.gffattstring(integer) RETURNS character varying
   name               varchar;
   uniquename         varchar;
   parent             varchar;
-  escape_loc         int;
+  escape_loc         int; 
 BEGIN
   --Get name from feature.name
   --Get ID from feature.uniquename
-
+                                                                                
   SELECT INTO feature_row * FROM feature WHERE feature_id = f_id;
   name  = feature_row.name;
   return_string = 'ID=' || feature_row.uniquename;
@@ -768,7 +768,7 @@ BEGIN
   THEN
     return_string = return_string ||';' || 'Name=' || name;
   END IF;
-
+                                                                                
   --Get Parent from feature_relationship
   SELECT INTO feature_row * FROM feature f, feature_relationship fr
     WHERE fr.subject_id = f_id AND fr.object_id = f.feature_id;
@@ -776,7 +776,7 @@ BEGIN
   THEN
     return_string = return_string||';'||'Parent='||feature_row.uniquename;
   END IF;
-
+                                                                                
   FOR atts_view IN SELECT * FROM gff3atts WHERE feature_id = f_id  LOOP
     escape_loc = position(';' in atts_view.attribute);
     IF escape_loc > 0 THEN
@@ -786,7 +786,7 @@ BEGIN
                      || atts_view.type || '='
                      || atts_view.attribute;
   END LOOP;
-
+                                                                                
   RETURN return_string;
 END;
 $_$;
@@ -1058,7 +1058,7 @@ COMMENT ON COLUMN public.feature_synonym.is_current IS 'the is_current boolean i
 -- Name: COLUMN feature_synonym.is_internal; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.feature_synonym.is_internal IS 'typically a synonym exists so that somebody querying the db with an obsolete name can find the object theyre looking for (under its current name.  If the synonym has been used publicly & deliberately (eg in a paper), it my also be listed in reports as a synonym.   If the synonym was not used deliberately (eg, there was a typo which went public), then the is_internal boolean may be set to -true- so that it is known that the
+COMMENT ON COLUMN public.feature_synonym.is_internal IS 'typically a synonym exists so that somebody querying the db with an obsolete name can find the object theyre looking for (under its current name.  If the synonym has been used publicly & deliberately (eg in a paper), it my also be listed in reports as a synonym.   If the synonym was not used deliberately (eg, there was a typo which went public), then the is_internal boolean may be set to -true- so that it is known that the 
 synonym is -internal- and should be queryable but should not be listed in reports as a valid synonym';
 
 
@@ -1304,7 +1304,7 @@ WHERE fs.feature_id= $1 AND fs.synonym_id = s.synonym_id
 UNION
 SELECT fp.feature_id,cv.name,fp.value
 FROM featureprop fp, cvterm cv
-WHERE fp.feature_id= $1 AND fp.type_id = cv.cvterm_id
+WHERE fp.feature_id= $1 AND fp.type_id = cv.cvterm_id 
 UNION
 SELECT feature_id, 'pub' AS type, s.series_name || ':' || s.title AS attribute
 FROM pub s, feature_pub fs
@@ -1328,9 +1328,9 @@ DECLARE
   bt_schema VARCHAR;
 BEGIN
   bt_schema = scm || '_bt';
-  query = 'SELECT relname
+  query = 'SELECT relname 
              FROM pg_class c, pg_namespace n
-            WHERE c.relnamespace=n.oid
+            WHERE c.relnamespace=n.oid 
               AND c.relkind=''r''
               AND n.nspname=''' || bt_schema || '''';
 --  RAISE NOTICE '%', query; --stmt;
@@ -1444,7 +1444,7 @@ CREATE FUNCTION public.store_feature(character varying) RETURNS integer
       FROM feature
       WHERE feature.accession = paccession;
     IF NOT FOUND THEN
-      INSERT INTO feature
+      INSERT INTO feature 
        (accession)
          VALUES
        (paccession);
@@ -1452,7 +1452,7 @@ CREATE FUNCTION public.store_feature(character varying) RETURNS integer
     END IF;
     UPDATE feature
       SET
-
+         
       WHERE
          feature.accession = paccession
 
@@ -1495,7 +1495,7 @@ CREATE FUNCTION public.store_feature(character varying, character varying, integ
             feature.md5checksum = pmd5checksum AND
             feature.type_id = ptype_id;
     IF NOT FOUND THEN
-      INSERT INTO feature
+      INSERT INTO feature 
        (name, accession, fmin, fmax, fstrand, residues, seqlen, md5checksum, type_id)
          VALUES
        (pname, paccession, pfmin, pfmax, pfstrand, presidues, pseqlen, pmd5checksum, ptype_id);
@@ -1503,7 +1503,7 @@ CREATE FUNCTION public.store_feature(character varying, character varying, integ
     END IF;
     UPDATE feature
       SET
-
+         
       WHERE
          feature.name = pname AND
             feature.accession = paccession AND
@@ -1542,7 +1542,7 @@ CREATE FUNCTION public.store_feature_cvterm(integer, integer, integer) RETURNS i
             feature_cvterm.cvterm_id = pcvterm_id AND
             feature_cvterm.pub_id = ppub_id;
     IF NOT FOUND THEN
-      INSERT INTO feature_cvterm
+      INSERT INTO feature_cvterm 
        (feature_id, cvterm_id, pub_id)
          VALUES
        (pfeature_id, pcvterm_id, ppub_id);
@@ -1550,7 +1550,7 @@ CREATE FUNCTION public.store_feature_cvterm(integer, integer, integer) RETURNS i
     END IF;
     UPDATE feature_cvterm
       SET
-
+         
       WHERE
          feature_cvterm.feature_id = pfeature_id AND
             feature_cvterm.cvterm_id = pcvterm_id AND
@@ -1580,7 +1580,7 @@ CREATE FUNCTION public.store_feature_dbxref(integer) RETURNS integer
       WHERE feature_dbxref.feature_dbxref_id = pfeature_dbxref_id AND
             feature_dbxref.dbxref_id = pdbxref_id;
     IF NOT FOUND THEN
-      INSERT INTO feature_dbxref
+      INSERT INTO feature_dbxref 
        (dbxref_id)
          VALUES
        (pdbxref_id);
@@ -1588,7 +1588,7 @@ CREATE FUNCTION public.store_feature_dbxref(integer) RETURNS integer
     END IF;
     UPDATE feature_dbxref
       SET
-
+         
       WHERE
          feature_dbxref.feature_dbxref_id = pfeature_dbxref_id AND
             feature_dbxref.dbxref_id = pdbxref_id
@@ -1620,7 +1620,7 @@ CREATE FUNCTION public.store_feature_relationship(integer, integer, integer) RET
             feature_relationship.obj_feature_id = pobj_feature_id AND
             feature_relationship.type_id = ptype_id;
     IF NOT FOUND THEN
-      INSERT INTO feature_relationship
+      INSERT INTO feature_relationship 
        (subj_feature_id, obj_feature_id, type_id)
          VALUES
        (psubj_feature_id, pobj_feature_id, ptype_id);
@@ -1628,7 +1628,7 @@ CREATE FUNCTION public.store_feature_relationship(integer, integer, integer) RET
     END IF;
     UPDATE feature_relationship
       SET
-
+         
       WHERE
          feature_relationship.subj_feature_id = psubj_feature_id AND
             feature_relationship.obj_feature_id = pobj_feature_id AND
@@ -1663,7 +1663,7 @@ CREATE FUNCTION public.store_featureprop(integer, integer, text, integer) RETURN
             featureprop.pval = ppval AND
             featureprop.prank = pprank;
     IF NOT FOUND THEN
-      INSERT INTO featureprop
+      INSERT INTO featureprop 
        (feature_id, pkey_id, pval, prank)
          VALUES
        (pfeature_id, ppkey_id, ppval, pprank);
@@ -1671,7 +1671,7 @@ CREATE FUNCTION public.store_featureprop(integer, integer, text, integer) RETURN
     END IF;
     UPDATE featureprop
       SET
-
+         
       WHERE
          featureprop.feature_id = pfeature_id AND
             featureprop.pkey_id = ppkey_id AND
@@ -1703,7 +1703,7 @@ CREATE FUNCTION public.store_featureprop_pub(integer, integer) RETURNS integer
       WHERE featureprop_pub.featureprop_id = pfeatureprop_id AND
             featureprop_pub.pub_id = ppub_id;
     IF NOT FOUND THEN
-      INSERT INTO featureprop_pub
+      INSERT INTO featureprop_pub 
        (featureprop_id, pub_id)
          VALUES
        (pfeatureprop_id, ppub_id);
@@ -1711,7 +1711,7 @@ CREATE FUNCTION public.store_featureprop_pub(integer, integer) RETURNS integer
     END IF;
     UPDATE featureprop_pub
       SET
-
+         
       WHERE
          featureprop_pub.featureprop_id = pfeatureprop_id AND
             featureprop_pub.pub_id = ppub_id
@@ -1739,7 +1739,7 @@ CREATE FUNCTION public.store_gene(character varying) RETURNS integer
       FROM gene
       WHERE gene.name = pname;
     IF NOT FOUND THEN
-      INSERT INTO gene
+      INSERT INTO gene 
        (name)
          VALUES
        (pname);
@@ -1747,7 +1747,7 @@ CREATE FUNCTION public.store_gene(character varying) RETURNS integer
     END IF;
     UPDATE gene
       SET
-
+         
       WHERE
          gene.name = pname
 
@@ -1776,7 +1776,7 @@ CREATE FUNCTION public.store_gene_feature(integer, integer) RETURNS integer
       WHERE gene_feature.gene_id = pgene_id AND
             gene_feature.feature_id = pfeature_id;
     IF NOT FOUND THEN
-      INSERT INTO gene_feature
+      INSERT INTO gene_feature 
        (gene_id, feature_id)
          VALUES
        (pgene_id, pfeature_id);
@@ -1784,7 +1784,7 @@ CREATE FUNCTION public.store_gene_feature(integer, integer) RETURNS integer
     END IF;
     UPDATE gene_feature
       SET
-
+         
       WHERE
          gene_feature.gene_id = pgene_id AND
             gene_feature.feature_id = pfeature_id
@@ -1816,7 +1816,7 @@ CREATE FUNCTION public.store_gene_genesynonym(integer, integer, integer) RETURNS
             gene_genesynonym.gene_id = pgene_id AND
             gene_genesynonym.pub_id = ppub_id;
     IF NOT FOUND THEN
-      INSERT INTO gene_genesynonym
+      INSERT INTO gene_genesynonym 
        (genesynonym_id, gene_id, pub_id)
          VALUES
        (pgenesynonym_id, pgene_id, ppub_id);
@@ -1824,7 +1824,7 @@ CREATE FUNCTION public.store_gene_genesynonym(integer, integer, integer) RETURNS
     END IF;
     UPDATE gene_genesynonym
       SET
-
+         
       WHERE
          gene_genesynonym.genesynonym_id = pgenesynonym_id AND
             gene_genesynonym.gene_id = pgene_id AND
@@ -1853,7 +1853,7 @@ CREATE FUNCTION public.store_genesynonym(character varying) RETURNS integer
       FROM genesynonym
       WHERE genesynonym.gsynonym = pgsynonym;
     IF NOT FOUND THEN
-      INSERT INTO genesynonym
+      INSERT INTO genesynonym 
        (gsynonym)
          VALUES
        (pgsynonym);
@@ -1861,7 +1861,7 @@ CREATE FUNCTION public.store_genesynonym(character varying) RETURNS integer
     END IF;
     UPDATE genesynonym
       SET
-
+         
       WHERE
          genesynonym.gsynonym = pgsynonym
 
@@ -1948,7 +1948,7 @@ END IF;
 
 -- Get a string representation of the column names.
 SELECT array_to_string(array(SELECT quote_ident(attname)
-                               FROM pg_class c,
+                               FROM pg_class c, 
                                     pg_attribute a,
                                     pg_namespace n
                               WHERE c.relnamespace = n.oid
@@ -1957,12 +1957,12 @@ SELECT array_to_string(array(SELECT quote_ident(attname)
                                 AND a.attname NOT IN ('cxgn_production_visible')
                                 AND nspname = bt_schema
                                 AND c.relname = tbl
-                                AND a.attnum > 0
+                                AND a.attnum > 0 
                            ORDER BY attnum), ', ')
    INTO cols;
 
  SELECT (SELECT adsrc
-           FROM pg_class c,
+           FROM pg_class c, 
                  pg_attribute a,
                  pg_namespace n,
                  pg_constraint t,
@@ -1972,7 +1972,7 @@ SELECT array_to_string(array(SELECT quote_ident(attname)
     AND t.conrelid = c.oid
     AND t.contype = 'p'
     AND array_upper(t.conkey, 1)=1
-    AND t.conkey[1]=a.attnum
+    AND t.conkey[1]=a.attnum      
     AND d.adrelid = c.oid
     AND d.adnum = a.attnum
     AND a.attname NOT IN ('cxgn_production_visible')
@@ -1992,9 +1992,9 @@ END IF;
 
 -- Get a string representation of the non-primary key columns
 -- of the pseudotable NEW (see the Pg Rules documentation for NEW).
-SELECT pkey_ins || ', ' ||
+SELECT pkey_ins || ', ' || 
        array_to_string(array(SELECT 'NEW.' || quote_ident(attname)
-                               FROM pg_class c
+                               FROM pg_class c 
                                JOIN pg_attribute a ON (a.attrelid = c.oid)
                                JOIN pg_namespace n ON (c.relnamespace = n.oid)
                               WHERE a.attname NOT IN ('cxgn_production_visible')
@@ -2002,19 +2002,19 @@ SELECT pkey_ins || ', ' ||
                                 AND a.attisdropped = 'f'
                                 AND nspname = bt_schema
                                 AND c.relname = tbl
-                                AND a.attnum > 0
+                                AND a.attnum > 0 
                              ORDER BY attnum), ', ')
   INTO ins_cols;
 
 IF ins_cols IS NULL THEN
   RAISE NOTICE 'This table doesn''t have any non-primary key columns.';
   RETURN 'f';
-END IF;
+END IF;     
 
 -- Get a string representation of the update list for all the
 -- non-primary key columns.
 SELECT array_to_string(array(SELECT quote_ident(attname) || ' = NEW.' || quote_ident(attname)
-                               FROM pg_class c,
+                               FROM pg_class c, 
                                     pg_attribute a,
                                     pg_namespace n
                               WHERE c.relnamespace = n.oid
@@ -2024,7 +2024,7 @@ SELECT array_to_string(array(SELECT quote_ident(attname) || ' = NEW.' || quote_i
                                 AND a.attisdropped = 'f'
                                 AND nspname = bt_schema
                                 AND c.relname = tbl
-                                AND a.attnum > 0
+                                AND a.attnum > 0 
                            ORDER BY attnum), ', ')
           INTO upd_cols;
 
@@ -2060,12 +2060,12 @@ EXECUTE stmt;
 --      Restore old privileges on views.  XXX doesn't actually work.
 --SELECT relname INTO dropped_view_privs FROM pg_class WHERE relname='dropped_view_privs';
 --IF dropped_view_privs IS NOT NULL THEN
---  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace)
+--  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace) 
 --WHERE c.relname=' || tbl || ' AND n.nspname=' || prod_schema;
 --          EXECUTE stmt;
 --  stmt='UPDATE pg_class SET relacl=(SELECT relacl FROM dropped_view_privs WHERE relname=' || tbl || ' AND nspname=' prod_schema ') WHERE oid=' || new_view_oid;
 --          EXECUTE stmt;
---  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace)
+--  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace) 
 --WHERE c.relname=' || tbl || ' AND n.nspname=' || prod_schema;
 --          EXECUTE stmt;
 --          stmt= 'UPDATE pg_class SET relacl=(SELECT relacl FROM dropped_view_privs WHERE relname=' || tbl || ' AND nspname=' prod_schema ') WHERE oid=' || new_view_oid;
@@ -2118,7 +2118,7 @@ END IF;
 
 -- Get a string representation of the column names.
 SELECT array_to_string(array(SELECT quote_ident(attname)
-                               FROM pg_class c,
+                               FROM pg_class c, 
                                     pg_attribute a,
                                     pg_namespace n
                               WHERE c.relnamespace = n.oid
@@ -2127,12 +2127,12 @@ SELECT array_to_string(array(SELECT quote_ident(attname)
                                 AND a.attname NOT IN ('cxgn_production_visible')
                                 AND nspname = bt_schema
                                 AND c.relname = tbl
-                                AND a.attnum > 0
+                                AND a.attnum > 0 
                            ORDER BY attnum), ', ')
    INTO cols;
 
  SELECT (SELECT adsrc
-           FROM pg_class c,
+           FROM pg_class c, 
                  pg_attribute a,
                  pg_namespace n,
                  pg_constraint t,
@@ -2142,7 +2142,7 @@ SELECT array_to_string(array(SELECT quote_ident(attname)
     AND t.conrelid = c.oid
     AND t.contype = 'p'
     AND array_upper(t.conkey, 1)=1
-    AND t.conkey[1]=a.attnum
+    AND t.conkey[1]=a.attnum      
     AND d.adrelid = c.oid
     AND d.adnum = a.attnum
     AND a.attname NOT IN ('cxgn_production_visible')
@@ -2162,9 +2162,9 @@ END IF;
 
 -- Get a string representation of the non-primary key columns
 -- of the pseudotable NEW (see the Pg Rules documentation for NEW).
-SELECT pkey_ins || ', ' ||
+SELECT pkey_ins || ', ' || 
        array_to_string(array(SELECT 'NEW.' || quote_ident(attname)
-                               FROM pg_class c
+                               FROM pg_class c 
                                JOIN pg_attribute a ON (a.attrelid = c.oid)
                                JOIN pg_namespace n ON (c.relnamespace = n.oid)
                               WHERE a.attname NOT IN ('cxgn_production_visible')
@@ -2172,19 +2172,19 @@ SELECT pkey_ins || ', ' ||
                                 AND a.attisdropped = 'f'
                                 AND nspname = bt_schema
                                 AND c.relname = tbl
-                                AND a.attnum > 0
+                                AND a.attnum > 0 
                              ORDER BY attnum), ', ')
   INTO ins_cols;
 
 IF ins_cols IS NULL THEN
   RAISE NOTICE 'This table doesn''t have any non-primary key columns.';
   RETURN 'f';
-END IF;
+END IF;     
 
 -- Get a string representation of the update list for all the
 -- non-primary key columns.
 SELECT array_to_string(array(SELECT quote_ident(attname) || ' = NEW.' || quote_ident(attname)
-                               FROM pg_class c,
+                               FROM pg_class c, 
                                     pg_attribute a,
                                     pg_namespace n
                               WHERE c.relnamespace = n.oid
@@ -2194,7 +2194,7 @@ SELECT array_to_string(array(SELECT quote_ident(attname) || ' = NEW.' || quote_i
                                 AND a.attisdropped = 'f'
                                 AND nspname = bt_schema
                                 AND c.relname = tbl
-                                AND a.attnum > 0
+                                AND a.attnum > 0 
                            ORDER BY attnum), ', ')
           INTO upd_cols;
 
@@ -2247,12 +2247,12 @@ END IF;
 --      Restore old privileges on views.  XXX doesn't actually work.
 --SELECT relname INTO dropped_view_privs FROM pg_class WHERE relname='dropped_view_privs';
 --IF dropped_view_privs IS NOT NULL THEN
---  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace)
+--  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace) 
 --WHERE c.relname=' || tbl || ' AND n.nspname=' || prod_schema;
 --          EXECUTE stmt;
 --  stmt='UPDATE pg_class SET relacl=(SELECT relacl FROM dropped_view_privs WHERE relname=' || tbl || ' AND nspname=' prod_schema ') WHERE oid=' || new_view_oid;
 --          EXECUTE stmt;
---  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace)
+--  stmt='SELECT oid INTO new_view_oid FROM pg_class c JOIN pg_namespace n ON (n.oid=c.relnamespace) 
 --WHERE c.relname=' || tbl || ' AND n.nspname=' || prod_schema;
 --          EXECUTE stmt;
 --          stmt= 'UPDATE pg_class SET relacl=(SELECT relacl FROM dropped_view_privs WHERE relname=' || tbl || ' AND nspname=' prod_schema ') WHERE oid=' || new_view_oid;
@@ -2361,9 +2361,9 @@ DECLARE
   bt_schema VARCHAR;
 BEGIN
   bt_schema = scm || '_bt';
-  query = 'SELECT relname
+  query = 'SELECT relname 
              FROM pg_class c, pg_namespace n
-            WHERE c.relnamespace=n.oid
+            WHERE c.relnamespace=n.oid 
               AND c.relkind=''r''
               AND n.nspname=''' || bt_schema || '''';
 --  RAISE NOTICE '%', query; --stmt;
@@ -10791,7 +10791,7 @@ COMMENT ON TABLE public.genotype IS 'Genetic context. A genotype is defined by a
 -- Name: COLUMN genotype.name; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.genotype.name IS 'Optional alternative name for a genotype,
+COMMENT ON COLUMN public.genotype.name IS 'Optional alternative name for a genotype, 
 for display purposes.';
 
 
@@ -10799,7 +10799,7 @@ for display purposes.';
 -- Name: COLUMN genotype.uniquename; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.genotype.uniquename IS 'The unique name for a genotype;
+COMMENT ON COLUMN public.genotype.uniquename IS 'The unique name for a genotype; 
 typically derived from the features making up the genotype.';
 
 
@@ -16851,7 +16851,7 @@ ALTER TABLE public.phylonode_relationship OWNER TO postgres;
 -- Name: TABLE phylonode_relationship; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.phylonode_relationship IS 'This is for
+COMMENT ON TABLE public.phylonode_relationship IS 'This is for 
 relationships that are not strictly hierarchical; for example,
 horizontal gene transfer. Most phylogenetic trees are strictly
 hierarchical, nevertheless it is here for completeness.';
@@ -30882,10 +30882,10 @@ COPY public.cv (cv_id, name, definition) FROM stdin;
 40	taxonomy	\N
 41	organism_property	\N
 42	genotype_property	\N
-45	list_types
+45	list_types	
 46	stock_property	\N
-47	project_type
-48	trait_property
+47	project_type	
+48	trait_property	
 50	publication	\N
 35	experiment_type	\N
 36	stock_type	\N
@@ -270479,3 +270479,4 @@ REFRESH MATERIALIZED VIEW public.materialized_stockprop;
 --
 -- PostgreSQL database dump complete
 --
+
