@@ -133,24 +133,33 @@ initialize_directories() {
 
 apply_site_overlay() {
 
-    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && $SITE_OVERLAY != "sgn" && -e /home/production/cxgn/$SITE_OVERLAY ]]; then
+    site_overlay_dir="/home/production/cxgn/$SITE_OVERLAY"
+    if [[ ! -z $SITE_OVERLAY && $SITE_OVERLAY != "" && $SITE_OVERLAY != "sgn" && -e $site_overlay_dir ]]; then
 
         echo "-------------------------------------------------------------------------"
         echo "Applying Site Overlay: $SITE_OVERLAY"
         echo "-------------------------------------------------------------------------"
+
+        if [[ $SITE_OVERLAY == "treeimprovementbase" ]]; then
+            site_overlay_user=$(ls -ld $site_overlay_dir | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
+            echo "Building treeimprovementbase svelte app"
+            cd $site_overlay_dir
+            sudo -u $site_overlay_user ./build_sgn
+            cd -
+        fi
 
         # Symlink files from the site overlay, match the sgn directory user
         dir_user=$(ls -ld /home/production/cxgn/sgn | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
         echo "Symlinking files as $dir_user"
 
         # Might get errors about conf template files, because those are managed by docker
-        sudo -u $dir_user cp --force --archive --recursive --symbolic-link /home/production/cxgn/$SITE_OVERLAY/* /home/production/cxgn/sgn 2>/dev/null || true
+        sudo -u $dir_user cp --force --archive --recursive --symbolic-link $site_overlay_dir/* /home/production/cxgn/sgn 2>/dev/null || true
 
         # Javascript cannot be symlinked, must be fully copied, match js user
-        if [[ -d /home/production/cxgn/$SITE_OVERLAY/js/ ]]; then
+        if [[ -d $site_overlay_dir/js/ ]]; then
             js_user=$(ls -l js/package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
             echo "Overwriting js files as $js_user"
-            sudo -u $js_user rsync -avI /home/production/cxgn/$SITE_OVERLAY/js/* js/
+            sudo -u $js_user rsync -avI $site_overlay_dir/js/* js/
         fi
     fi
 }
