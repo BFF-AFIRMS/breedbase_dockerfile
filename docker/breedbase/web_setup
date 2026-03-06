@@ -144,7 +144,7 @@ apply_site_overlay() {
             site_overlay_user=$(ls -ld $site_overlay_dir | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
             echo "Building treeimprovementbase svelte app"
             cd $site_overlay_dir
-            sudo -u $site_overlay_user ./build_sgn
+            sudo -E -u $site_overlay_user ./build_sgn
             cd -
         fi
 
