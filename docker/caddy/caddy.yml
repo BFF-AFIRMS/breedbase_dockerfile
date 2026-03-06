@@ -1,0 +1,73 @@
+volumes:
+  staticdata:
+  jsdata:
+
+services:
+
+  caddy:
+    hostname: caddy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bffafirms/caddy:2.10.2
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CAP_NET_BIND_SERVICE
+      - CAP_NET_ADMIN
+    user: ${USER_GROUP_ID}
+    environment:
+      USER_GROUP_ID:   ${USER_GROUP_ID:?}
+      DOMAIN_NAME:     ${DOMAIN_NAME:-localhost}
+    expose:
+      - 80
+      - 443
+    ports: ["80:80", "443:443"]
+    healthcheck:
+      test: curl -f http://localhost:2019/config/
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    volumes:
+
+      - staticdata:/data/breedbase/static
+      - jsdata:/data/breedbase/js
+
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/caddy
+        target: /data/caddy
+        bind:
+          create_host_path: false
+
+      # Jbrowse web application
+      - type: bind
+        source: $PWD/data/jbrowse/app
+        target: /srv/www/jbrowse2
+        bind:
+          create_host_path: false
+
+      # Jbrowse genomic data
+      - type: bind
+        source: $PWD/data/jbrowse/data
+        target: /data/jbrowse
+        bind:
+          create_host_path: false

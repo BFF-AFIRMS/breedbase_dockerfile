@@ -1,0 +1,94 @@
+{
+  "assemblies": [
+    {
+      "name": "Virus Demo",
+      "sequence": {
+        "type": "ReferenceSequenceTrack",
+        "trackId": "virus_demo_genomic_sequence",
+        "name": "Reference Sequence",
+        "adapter": {
+          "type": "IndexedFastaAdapter",
+          "fastaLocation": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/bacteria_demo/reference.fasta.gz",
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/virus_demo/reference.fasta.gz"
+          },
+          "faiLocation": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/virus_demo/reference.fasta.gz.fai"
+          },
+          "gziLocation": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/virus_demo/reference.fasta.gz.gzi"
+          }
+        }
+      }
+    },
+    {
+      "name": "Bacteria Demo",
+      "sequence": {
+        "type": "ReferenceSequenceTrack",
+        "trackId": "bacteria_demo_genomic_sequence",
+        "name": "Reference Sequence",
+        "adapter": {
+          "type": "BgzipFastaAdapter",
+          "fastaLocation": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/bacteria_demo/reference.fasta.gz"
+          },
+          "faiLocation": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/bacteria_demo/reference.fasta.gz.fai"
+          },
+          "gziLocation": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/bacteria_demo/reference.fasta.gz.gzi"
+          }
+        }
+      }
+    }
+  ],
+  "configuration": {},
+  "connections": [],
+  "defaultSession": {},
+  "tracks": [
+    {
+      "type": "FeatureTrack",
+      "trackId": "virus_demo_annotations",
+      "name": "Genes",
+      "adapter": {
+        "type": "Gff3TabixAdapter",
+        "gffGzLocation": {
+          "uri": "https://{DOMAIN_NAME}/jbrowse/data/virus_demo/annotations.gff.gz",
+          "locationType": "UriLocation"
+        },
+        "index": {
+          "location": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/virus_demo/annotations.gff.gz.tbi",
+            "locationType": "UriLocation"
+          },
+          "indexType": "TBI"
+        }
+      },
+      "assemblyNames": [
+        "Virus Demo"
+      ]
+    },
+    {
+      "type": "FeatureTrack",
+      "trackId": "bacteria_demo_annotations",
+      "name": "Genes",
+      "adapter": {
+        "type": "Gff3TabixAdapter",
+        "gffGzLocation": {
+          "uri": "https://{DOMAIN_NAME}/jbrowse/data/bacteria_demo/annotations.gff.gz",
+          "locationType": "UriLocation"
+        },
+        "index": {
+          "location": {
+            "uri": "https://{DOMAIN_NAME}/jbrowse/data/bacteria_demo/annotations.gff.gz.tbi",
+            "locationType": "UriLocation"
+          },
+          "indexType": "TBI"
+        }
+      },
+      "assemblyNames": [
+        "Bacteria Demo"
+      ]
+    }
+  ]
+}

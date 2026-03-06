@@ -1,0 +1,6 @@
+#!/bin/bash
+
+args=$@
+
+sed -E "s|(\s+command).*|\1: \[\"$args\"\]|g" compose.testing.yml > compose.tmp.yml
+docker compose -f compose.tmp.yml up breedbase
