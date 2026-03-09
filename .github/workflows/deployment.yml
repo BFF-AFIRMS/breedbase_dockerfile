@@ -65,11 +65,11 @@ jobs:
 
       - name: DB container log
         if: always()
-        run: docker compose -f compose.${{ matrix.mode }}.yml logs ${{ matrix.mode }}-breedbase_db-1
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase_db
 
       - name: Web container log
         if: always()
-        run: docker compose -f compose.${{ matrix.mode }}.yml logs ${{ matrix.mode }}-breedbase-1
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase
 
       - name: Stop containers
         run: docker compose down
