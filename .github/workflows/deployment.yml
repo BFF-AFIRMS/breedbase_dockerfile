@@ -64,11 +64,11 @@ jobs:
           require-healthy: true
 
       - name: DB container log
-        if: always
+        if: always()
         run: docker compose -f compose.${{ matrix.mode }}.yml logs ${{ matrix.mode }}-breedbase_db-1
 
       - name: Web container log
-        if: always
+        if: always()
         run: docker compose -f compose.${{ matrix.mode }}.yml logs ${{ matrix.mode }}-breedbase-1
 
       - name: Stop containers
