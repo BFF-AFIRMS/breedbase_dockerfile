@@ -140,11 +140,13 @@ apply_site_overlay() {
         echo "Applying Site Overlay: $SITE_OVERLAY"
         echo "-------------------------------------------------------------------------"
 
+        echo "Changing site overlay ownership to sgn"
+        chown -R sgn:sgn $site_overlay_dir
+
         if [[ $SITE_OVERLAY == "treeimprovementbase" ]]; then
-            site_overlay_user=$(ls -ld $site_overlay_dir | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
             echo "Building treeimprovementbase svelte app"
             cd $site_overlay_dir
-            sudo -E -u $site_overlay_user ./build_sgn
+            sudo -E -u sgn ./build_sgn
             cd -
         fi
 

@@ -1,4 +1,5 @@
 **/.git
+**/*node_modules/
 cxgn/sgn/js/node_modules
 cxgn/sgn/js/build
 cxgn/sgn/js/package-lock.json
