@@ -31,11 +31,22 @@
 	}
 
 	handle {
+		# svelte files from treeimprovementbase
+		@svelte path /svelte/_app/*
+		handle @svelte {
+			uri strip_prefix /svelte
+			root * /home/production/cxgn/treeimprovementbase/svelte/build
+			file_server
+		}
+
+		# static files from breedbase sgn
 		@static path /css/* /documents/* /img/*
 		handle @static {
 			root * /data/breedbase/static
 			file_server
 		}
+
+		# javascript files from breedbase sgn
 		@js path /js/legacy/* /js/source/legacy/*
 		handle @js {
 			uri strip_prefix /js/legacy

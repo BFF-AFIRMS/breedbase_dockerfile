@@ -45,6 +45,7 @@ services:
 
       - staticdata:/data/breedbase/static
       - jsdata:/data/breedbase/js
+      - treeimprovementbase:/home/production/cxgn/treeimprovementbase
 
       - type: bind
         source: ./Caddyfile
@@ -71,3 +72,5 @@ services:
         target: /data/jbrowse
         bind:
           create_host_path: false
+    
+

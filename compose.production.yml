@@ -25,3 +25,6 @@ services:
       PGPASSWORD:        ${PGPASSWORD:?}        # Database password for 'postgres' superuser
       WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Database password for 'web_usr'
       ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user
+    volumes:
+      - jsdata:/home/production/cxgn/sgn/js
+      - treeimprovementbase:/home/production/cxgn/treeimprovementbase
