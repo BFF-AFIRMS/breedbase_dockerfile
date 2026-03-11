@@ -72,5 +72,3 @@ services:
         target: /data/jbrowse
         bind:
           create_host_path: false
-    
-
