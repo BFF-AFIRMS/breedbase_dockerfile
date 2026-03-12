@@ -53,6 +53,7 @@ start_sgn_server() {
         echo "Updating template file: sgn_local_template.conf"
         sed \
             -e "s/{PGDATABASE}/$PGDATABASE/g" \
+            -e "s/{PGHOST}/$PGHOST/g" \
             -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
             -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
             sgn_local_template.conf \

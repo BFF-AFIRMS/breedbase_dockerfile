@@ -32,15 +32,15 @@ services:
         bind:
           create_host_path: false
 
-      # # mount scripts when developing the docker image itself
-      # - type: bind
-      #   source: ./docker/breedbase/web_entrypoint.sh
-      #   target: /entrypoint.sh
-      #   bind:
-      #     create_host_path: false
+      # mount scripts when developing the docker image itself
+      - type: bind
+        source: ./docker/breedbase/web_entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false
 
-      # - type: bind
-      #   source: ./docker/breedbase/web_setup
-      #   target: /usr/local/bin/web_setup
-      #   bind:
-      #     create_host_path: false
+      - type: bind
+        source: ./docker/breedbase/web_setup
+        target: /usr/local/bin/web_setup
+        bind:
+          create_host_path: false
