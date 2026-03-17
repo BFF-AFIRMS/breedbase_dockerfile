@@ -4,6 +4,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/bff-afirms/breedbase_dockerfile.svg)](https://github.com/phac-nml/rebar/issues)
 [![Test CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml)
 [![Deployment CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml)
+[![Dockerhub CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/dockerhub.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/dockerhub.yml)
 
 <p align="center">
   <img src="Breedbase.png" alt="breedbase logo">
@@ -266,7 +267,60 @@ Tests can be run in `interactive` mode, where the same database and web server a
 
 ## Updating
 
-To update with the latest changes from the [upstream repo](https://github.com/solgenomics/breedbase_dockerfile).
+To update to the latest changes from the [upstream repo](https://github.com/solgenomics/breedbase_dockerfile).
+
+1. Update the `master` branch to have the latest changes from the [upstream repo](https://github.com/solgenomics/breedbase_dockerfile).
+
+    ```bash
+    git checkout master
+    git remote add upstream https://github.com/solgenomics/breedbase_dockerfile
+    git pull upstream master
+    git pull upstream --tags
+    ```
+
+2. Checkout the commit or tag you want to update to.
+
+    ```bash
+    # sgn-447.0 = breedbase_dockerfile v1.98
+    git checkout v1.98
+    ```
+
+3. Create a new branch off of `bff-afirms`.
+
+    ```bash
+    git checkout bff-afirms
+    git submodule update --recursive --progress --init
+    git checkout -b bff-afirms-sgn-447.0
+    ```
+
+4. Merge the upstream changes into the new branch.
+
+    > Do not rebase!
+
+    ```bash
+    git checkout bff-afirms-sgn-447.0
+    git merge master
+    ```
+
+5. Push to GitHub.
+
+    ```bash
+    git push --set-upstream origin bff-afirms-sgn-447.0
+    ```
+
+6. Open a pull request.
+
+    ```yaml
+    Base Repository: BFF-AFIRMS/breedbase_dockerfile
+    Base: bff-afirms
+    Compare: bff-afirms-sgn-447.0
+    ```
+
+    There will be a larger number of commits in the history, because the BFF-AFIRMS branch split off of the upstream at version `sgn-444.0`. These will be squashed into one final commit reflecting the single update.
+
+7. Confirm that the tests all pass before `Squash and Merge`.
+
+You have now successfully updated to the latest SGN changes while keeping the BFF-AFIRMS features.
 
 ## Debugging
 
@@ -306,7 +360,6 @@ The db patches can be run individually by changing into the specific directory, 
 The database can be updated to the current level in one step (recommended method) by running the ```run_all_patches.pl``` script in the ```db/``` directory, which calls all the db patches individually. If you are using the standard docker compose setup, the command line is (options in square brackets are optional):
 
 ```bash
-cd db;
 perl db/run_all_patches.pl -e admin [-s <startfrom>] [--test]
 ```
 
@@ -320,7 +373,7 @@ export PERL5LIB=$PERL5LIB:.
 
 The original [breedbase_dockerfile repository](https://github.com/solgenomics/breedbase_dockerfile) is built by Dr. Lukas Mueller's lab at the [Boyce Thompson Institute](https://btiscience.org/). For a full list of contributors, please  see [this link](https://github.com/solgenomics/breedbase_dockerfile/graphs/contributors).
 
-This fork is maintained by [Katherine Eaton](https://ktmeaton.github.io/) through Dr. Barb Thomas's [Tree Improvement Lab](https://people.ales.ualberta.ca/barbthomas/) at the [University of Alberta](https://www.ualberta.ca/).
+This fork is maintained by [Katherine Eaton](https://ktmeaton.github.io/) through Dr. Barb Thomas' [Tree Improvement Lab](https://people.ales.ualberta.ca/barbthomas/) at the [University of Alberta](https://www.ualberta.ca/).
 
 ## License
 
