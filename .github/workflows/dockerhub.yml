@@ -1,5 +1,5 @@
-# Re-usable workflow to test deployments
-name: Deployment
+# Re-usable workflow to check dockerhub pull
+name: Dockerhub
 
 on:
   workflow_call:
@@ -27,9 +27,7 @@ jobs:
       matrix:
         include:
           - mode: quickstart
-          - mode: development
           - mode: production
-          - mode: testing
 
     steps:
 
@@ -43,7 +41,7 @@ jobs:
           ln -s compose.yml compose.quickstart.yml
 
       - name: Build container image
-        run: docker build -t bffafirms/breedbase:latest .
+        run: docker pull bffafirms/breedbase:latest
 
       # ---------------------------------------------------------------------------
       # No Overlay
