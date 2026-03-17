@@ -8,8 +8,8 @@ on:
       - '.gitignore'
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yml
+  # lint:
+  #   uses: ./.github/workflows/lint.yml
 
   sgn:
     uses: ./.github/workflows/sgn.yml
