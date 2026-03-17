@@ -22,7 +22,6 @@ if [[ ! -e .env ]]; then
         echo WEB_USR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
         echo SITE_OVERLAY=sgn
         echo SECRET_KEY=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
-        echo MATHESAR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
     } > .env
 fi
 source .env
