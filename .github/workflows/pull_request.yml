@@ -8,11 +8,8 @@ on:
       - '.gitignore'
 
 jobs:
-  deployment:
-    uses: ./.github/workflows/deployment.yml
-
-  test:
-    uses: ./.github/workflows/test.yml
+  sgn:
+    uses: ./.github/workflows/sgn.yml
 
   treeimprovementbase:
     uses: ./.github/workflows/treeimprovementbase.yml
