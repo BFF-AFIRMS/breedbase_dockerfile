@@ -13,3 +13,6 @@ jobs:
 
   test:
     uses: ./.github/workflows/test.yml
+
+  treeimprovementbase:
+    uses: ./.github/workflows/treeimprovementbase.yml

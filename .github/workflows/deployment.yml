@@ -3,12 +3,21 @@ name: Deployment
 
 on:
   workflow_call:
+    inputs:
+      SITE_OVERLAY:
+        required: false
+        type: string
+        default: sgn
   workflow_dispatch:
+    inputs:
+      SITE_OVERLAY:
+        required: false
+        type: string
+        default: sgn
   schedule:
     - cron: '0 12 * * 0'
 
-env:
-  SITE_OVERLAY: treeimprovementbase
+run-name: ${{ format('Deployment {0}', inputs.SITE_OVERLAY) }}
 
 jobs:
 
@@ -46,10 +55,13 @@ jobs:
         run: docker build -t bffafirms/breedbase:latest .
 
       # ---------------------------------------------------------------------------
-      # No Overlay
+      # Deployments
 
       - name: Setup
         run: ./setup
+
+      - name: Configure overlay
+        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
 
       - name: Start containers
         run: docker compose -f compose.${{ matrix.mode }}.yml up -d
@@ -77,34 +89,4 @@ jobs:
         run: docker volume prune -af
 
       - name: Clean data
-        run: rm -rf data
-
-      # ---------------------------------------------------------------------------
-      # Site Overlay
-
-
-      - name: Setup overlay
-        run: ./setup
-
-      - name: Configure overlay
-        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${SITE_OVERLAY}/g" .env
-
-      - name: Start containers overlay
-        run: docker compose -f compose.${{ matrix.mode }}.yml up -d
-
-      - name: Healthcheck containers overlay
-        uses: stringbean/docker-healthcheck-action@v3
-        with:
-          container: ${{ matrix.mode }}-breedbase-1
-          wait-time: 300
-          require-status: running
-          require-healthy: true
-
-      - name: Stop containers overlay
-        run: docker compose down
-
-      - name: Clean volumes overlay
-        run: docker volume prune -af
-
-      - name: Clean data overlay
         run: rm -rf data

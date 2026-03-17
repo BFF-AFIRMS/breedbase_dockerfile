@@ -3,9 +3,21 @@ name: Test
 
 on:
   workflow_call:
+    inputs:
+      SITE_OVERLAY:
+        required: false
+        type: string
+        default: sgn
   workflow_dispatch:
+    inputs:
+      SITE_OVERLAY:
+        required: false
+        type: string
+        default: sgn
   schedule:
-    - cron: '0 12 * * 0'
+    - cron: '0 11 * * 0'
+
+run-name: ${{ format('Test {0}', inputs.SITE_OVERLAY) }}
 
 jobs:
 
@@ -31,6 +43,9 @@ jobs:
 
       - name: Setup
         run: ./setup
+
+      - name: Configure overlay
+        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
 
       # -----------------------------------------------------------------------
       # Testing
