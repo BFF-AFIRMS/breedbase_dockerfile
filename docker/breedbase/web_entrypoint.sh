@@ -48,9 +48,9 @@ start_sgn_server() {
     # Allow errors now to not stop the script
     set +e
 
-    # Update template file with credentials
+    # Update config file with credentials
     if [[ -e sgn_local_template.conf ]]; then
-        echo "Updating template file: sgn_local_template.conf"
+        echo "Updating config: sgn_local.conf"
         sed \
             -e "s/{PGDATABASE}/$PGDATABASE/g" \
             -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
