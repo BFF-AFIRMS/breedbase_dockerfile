@@ -3,9 +3,17 @@ name: development
 include:
   - docker/breedbase/db.yml           # Breedbase Database
   - docker/breedbase/web_volumes.yml  # Breedbase Web Volumes (Javascript, Static)
-  - docker/keycloak/web.yml           # Keycloak Web Application + Database
+  - docker/keycloak/db.yml            # Keycloak Database
 
 services:
+
+  keycloak:
+    extends:
+      file: docker/keycloak/web.yml
+      service: keycloak
+    environment:
+      KC_FRONTEND_URL:       http://localhost:9080/auth
+      KC_HOSTNAME_ADMIN_URL: http://localhost:9080/auth
 
   breedbase:
     extends:
@@ -32,15 +40,15 @@ services:
         bind:
           create_host_path: false
 
-      # # mount scripts when developing the docker image itself
-      # - type: bind
-      #   source: ./docker/breedbase/web_entrypoint.sh
-      #   target: /entrypoint.sh
-      #   bind:
-      #     create_host_path: false
+      # mount scripts when developing the docker image itself
+      - type: bind
+        source: ./docker/breedbase/web_entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false
 
-      # - type: bind
-      #   source: ./docker/breedbase/web_setup
-      #   target: /usr/local/bin/web_setup
-      #   bind:
-      #     create_host_path: false
+      - type: bind
+        source: ./docker/breedbase/web_setup
+        target: /usr/local/bin/web_setup
+        bind:
+          create_host_path: false

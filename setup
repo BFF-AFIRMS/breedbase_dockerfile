@@ -47,6 +47,9 @@ mkdir -p data/breedbase/downloads
 touch data/breedbase/bash_history
 touch data/breedbase/sgn_local.conf
 
+# keycloak web
+mkdir -p data/keycloak/export
+
 # caddy
 mkdir -p data/caddy
 

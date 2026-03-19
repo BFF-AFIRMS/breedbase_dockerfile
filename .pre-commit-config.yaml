@@ -47,4 +47,4 @@ repos:
       - id: ggshield
         language_version: python3
         stages: [pre-commit]
-        exclude: docker/keycloak/realm.json
+        exclude: docker/keycloak/realms/master-realm.json

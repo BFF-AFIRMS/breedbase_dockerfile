@@ -110,7 +110,7 @@ There are four different options for deployment:
 
 ### Production
 
-After quick-start, deploying for production is the most straightforward simplest. Production mode provides 3 features:
+After quick-start, deploying for production is the most straightforward. Production mode provides 3 features:
 
 - Randomly generated passwords for default db and web accounts.
 - Secures web application with HTTPS.
@@ -142,6 +142,12 @@ Development mode will allow you to make changes to the application in real-time.
 
     ```bash
     docker compose up -f compose.development.yml up -d
+    ```
+
+1. **Wait for the container to be HEALTHY**.
+
+    ```bash
+    docker compose -f compose.development.yml ps breedbase
     ```
 
 1. **Access the applications via web browser.**
@@ -177,38 +183,39 @@ Then choose either [Standalone](#standalone) or [Interactive](#interactive) mode
 Tests can be run in `standalone` mode. For each test, a new database and web server will be created, ensuring reproducibility and isolation between tests.
 
 > This mode can be very slow to start up and run.  
-> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
+> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>  
+> The `-s` flag shows stderr, omit for cleaner output.
 
 ```bash
 # Single
-./run_test t/unit/CXGN/String
-./run_test t/selenium2/search/stock.t
+./run_test -s t/unit/CXGN/String
+./run_test -s t/selenium2/search/stock.t
 
 # Group
-./run_test t/unit/CXGN
-./run_test t/selenium2/search
+./run_test -s t/unit/CXGN
+./run_test -s t/selenium2/search
 
 # Category
-./run_test t/unit/
-./run_test t/unit_fixture
-./run_test t/unit_mech
-./run_test t/selenium2
+./run_test -s t/unit/
+./run_test -s t/unit_fixture
+./run_test -s t/unit_mech
+./run_test -s t/selenium2
 ```
 
-For less noisy output, cleanup `stderr` with:
+For less noisy output, omit the `-s` flag that show stderr.
 
 ```bash
-./run_test "t/unit_fixture 2>/dev/null"
+./run_test t/unit_fixture
 ```
 
 #### Interactive
 
 Tests can be run in `interactive` mode, where the same database and web server are re-used between tests for quick iteration. This is particulary useful when writing and troubleshooting new tests.
 
-1. **Start up all containers with docker compose.**
+1. **Start up all containers in interactive mode.**
 
     ```bash
-    ./run_test /tmp/interactive.t
+    ./run_test -i
     ```
 
 2. **Open a separate terminal to run the remaining commands.**
@@ -254,16 +261,22 @@ Tests can be run in `interactive` mode, where the same database and web server a
     perl t/test_fixture.pl t/selenium2/search/stock.t
 
     # Group
-    perl t/test_fixture.pl t/unit/CXGN 2>/dev/null
+    perl t/test_fixture.pl t/unit/CXGN
     perl t/test_fixture.pl t/selenium2/search
 
     # Category
-    perl t/test_fixture.pl t/unit/ 2>/dev/null
-    perl t/test_fixture.pl t/unit_fixture 2>/dev/null
-    perl t/test_fixture.pl t/unit_mech 2>/dev/null
-    perl t/test_fixture.pl t/selenium2/01_list 2>/dev/null
-    perl t/test_fixture.pl t/selenium2/02_trial 2>/dev/null
+    perl t/test_fixture.pl t/unit/
+    perl t/test_fixture.pl t/unit_fixture
+    perl t/test_fixture.pl t/unit_mech
+    perl t/test_fixture.pl t/selenium2/01_list
+    perl t/test_fixture.pl t/selenium2/02_trial
     ```
+
+To troubleshoot selenium tests:
+
+- Open the Selenium Hub: <http://localhost:4444/wd/hub/static/resource/hub.html>
+- Click `Create Session` -> `Firefox`
+- Open the Visualizer to see the Firefox window: <http://localhost:8081/vnc.html>
 
 ## Updating
 

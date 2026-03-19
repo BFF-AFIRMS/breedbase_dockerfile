@@ -52,9 +52,11 @@ start_sgn_server() {
     if [[ -e sgn_local_template.conf ]]; then
         echo "Updating config: sgn_local.conf"
         sed \
+            -e "s/{PGHOST}/$PGHOST/g" \
             -e "s/{PGDATABASE}/$PGDATABASE/g" \
             -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
             -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
+            -e "s/{KC_HOSTNAME}/$KC_HOSTNAME/g" \
             sgn_local_template.conf \
             > sgn_local.conf
         chown sgn:sgn sgn_local.conf

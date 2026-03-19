@@ -21,7 +21,8 @@ services:
       KC_DB_PASSWORD:              keycloak
       KC_BOOTSTRAP_ADMIN_PASSWORD: password
       KC_DB_URL:                   jdbc:postgresql://keycloak_db:5432/keycloak
-      KC_HOSTNAME: http://localhost:9080/auth
+      KC_HOSTNAME:                 http://keycloak:9080/auth
+      KC_HOSTNAME_ADMIN_URL:       http://keycloak:9080/auth
     expose:
       - 9080
     ports:
@@ -33,6 +34,13 @@ services:
         target: /entrypoint.sh
         bind:
           create_host_path: false
+
+      - type: bind
+        source: $PWD/data/keycloak
+        target: /data/keycloak
+        bind:
+          create_host_path: false
+
     deploy:
       resources:
         limits:
