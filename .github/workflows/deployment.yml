@@ -51,8 +51,8 @@ jobs:
         run: |
           ln -s compose.yml compose.quickstart.yml
 
-      - name: Build container image
-        run: docker build -t bffafirms/breedbase:latest .
+      - name: Build container images
+        run: docker compose -f compose.${{ matrix.mode }}.yml build
 
       # ---------------------------------------------------------------------------
       # Deployments
@@ -83,7 +83,7 @@ jobs:
         run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase
 
       - name: Keycloak Web container log
-        if: always()
+        if: ${{ (matrix.mode == 'testing') || (matrix.mode == 'development') }}
         run: docker compose -f compose.${{ matrix.mode }}.yml logs keycloak
 
       - name: Stop containers
