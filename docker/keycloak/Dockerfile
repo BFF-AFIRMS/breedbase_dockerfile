@@ -2,7 +2,6 @@ FROM keycloak/keycloak:26.5.1-0
 
 RUN mkdir -p /opt/keycloak/data/import
 
-COPY realms/master-realm.json /opt/keycloak/data/import/master-realm.json
 COPY realms/breedbase-realm.json  /opt/keycloak/data/import/breedbase-realm.json
 COPY web_entrypoint.sh /entrypoint.sh
 

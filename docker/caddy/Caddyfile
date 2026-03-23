@@ -31,6 +31,12 @@
 	}
 
 	handle {
+		@new path /svelte/_app/* /nuxt/_nuxt/*
+		handle @new {
+			root * /data/breedbase/static
+			file_server
+		}
+
 		@static path /css/* /documents/* /img/*
 		handle @static {
 			root * /data/breedbase/static

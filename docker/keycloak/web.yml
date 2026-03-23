@@ -22,7 +22,7 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: password
       KC_DB_URL:                   jdbc:postgresql://keycloak_db:5432/keycloak
       KC_HOSTNAME:                 http://keycloak:9080/auth
-      KC_HOSTNAME_ADMIN_URL:       http://keycloak:9080/auth
+      KC_HOSTNAME_ADMIN:           http://keycloak:9080/auth
     expose:
       - 9080
     ports:

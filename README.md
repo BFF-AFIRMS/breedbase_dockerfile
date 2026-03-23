@@ -153,7 +153,8 @@ Development mode will allow you to make changes to the application in real-time.
 1. **Access the applications via web browser.**
 
     - Breedbase (Main Application): <http://localhost:8080>
-    - Keycloak (Single-Sign On/OIDC Testing): <http://localhost:9080>
+    - Keycloak Login (Single-Sign On/OIDC Testing): <http://localhost:9080/auth/realms/Breedbase/account>
+    - Keycloak Admin: http://localhost:9080/auth/admin/
 
     Login with the following credentials.
 
