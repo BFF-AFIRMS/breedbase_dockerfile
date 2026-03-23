@@ -6,8 +6,6 @@ services:
   breedbase:
     hostname: breedbase
     image: bffafirms/breedbase:latest
-    build:
-      context: .
     restart: unless-stopped
     # Restrict security privileges
     security_opt:

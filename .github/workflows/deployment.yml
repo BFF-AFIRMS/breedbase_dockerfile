@@ -51,13 +51,16 @@ jobs:
         run: |
           ln -s compose.yml compose.quickstart.yml
 
+      - name: Build breedbase image
+        run: docker build -t bffafirms/breedbase:latest .
+
       # ---------------------------------------------------------------------------
       # Deployments
 
       - name: Setup
         run: ./setup
 
-      - name: Build container images
+      - name: Build supporting images
         run: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache
 
       - name: Configure overlay
