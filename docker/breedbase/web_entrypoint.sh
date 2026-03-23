@@ -84,7 +84,9 @@ start_sgn_server() {
     elif [ "$MODE" == "PRODUCTION" ]; then
 
         echo "Updating main_production_site_url"
-        sed -i -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" sgn_local.conf
+        cp sgn_local.conf /tmp/sgn_local.conf
+        sed -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" /tmp/sgn_local.conf > sgn_local.conf
+        rm -f /tmp/sgn_local.conf
         grep main_production_site_url sgn_local.conf || true
 
         /etc/init.d/sgn start
