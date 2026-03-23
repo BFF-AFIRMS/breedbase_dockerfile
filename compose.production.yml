@@ -2,7 +2,9 @@ name: production
 
 include:
   - docker/breedbase/web_volumes.yml # Breedbase Web Volumes
-  - docker/caddy/caddy.yml           # Caddy File Server and Reverse Proxy
+
+volumes:
+  cxgndata:
 
 services:
   breedbase_db:
@@ -24,3 +26,12 @@ services:
       PGPASSWORD:        ${PGPASSWORD:?}        # Database password for 'postgres' superuser
       WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Database password for 'web_usr'
       ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user
+    volumes:
+      - cxgndata:/home/production/cxgn
+
+  caddy:
+    extends:
+      file: docker/caddy/caddy.yml
+      service: caddy
+    volumes:
+      - cxgndata:/home/production/cxgn

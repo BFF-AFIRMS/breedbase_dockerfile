@@ -38,11 +38,14 @@ jobs:
         with:
           submodules: true
 
-      - name: Build container image
+      - name: Build Breedbase web image
         run: docker build -t bffafirms/breedbase:latest .
 
       - name: Setup
         run: ./setup
+
+      - name: Build supporting images
+        run: docker compose -f compose.testing.yml build --no-cache
 
       - name: Configure overlay
         run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
