@@ -51,14 +51,14 @@ jobs:
         run: |
           ln -s compose.yml compose.quickstart.yml
 
-      - name: Build container images
-        run: docker compose -f compose.${{ matrix.mode }}.yml build
-
       # ---------------------------------------------------------------------------
       # Deployments
 
       - name: Setup
         run: ./setup
+
+      - name: Build container images
+        run: docker compose -f compose.${{ matrix.mode }}.yml build
 
       - name: Configure overlay
         run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
