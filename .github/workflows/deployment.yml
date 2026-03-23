@@ -74,13 +74,17 @@ jobs:
           require-status: running
           require-healthy: true
 
-      - name: DB container log
+      - name: Breedbase DB container log
         if: always()
         run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase_db
 
-      - name: Web container log
+      - name: Breedbase Web container log
         if: always()
         run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase
+
+      - name: Keycloak Web container log
+        if: always()
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs keycloak
 
       - name: Stop containers
         run: docker compose down
