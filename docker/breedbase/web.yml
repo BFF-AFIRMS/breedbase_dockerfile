@@ -81,13 +81,6 @@ services:
         bind:
           create_host_path: false
 
-      # Template config file
-      - type: bind
-        source: ./sgn_local_template.conf
-        target: /home/production/cxgn/sgn/sgn_local_template.conf
-        bind:
-          create_host_path: false
-
       # SSL Certificates for database communication
       - type: bind
         source: $PWD/data/breedbase_db/certs

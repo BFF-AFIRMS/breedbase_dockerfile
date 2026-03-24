@@ -48,13 +48,15 @@ start_sgn_server() {
     # Allow errors now to not stop the script
     set +e
 
-    # Update template file with credentials
+    # Update config file with credentials
     if [[ -e sgn_local_template.conf ]]; then
-        echo "Updating template file: sgn_local_template.conf"
+        echo "Updating config: sgn_local.conf"
         sed \
+            -e "s/{PGHOST}/$PGHOST/g" \
             -e "s/{PGDATABASE}/$PGDATABASE/g" \
             -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
             -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
+            -e "s/{KC_HOSTNAME}/$KC_HOSTNAME/g" \
             sgn_local_template.conf \
             > sgn_local.conf
         chown sgn:sgn sgn_local.conf
@@ -82,7 +84,9 @@ start_sgn_server() {
     elif [ "$MODE" == "PRODUCTION" ]; then
 
         echo "Updating main_production_site_url"
-        sed -i -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" sgn_local.conf
+        cp sgn_local.conf /tmp/sgn_local.conf
+        sed -E "s|(main_production_site_url ).*|\1  https://${DOMAIN_NAME}|g" /tmp/sgn_local.conf > sgn_local.conf
+        rm -f /tmp/sgn_local.conf
         grep main_production_site_url sgn_local.conf || true
 
         /etc/init.d/sgn start

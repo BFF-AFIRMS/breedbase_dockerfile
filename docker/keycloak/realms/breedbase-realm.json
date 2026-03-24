@@ -1,8 +1,8 @@
 {
   "id": "addce0ec-c800-44dc-87e3-2de30b9bfd1e",
   "realm": "Breedbase",
-  "displayName": "",
-  "displayNameHtml": "",
+  "displayName": "Breedbase",
+  "displayNameHtml": "<div><span>Breedbase</span></div>",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,

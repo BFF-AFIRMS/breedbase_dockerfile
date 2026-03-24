@@ -1,6 +1,34 @@
 #!/bin/bash
 
-args=$@
+POSITIONAL_ARGS=()
 
-sed -E "s|(\s+command).*|\1: \[\"$args\"\]|g" compose.testing.yml > compose.tmp.yml
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -s|--stderr)
+      show_stderr=""
+      shift # past argument
+      ;;
+    -i|--interactive)
+      interactive="true"
+      shift # past argument
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+
+if [[ $interactive == "true" ]]; then
+  sed -E "s|(\s+command).*|\1: \[\"/tmp/interactive.t\"\]|g" compose.testing.yml > compose.tmp.yml
+else
+  sed -E "s|(\s+command).*|\1: \[\"$POSITIONAL_ARGS $show_stderr\"\]|g" compose.testing.yml > compose.tmp.yml
+fi
+
 docker compose -f compose.tmp.yml up breedbase

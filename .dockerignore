@@ -7,3 +7,4 @@ cxgn/sgn/db/delete_nd_experiment_ids
 cxgn/sgn/logfile*
 cxgn/sgn/sgn_fixture.conf
 cxgn/*/sgn_local.conf
+**/*.env

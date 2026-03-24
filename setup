@@ -22,7 +22,6 @@ if [[ ! -e .env ]]; then
         echo WEB_USR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
         echo SITE_OVERLAY=sgn
         echo SECRET_KEY=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
-        echo MATHESAR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
     } > .env
 fi
 source .env
@@ -47,6 +46,9 @@ mkdir -p data/breedbase/volume
 mkdir -p data/breedbase/downloads
 touch data/breedbase/bash_history
 touch data/breedbase/sgn_local.conf
+
+# keycloak web
+mkdir -p data/keycloak/export
 
 # caddy
 mkdir -p data/caddy

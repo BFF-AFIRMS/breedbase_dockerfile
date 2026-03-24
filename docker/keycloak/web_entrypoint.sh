@@ -1,5 +1,14 @@
 #!/bin/bash
 
-# allow keycloak to be accessible over localhost for DEVELOPMENT mode
-sed -i -E 's|("frontendUrl":).*|\1 "http://localhost:9080/auth",|g' /opt/keycloak/data/import/realm.json
-/opt/keycloak/bin/kc.sh start-dev --import-realm
+set -e
+
+# Configure custom realms
+echo "Initializing Breedbase realm"
+if [[ $KC_HOSTNAME ]]; then
+    sed -i -E "s|(\"frontendUrl\":).*|\1 \"$KC_HOSTNAME\",|g" /opt/keycloak/data/import/breedbase-realm.json
+fi
+/opt/keycloak/bin/kc.sh import --file=/opt/keycloak/data/import/breedbase-realm.json --override=false
+
+
+# Start server
+/opt/keycloak/bin/kc.sh start-dev

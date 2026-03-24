@@ -3,9 +3,21 @@ name: Test
 
 on:
   workflow_call:
+    inputs:
+      SITE_OVERLAY:
+        required: false
+        type: string
+        default: sgn
   workflow_dispatch:
+    inputs:
+      SITE_OVERLAY:
+        required: false
+        type: string
+        default: sgn
   schedule:
-    - cron: '0 12 * * 0'
+    - cron: '0 11 * * 0'
+
+run-name: ${{ format('Test {0}', inputs.SITE_OVERLAY) }}
 
 jobs:
 
@@ -26,72 +38,84 @@ jobs:
         with:
           submodules: true
 
-      - name: Build container image
+      - name: Build Breedbase web image
         run: docker build -t bffafirms/breedbase:latest .
 
       - name: Setup
         run: ./setup
 
+      - name: Build supporting images
+        run: docker compose -f compose.testing.yml build --no-cache
+
+      - name: Configure overlay
+        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
+
       # -----------------------------------------------------------------------
       # Testing
 
+      # use -s flag to show stderr
       - name: Run quick setup
         run: |
-          ./run_test t/unit/CXGN/String
+          ./run_test -s t/unit/CXGN/String
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run unit tests
         run: |
-          ./run_test "t/unit 2>/dev/null"
+          ./run_test t/unit
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run fixture tests
         run: |
-          ./run_test "t/unit_fixture 2>/dev/null"
+          ./run_test t/unit_fixture
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run mech tests
         run: |
-          ./run_test "t/unit_mech 2>/dev/null"
+          ./run_test t/unit_mech
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       # Run all selenium tests individually to avoid solgs for now
       - name: Run selenium tests lists
         run: |
-          ./run_test "t/selenium2/01_list 2>/dev/null"
+          ./run_test t/selenium2/01_list
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests trial
         run: |
-          ./run_test "t/selenium2/02_trial 2>/dev/null"
+          ./run_test t/selenium2/02_trial
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests dataset
         run: |
-          ./run_test "t/selenium2/03_dataset 2>/dev/null"
+          ./run_test t/selenium2/03_dataset
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
+
+      - name: Run selenium tests authenticate
+        run: |
+          ./run_test t/selenium2/authenticate
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests breeders
         run: |
-          ./run_test "t/selenium2/breeders 2>/dev/null"
+          ./run_test t/selenium2/breeders
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests onto
         run: |
-          ./run_test "t/selenium2/onto 2>/dev/null"
+          ./run_test t/selenium2/onto
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests search
         run: |
-          ./run_test "t/selenium2/search 2>/dev/null"
+          ./run_test t/selenium2/search
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests stock
         run: |
-          ./run_test "t/selenium2/stock 2>/dev/null"
+          ./run_test t/selenium2/stock
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       - name: Run selenium tests tools
         run: |
-          ./run_test "t/selenium2/tools 2>/dev/null"
+          ./run_test t/selenium2/tools
           exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
