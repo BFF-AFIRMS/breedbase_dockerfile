@@ -54,8 +54,10 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 All deployment options involve first running setup to create credentials and data directories.
 
 ```bash
-./setup
+./setup --site-overlay treeimprovementbase
 ```
+
+> The `--site-overlay` argument specifies which website skin to use.
 
 ```text
 -----------------------------------------------------------------------------
@@ -115,6 +117,19 @@ After quick-start, deploying for production is the most straightforward. Product
 - Randomly generated passwords for default db and web accounts.
 - Secures web application with HTTPS.
 - Serves static files and js with Caddy for better browsing performance.
+
+> Note: If you have already started the quickstart deployment, you will need to first run these steps:
+
+```bash
+# Stop containers
+docker compose down
+# Clean up data directory
+mv data data_quickstart
+# Regenerate data directory
+./setup --site-overlay treeimprovementbase
+```
+
+You can then proceed to the following steps:
 
 1. **Deploy with docker compose**
 

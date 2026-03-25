@@ -5,6 +5,28 @@ GREEN="\e[32m"
 YELLOW="\e[33m"
 NC="\e[0m" # No Color
 
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -s|--site-overlay)
+      site_overlay="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+site_overlay=${site_overlay:-sgn}
+
 echo -e "-----------------------------------------------------------------------------"
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tBeginning setup."
 
@@ -20,7 +42,7 @@ if [[ ! -e .env ]]; then
         echo PGPASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
         echo ADMIN_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
         echo WEB_USR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
-        echo SITE_OVERLAY=sgn
+        echo SITE_OVERLAY=$site_overlay
         echo SECRET_KEY=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
     } > .env
 fi
