@@ -45,7 +45,7 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 1. **Clone repository**
 
     ```bash
-    git clone https://github.com/solgenomics/breedbase_dockerfile
+    git clone https://github.com/bff-afirms/breedbase_dockerfile
     cd breedbase_dockerfile
     ```
 
