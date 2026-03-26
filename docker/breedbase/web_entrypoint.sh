@@ -48,6 +48,11 @@ start_sgn_server() {
     # Allow errors now to not stop the script
     set +e
 
+    echo "Updating config: sgn_local.conf"
+    cp sgn_local.conf /tmp/sgn_local.conf
+    sed -E "s|(dbpass ).*|\1  ${WEB_USR_PASSWORD}|g" /tmp/sgn_local.conf > sgn_local.conf
+    rm -f /tmp/sgn_local.conf
+
     if [ "$MODE" == "TESTING" ]; then
 
         # Expand out the args first, otherwise only the first arg is captured
@@ -65,6 +70,7 @@ start_sgn_server() {
         exit $exit_status
 
     elif [ "$MODE" == "DEVELOPMENT" ]; then
+
         /home/production/cxgn/sgn/bin/sgn_server.pl --fork -r -p 8080
 
     elif [ "$MODE" == "PRODUCTION" ]; then

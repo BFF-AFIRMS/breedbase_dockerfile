@@ -266,9 +266,16 @@ initialize_javascript() {
     sudo -u $js_user npm config set engine-strict true
     echo "Install npm packages"
     sudo -u $js_user HOME=/tmp npm install --loglevel info
+    if [[ -f .git ]]; then
+        echo "Temporarily moving .git to .git-bak"
+        mv .git .git-bak
+    fi
     echo "Running webpack build..."
     sudo -u $js_user HOME=/tmp node_modules/.bin/webpack --config build.webpack.config.js
-    #sudo -u $js_user HOME=/tmp npm run build
+    if [[ -f .git-bak ]]; then
+        echo "Restoring .git from .git-bak"
+        mv .git-bak .git
+    fi
     cd -
 }
 
