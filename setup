@@ -45,7 +45,21 @@ done
 mkdir -p data/breedbase/volume
 mkdir -p data/breedbase/downloads
 touch data/breedbase/bash_history
-touch data/breedbase/sgn_local.conf
+
+if [[ ! -e data/breedbase/sgn_local.conf ]]; then
+
+  if [[ $SITE_OVERLAY == "treeimprovementbase" ]]; then
+    template=cxgn/treeimprovementbase/sgn_local_template.conf
+  else
+    template=docker/breedbase/sgn_local_template.conf
+  fi
+
+  sed \
+    -e "s/{PROJECT_NAME}/$PROJECT_NAME/g" \
+    -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
+    -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
+    $template > data/breedbase/sgn_local.conf
+fi
 
 # keycloak web
 mkdir -p data/keycloak/export

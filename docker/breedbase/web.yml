@@ -95,7 +95,7 @@ services:
         bind:
           create_host_path: false
 
-      # Final config file (filed in template)
+      # Config file
       - type: bind
         source: $PWD/data/breedbase/sgn_local.conf
         target: /home/production/cxgn/sgn/sgn_local.conf
@@ -105,7 +105,7 @@ services:
       # Keep history of commands
       - type: bind
         source: $PWD/data/breedbase/bash_history
-        target: /home/production/.bash_history
+        target: /home/sgn/.bash_history
         bind:
           create_host_path: false
 

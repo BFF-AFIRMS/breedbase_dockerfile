@@ -138,6 +138,12 @@ Development mode will allow you to make changes to the application in real-time.
 
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted into the container during the compose step, but will still be accessible from the host for development work.
 
+1. **Build Docker Containers**
+
+    ```bash
+    docker compose up -f compose.development.yml build
+    ```
+
 1. **Deploy with docker compose**
 
     ```bash

@@ -80,6 +80,8 @@ initialize_user() {
 
     echo "Config user:   " $(getent passwd "$file_user")
     echo "Config group:  " $(getent group "$file_group")
+
+    chown $user_name:$user_name /home/$user_name
 }
 
 
@@ -260,7 +262,6 @@ initialize_javascript() {
     if [[ -d js/build ]]; then rm -rf js/build; fi
 
     cd js
-    js_user=$(ls -l package.json | sed -E 's/\s+/ /g' | cut -d ' ' -f 3)
 
     sudo -u $js_user npm config set engine-strict true
     echo "Install npm packages"
