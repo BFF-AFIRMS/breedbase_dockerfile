@@ -48,19 +48,10 @@ start_sgn_server() {
     # Allow errors now to not stop the script
     set +e
 
-    # Update config file with credentials
-    if [[ -e sgn_local_template.conf ]]; then
-        echo "Updating config: sgn_local.conf"
-        sed \
-            -e "s/{PGHOST}/$PGHOST/g" \
-            -e "s/{PGDATABASE}/$PGDATABASE/g" \
-            -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
-            -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
-            -e "s/{KC_HOSTNAME}/$KC_HOSTNAME/g" \
-            sgn_local_template.conf \
-            > sgn_local.conf
-        chown sgn:sgn sgn_local.conf
-    fi
+    echo "Updating config: sgn_local.conf"
+    cp sgn_local.conf /tmp/sgn_local.conf
+    sed -E "s|(dbpass ).*|\1  ${WEB_USR_PASSWORD}|g" /tmp/sgn_local.conf > sgn_local.conf
+    rm -f /tmp/sgn_local.conf
 
     if [ "$MODE" == "TESTING" ]; then
 
@@ -79,6 +70,7 @@ start_sgn_server() {
         exit $exit_status
 
     elif [ "$MODE" == "DEVELOPMENT" ]; then
+
         /home/production/cxgn/sgn/bin/sgn_server.pl --fork -r -p 8080
 
     elif [ "$MODE" == "PRODUCTION" ]; then

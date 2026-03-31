@@ -172,8 +172,6 @@ RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
 # [REQUIRED]
-# Use the custom template
-COPY --chown=production:production docker/breedbase/sgn_local_template.conf sgn/sgn_local_template.conf
 # Use the interactive test file for interactive testing
 RUN cp /home/production/cxgn/treeimprovementbase/t/interactive.t /tmp/interactive.t
 # Set npm cache to the volume mount location
