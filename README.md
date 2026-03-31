@@ -334,6 +334,7 @@ To update to the latest changes from the [upstream repo](https://github.com/solg
 
     ```bash
     git checkout bff-afirms-sgn-447.0
+    git submodule update --recursive --progress --init
     git merge master
     ```
 
