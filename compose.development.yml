@@ -2,8 +2,10 @@ name: development
 
 include:
   - docker/breedbase/db.yml           # Breedbase Database
-  - docker/breedbase/web_volumes.yml  # Breedbase Web Volumes (Javascript, Static)
   - docker/keycloak/db.yml            # Keycloak Database
+
+volumes:
+  npmdata:
 
 services:
 

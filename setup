@@ -56,7 +56,7 @@ if [[ ! -e breedbase/sgn_local.conf ]]; then
     -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
     -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
     -e "s/{BREEDBASE_CLIENT_SECRET}/$BREEDBASE_CLIENT_SECRET/g" \
-    ../cxgn/bff-afirms/sgn_local_template.conf > breedbase/sgn_local.conf
+    ../docker/breedbase/sgn_local_template.conf > breedbase/sgn_local.conf
 fi
 
 # keycloak web

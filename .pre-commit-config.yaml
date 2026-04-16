@@ -6,20 +6,37 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-        exclude: db_dumps/empty_breedbase.sql
+        exclude: |
+          (?x)(
+              ^db_dumps/|
+              ^docker/breedbase/patches/
+          )
 
       - id: end-of-file-fixer
-        exclude: db_dumps/empty_breedbase.sql
+        exclude: |
+          (?x)(
+              ^db_dumps/|
+              ^docker/breedbase/patches/
+          )
 
       - id: check-yaml
         args: ['--unsafe'] # Allow custom tags like !override
 
       - id: check-added-large-files
         args: ['--maxkb=10000']
-        exclude: db_dumps/empty_breedbase.sql
+        exclude: |
+          (?x)(
+              ^db_dumps/|
+              ^docker/breedbase/patches/
+          )
 
       - id: mixed-line-ending
         args: [--fix=lf]
+        exclude: |
+          (?x)(
+              ^db_dumps/|
+              ^docker/breedbase/patches/
+          )
 
       - id: detect-private-key
 

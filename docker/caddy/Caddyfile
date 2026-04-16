@@ -31,22 +31,17 @@
 	}
 
 	handle {
-		@new path /svelte/_app/* /nuxt/_nuxt/*
-		handle @new {
-			root * /data/breedbase/static
-			file_server
-		}
 
-		@static path /css/* /documents/* /img/*
+		@static path /css/* /documents/* /img/* /react/assets/*
 		handle @static {
-			root * /data/breedbase/static
+			root * /home/production/cxgn/sgn/static
 			file_server
 		}
 		@js path /js/legacy/* /js/source/legacy/*
 		handle @js {
 			uri strip_prefix /js/legacy
 			uri strip_prefix /js/source/legacy
-			root * /data/breedbase/js/source/legacy
+			root * /home/production/cxgn/sgn/js/source/legacy
 			file_server
 		}
 

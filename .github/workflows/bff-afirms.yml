@@ -1,5 +1,5 @@
-# Re-usable workflow to test treeimprovementbase site overlay
-name: treeimprovementbase
+# Re-usable workflow to test sgn site overlay
+name: sgn
 
 on:
   workflow_call:
@@ -11,9 +11,9 @@ jobs:
   deployment:
     uses: ./.github/workflows/deployment.yml
     with:
-      SITE_OVERLAY: treeimprovementbase
+      SGN_BRANCH: bff-afirms
 
   test:
     uses: ./.github/workflows/test.yml
     with:
-      SITE_OVERLAY: treeimprovementbase
+      SGN_BRANCH: bff-afirms

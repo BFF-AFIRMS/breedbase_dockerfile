@@ -57,9 +57,9 @@ start_sgn_server() {
 
         # Expand out the args first, otherwise only the first arg is captured
         args="${@}"
-        if [[ $args == "--interactive" && -e "/tmp/interactive.t" ]]; then
+        if [[ $args == "--interactive" && -e "/usr/local/bin/interactive.t" ]]; then
             echo "No testing arguments were given, setting up interactive mode."
-            tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture /tmp/interactive.t"
+            tty_wrapper "perl t/test_fixture.pl --dumpupdatedfixture /usr/local/bin/interactive.t"
             exit_status=$?
         else
             tty_wrapper "perl t/test_fixture.pl --carpalways -v $args"

@@ -7,9 +7,6 @@ on:
   schedule:
     - cron: '0 12 * * 0'
 
-env:
-  SITE_OVERLAY: treeimprovementbase
-
 jobs:
 
   # ---------------------------------------------------------------------------
@@ -98,9 +95,6 @@ jobs:
 
       - name: Setup overlay
         run: ./setup
-
-      - name: Configure overlay
-        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${SITE_OVERLAY}/g" .env
 
       - name: Start containers overlay
         run: docker compose -f compose.${{ matrix.mode }}.yml up -d

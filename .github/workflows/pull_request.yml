@@ -14,5 +14,5 @@ jobs:
   sgn:
     uses: ./.github/workflows/sgn.yml
 
-  treeimprovementbase:
-    uses: ./.github/workflows/treeimprovementbase.yml
+  bff-afirms:
+    uses: ./.github/workflows/bff-afirms.yml

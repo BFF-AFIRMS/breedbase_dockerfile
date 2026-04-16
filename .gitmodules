@@ -3,7 +3,7 @@
 	url = https://github.com/solgenomics/cxgn-corelibs.git
 [submodule "cxgn/sgn"]
 	path = cxgn/sgn
-	url = https://github.com/solgenomics/sgn.git
+	url = https://github.com/bff-afirms/sgn.git
 [submodule "cxgn/Phenome"]
 	path = cxgn/Phenome
 	url = https://github.com/solgenomics/Phenome.git
@@ -117,6 +117,3 @@
 [submodule "cxgn/Bio-Chado-Schema"]
 	path = cxgn/bio-chado-schema
 	url = https://github.com/solgenomics/bio-chado-schema
-[submodule "cxgn/bff-afirms"]
-	path = cxgn/bff-afirms
-	url = https://github.com/BFF-AFIRMS/sgn

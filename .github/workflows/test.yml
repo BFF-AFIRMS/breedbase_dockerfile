@@ -4,20 +4,20 @@ name: Test
 on:
   workflow_call:
     inputs:
-      SITE_OVERLAY:
+      SGN_BRANCH:
         required: false
         type: string
-        default: sgn
+        default: bff-afirms
   workflow_dispatch:
     inputs:
-      SITE_OVERLAY:
+      SGN_BRANCH:
         required: false
         type: string
-        default: sgn
+        default: bff-afirms
   schedule:
     - cron: '0 11 * * 0'
 
-run-name: ${{ format('Test {0}', inputs.SITE_OVERLAY) }}
+run-name: ${{ format('Test {0}', inputs.SGN_BRANCH) }}
 
 jobs:
 
@@ -52,17 +52,20 @@ jobs:
         with:
           submodules: true
 
-      - name: Build Breedbase web image
-        run: docker build -t bffafirms/breedbase:latest .
-
       - name: Setup
         run: ./setup
 
+      - name: Checkout sgn master branch
+        if: ${{ inputs.SGN_BRANCH != 'bff-afirms' }}
+        run: |
+          cd cxgn/sgn
+          git checkout ${{ inputs.SGN_BRANCH }}
+
+      - name: Build Breedbase web image
+        run: docker build -t bffafirms/breedbase:latest .
+
       - name: Build supporting images
         run: docker compose -f compose.testing.yml build --no-cache
-
-      - name: Configure overlay
-        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
 
       # -----------------------------------------------------------------------
       # Testing

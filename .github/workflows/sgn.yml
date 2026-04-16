@@ -11,9 +11,9 @@ jobs:
   deployment:
     uses: ./.github/workflows/deployment.yml
     with:
-      SITE_OVERLAY: sgn
+      SGN_BRANCH: master
 
   test:
     uses: ./.github/workflows/test.yml
     with:
-      SITE_OVERLAY: sgn
+      SGN_BRANCH: master

@@ -139,24 +139,20 @@ apply_system_patches() {
     echo "Applying System Patches"
     echo "-------------------------------------------------------------------------"
 
-    # Use bff-afirms necessary system patches
+    echo "Using cxgn_fixture.sql for postgres >=17."
+    cp -f /etc/breedbase/patches/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql
 
-    bffafirms_dir=/home/production/cxgn/bff-afirms
+    echo "Using db patch 00203 for postgres >=17."
+    cp -f /etc/breedbase/patches/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm db/00203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm
 
-    echo "Using t/data/fixture/cxgn_fixture.sql from bff-afirms for postgres >=17."
-    cp -f $bffafirms_dir/t/data/fixture/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql 2>/dev/null || true
+    echo "Using ExternalReferences.pm for postgres >=17."
+    cp -f /etc/breedbase/patches/ExternalReferences.pm lib/CXGN/BrAPI/v2/ExternalReferences.pm
 
-    echo "Using db patch 00203 from bff-afirms for postgres >=17."
-    cp -f $bffafirms_dir/db/00203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm db/00203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm 2>/dev/null || true
+    echo "Using Contact.pm for non-root user sendmail."
+    cp -f /etc/breedbase/patches/Contact.pm lib/CXGN/Contact.pm
 
-    echo "Using lib/CXGN/BrAPI/v2/ExternalReferences.pm from bff-afirms for postgres >=17."
-    cp -f $bffafirms_dir/lib/CXGN/BrAPI/v2/ExternalReferences.pm lib/CXGN/BrAPI/v2/ExternalReferences.pm 2>/dev/null || true
-
-    echo "Using lib/CXGN/Contact.pm from bff-afirms for non-root user sendmail."
-    cp -f $bffafirms_dir/lib/CXGN/Contact.pm lib/CXGN/Contact.pm 2>/dev/null || true
-
-    echo "Using lib/SGN/Controller/solGS/Files.pm from bff-afirms for non-root user file permissions"
-    cp -f $bffafirms_dir/lib/SGN/Controller/solGS/Files.pm lib/SGN/Controller/solGS/Files.pm 2>/dev/null || true
+    echo "Using Files.pm for non-root user file permissions"
+    cp -f /etc/breedbase/patches/Files.pm lib/SGN/Controller/solGS/Files.pm
 
 }
 
@@ -227,6 +223,11 @@ initialize_javascript() {
         mv .git-bak .git
     fi
     cd -
+
+    if [[ -e build_sgn ]]; then
+        echo "Building additional sgn app"
+        sudo -E -u sgn ./build_sgn
+    fi
 }
 
 _main() {
