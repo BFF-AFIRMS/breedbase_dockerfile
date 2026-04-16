@@ -23,6 +23,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# By default, hide stderr and unless specifically requested
+show_stderr=${show_stderr:-"2> /dev/null"}
+
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 if [[ $interactive == "true" ]]; then

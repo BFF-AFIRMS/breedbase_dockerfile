@@ -28,6 +28,8 @@ services:
       MODE:            DEVELOPMENT
       SGN_TEST_SERVER: http://breedbase:3010
     volumes:
+      - npmdata:/home/production/npm
+
       - type: bind
         source: ./cxgn
         target: /home/production/cxgn

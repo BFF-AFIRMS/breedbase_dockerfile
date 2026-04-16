@@ -54,10 +54,10 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 All deployment options involve first running setup to create credentials and data directories.
 
 ```bash
-./setup --site-overlay treeimprovementbase
+./setup --site-base bff-afirms
 ```
 
-> The `--site-overlay` argument specifies which website skin to use.
+> The `--site-base` argument specifies which website to use (ex. `bff-afirms` or `sgn`).
 
 ```text
 -----------------------------------------------------------------------------
@@ -126,7 +126,7 @@ docker compose down
 # Clean up data directory
 mv data data_quickstart
 # Regenerate data directory
-./setup --site-overlay treeimprovementbase
+./setup --site-base bff-afirms
 ```
 
 You can then proceed to the following steps:
@@ -237,7 +237,7 @@ Tests can be run in `interactive` mode, where the same database and web server a
 1. **Start up all containers in interactive mode.**
 
     ```bash
-    ./run_test -i
+    D
     ```
 
 2. **Open a separate terminal to run the remaining commands.**

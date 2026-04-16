@@ -3,9 +3,6 @@ name: production
 include:
   - docker/breedbase/web_volumes.yml # Breedbase Web Volumes
 
-volumes:
-  cxgndata:
-
 services:
   breedbase_db:
     extends:
@@ -28,6 +25,9 @@ services:
       ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user
     volumes:
       - cxgndata:/home/production/cxgn
+      - staticdata:/home/production/cxgn/sgn/static
+      - jsdata:/home/production/cxgn/sgn/js
+      - npmdata:/home/production/npm
 
   caddy:
     extends:

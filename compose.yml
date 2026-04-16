@@ -1,5 +1,15 @@
 name: quickstart
 
 include:
-  - docker/breedbase/db.yml    # Breedbase Database
-  - docker/breedbase/web.yml   # Breedbase Web Application
+  - docker/breedbase/db.yml          # Breedbase Database
+
+volumes:
+  npmdata:
+
+services:
+  breedbase:
+    extends:
+      file: docker/breedbase/web.yml
+      service: breedbase
+    volumes:
+      - npmdata:/home/production/npm
