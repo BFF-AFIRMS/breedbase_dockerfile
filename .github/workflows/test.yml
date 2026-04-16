@@ -22,9 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - mode: [quickstart]
-            sgn_branch: [master, current]
+        mode: [quickstart]
+        sgn_branch: [master, current]
 
     steps:
       - name: Free Disk Space (Ubuntu)

@@ -22,9 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - mode: [quickstart, development, production, testing]
-            sgn_branch: [master, current]
+        mode: [quickstart, development, production, testing]
+        sgn_branch: [master, current]
 
     steps:
 
