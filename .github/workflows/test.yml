@@ -3,21 +3,9 @@ name: Test
 
 on:
   workflow_call:
-    inputs:
-      SGN_BRANCH:
-        required: false
-        type: string
-        default: bff-afirms
   workflow_dispatch:
-    inputs:
-      SGN_BRANCH:
-        required: false
-        type: string
-        default: bff-afirms
   schedule:
     - cron: '0 11 * * 0'
-
-run-name: ${{ format('Test {0}', inputs.SGN_BRANCH) }}
 
 jobs:
 
@@ -30,6 +18,13 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: 1
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: quickstart
+            sgn_branch: [master, current]
 
     steps:
       - name: Free Disk Space (Ubuntu)
@@ -55,11 +50,11 @@ jobs:
       - name: Setup
         run: ./setup
 
-      - name: Checkout sgn master branch
-        if: ${{ inputs.SGN_BRANCH != 'bff-afirms' }}
+      - name: Checkout sgn branch
+        if: ${{ matrix.sgn_branch != 'current' }}
         run: |
           cd cxgn/sgn
-          git checkout ${{ inputs.SGN_BRANCH }}
+          git checkout ${{ matrix.sgn_branch }}
 
       - name: Build Breedbase web image
         run: docker build -t bffafirms/breedbase:latest .

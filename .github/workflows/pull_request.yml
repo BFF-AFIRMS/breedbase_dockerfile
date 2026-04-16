@@ -11,8 +11,8 @@ jobs:
   # lint:
   #   uses: ./.github/workflows/lint.yml
 
-  sgn:
-    uses: ./.github/workflows/sgn.yml
+  deployment:
+    uses: ./.github/workflows/deployment.yml
 
-  bff-afirms:
-    uses: ./.github/workflows/bff-afirms.yml
+  test:
+    uses: ./.github/workflows/test.yml
