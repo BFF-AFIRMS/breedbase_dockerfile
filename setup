@@ -95,9 +95,9 @@ if [[ ! -d data/jbrowse ]]; then
   mkdir -p data/jbrowse/app data/jbrowse/data
 
   cd data/jbrowse/app
-  wget -q https://github.com/GMOD/jbrowse-components/releases/download/v4.1.13/jbrowse-web-v4.1.13.zip
-  unzip -q jbrowse-web-v4.1.13.zip
-  rm -f jbrowse-web-v4.1.13.zip
+  wget -q https://github.com/GMOD/jbrowse-components/releases/download/v4.1.15/jbrowse-web-v4.1.15.zip
+  unzip -q jbrowse-web-v4.1.15.zip
+  rm -f jbrowse-web-v4.1.15.zip
 
   if [[ ! -e config.json ]]; then
     sed "s/{DOMAIN_NAME}/${DOMAIN_NAME}/g" ../../../docker/jbrowse/config.template.json > config.json

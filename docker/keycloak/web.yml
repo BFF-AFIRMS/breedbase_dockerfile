@@ -23,6 +23,7 @@ services:
       KC_DB_URL:                   jdbc:postgresql://keycloak_db:5432/keycloak
       KC_HOSTNAME:                 http://keycloak:9080/auth
       KC_HOSTNAME_ADMIN:           http://keycloak:9080/auth
+      REALM_FILE:                  breedbase-realm.json
     expose:
       - 9080
     ports:
