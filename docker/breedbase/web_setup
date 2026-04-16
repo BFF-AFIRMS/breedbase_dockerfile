@@ -180,8 +180,8 @@ apply_patches() {
     echo "Using t/data/fixture/cxgn_fixture.sql from treeimprovementbase."
     cp -f $tibase_dir/t/data/fixture/cxgn_fixture.sql t/data/fixture/cxgn_fixture.sql 2>/dev/null || true
 
-    echo "Using db patch 203 from treeimprovementbase."
-    cp -f $tibase_dir/db/203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm db/203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm 2>/dev/null || true
+    echo "Using db patch 00203 from treeimprovementbase."
+    cp -f $tibase_dir/db/00203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm db/00203/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm 2>/dev/null || true
 
     echo "Using lib/CXGN/Contact.pm from treeimprovementbase."
     cp -f $tibase_dir/lib/CXGN/Contact.pm lib/CXGN/Contact.pm 2>/dev/null || true
