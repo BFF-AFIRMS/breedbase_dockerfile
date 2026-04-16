@@ -66,12 +66,6 @@ jobs:
         run: |
           ln -s compose.yml compose.quickstart.yml
 
-      - name: Build breedbase image
-        run: docker build -t bffafirms/breedbase:latest .
-
-      # ---------------------------------------------------------------------------
-      # Deployments
-
       - name: Setup
         run: ./setup
 
@@ -81,11 +75,14 @@ jobs:
           cd cxgn/sgn
           git checkout ${{ inputs.SGN_BRANCH }}
 
+      - name: Build breedbase image
+        run: docker build -t bffafirms/breedbase:latest .
+
+      # ---------------------------------------------------------------------------
+      # Deployments
+
       - name: Build supporting images
         run: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache
-
-      - name: Configure overlay
-        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
 
       - name: Start containers
         run: docker compose -f compose.${{ matrix.mode }}.yml up -d
