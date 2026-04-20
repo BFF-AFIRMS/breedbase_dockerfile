@@ -3,21 +3,9 @@ name: Deployment
 
 on:
   workflow_call:
-    inputs:
-      SITE_OVERLAY:
-        required: false
-        type: string
-        default: sgn
   workflow_dispatch:
-    inputs:
-      SITE_OVERLAY:
-        required: false
-        type: string
-        default: sgn
   schedule:
     - cron: '0 12 * * 0'
-
-run-name: ${{ format('Deployment {0}', inputs.SITE_OVERLAY) }}
 
 jobs:
 
@@ -34,11 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - mode: quickstart
-          - mode: development
-          - mode: production
-          - mode: testing
+        mode: [quickstart, development, production, testing]
+        sgn_branch: [master, current]
 
     steps:
 
@@ -66,20 +51,23 @@ jobs:
         run: |
           ln -s compose.yml compose.quickstart.yml
 
+      - name: Setup
+        run: ./setup
+
+      - name: Checkout sgn branch
+        if: ${{ matrix.sgn_branch != 'current' }}
+        run: |
+          cd cxgn/sgn
+          git checkout ${{ matrix.sgn_branch }}
+
       - name: Build breedbase image
         run: docker build -t bffafirms/breedbase:latest .
 
       # ---------------------------------------------------------------------------
       # Deployments
 
-      - name: Setup
-        run: ./setup
-
       - name: Build supporting images
         run: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache
-
-      - name: Configure overlay
-        run: sed -i -E "s/(SITE_OVERLAY=).*/\1${{ inputs.SITE_OVERLAY }}/g" .env
 
       - name: Start containers
         run: docker compose -f compose.${{ matrix.mode }}.yml up -d

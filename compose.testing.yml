@@ -2,10 +2,12 @@ name: testing
 
 include:
   - docker/breedbase/db.yml           # Breedbase Database
-  - docker/breedbase/web_volumes.yml  # Breedbase Web Volumes
   - docker/keycloak/web.yml           # Keycloak Web Application + Database
   - docker/selenium/selenium.yml      # Selenium Web Browser
   - docker/novnc/novnc.yml            # NoVNC Visualizer for Selenium Tests
+
+volumes:
+  npmdata:
 
 services:
 
@@ -31,6 +33,7 @@ services:
     healthcheck:
       test: curl -I localhost:3010
     volumes:
+      - npmdata:/home/production/npm
 
       - type: bind
         source: ./cxgn

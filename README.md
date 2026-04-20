@@ -54,16 +54,15 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
 All deployment options involve first running setup to create credentials and data directories.
 
 ```bash
-./setup --site-overlay treeimprovementbase
+./setup
 ```
-
-> The `--site-overlay` argument specifies which website skin to use.
 
 ```text
 -----------------------------------------------------------------------------
 2026-02-24 08:02:03     Beginning setup.
 2026-02-24 08:02:03     Generating secure credentials: .env
 2026-02-24 08:02:03     Creating data directories: data/
+2026-02-24 08:02:03     Downloading jbrowse files: jbrowse
 2026-02-24 08:02:03     Completed setup.
 -----------------------------------------------------------------------------
 ```
@@ -126,7 +125,7 @@ docker compose down
 # Clean up data directory
 mv data data_quickstart
 # Regenerate data directory
-./setup --site-overlay treeimprovementbase
+./setup
 ```
 
 You can then proceed to the following steps:
@@ -145,6 +144,17 @@ You can then proceed to the following steps:
 
 Development mode will allow you to make changes to the application in real-time.
 
+Note: If you have already started the production deployment, you will need to first run these steps:
+
+```bash
+# Stop containers
+docker compose down
+# Clean up data directory
+mv data data_production
+# Regenerate data directory
+./setup
+```
+
 1. **Clone the submodules**
 
     ```bash
@@ -156,13 +166,13 @@ Development mode will allow you to make changes to the application in real-time.
 1. **Build Docker Containers**
 
     ```bash
-    docker compose up -f compose.development.yml build
+    docker compose -f compose.development.yml build
     ```
 
 1. **Deploy with docker compose**
 
     ```bash
-    docker compose up -f compose.development.yml up -d
+    docker compose -f compose.development.yml up -d
     ```
 
 1. **Wait for the container to be HEALTHY**.
@@ -187,6 +197,25 @@ Development mode will allow you to make changes to the application in real-time.
 
     - Changes to mason components (`mason`) will update on page refresh.
     - Changes to config files or libraries (`lib`) will trigger the server to restart, with changes going live once the restart is complete.
+    - Changes to javascript files (`js`) will require manual recompilation:
+
+        ```bash
+        docker compose -f compose.development.yml exec breedbase bash -c 'cd js && npm run build'
+        ```
+
+    - Changes to the react app (`react`) can either be manually recompiled:
+
+        ```bash
+        docker compose -f compose.development.yml exec breedbase bash -c 'cd react && npm run build'
+        ```
+
+        Or run with live changes locally with a local nodejs install:
+
+        ```bash
+        cd react
+        npm install
+        npm run dev
+        ```
 
 ### Testing
 
@@ -237,7 +266,7 @@ Tests can be run in `interactive` mode, where the same database and web server a
 1. **Start up all containers in interactive mode.**
 
     ```bash
-    ./run_test -i
+    D
     ```
 
 2. **Open a separate terminal to run the remaining commands.**
