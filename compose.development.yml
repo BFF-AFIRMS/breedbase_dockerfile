@@ -9,6 +9,13 @@ volumes:
 
 services:
 
+  caddy:
+    extends:
+      file: docker/caddy/caddy.yml
+      service: caddy
+    volumes:
+      - ./cxgn:/home/production/cxgn
+
   keycloak:
     extends:
       file: docker/keycloak/web.yml

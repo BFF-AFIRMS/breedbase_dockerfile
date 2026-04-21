@@ -641,7 +641,8 @@
         "http://localhost:3010/authenticate/oidc/keycloak/callback",
         "http://localhost:8080/authenticate/oidc/keycloak/callback",
         "http://breedbase:3010/authenticate/oidc/keycloak/callback",
-        "http://breedbase:8080/authenticate/oidc/keycloak/callback"
+        "http://breedbase:8080/authenticate/oidc/keycloak/callback",
+        "https://localhost/authenticate/oidc/keycloak/callback"
       ],
       "webOrigins": [
         "http://test_breedbase:3010",
@@ -649,7 +650,8 @@
         "http://localhost:3010",
         "http://localhost:8080",
         "http://breedbase:3010",
-        "http://breedbase:8080"
+        "http://breedbase:8080",
+        "https://localhost"
       ],
       "notBefore": 0,
       "bearerOnly": false,
