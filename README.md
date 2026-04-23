@@ -183,9 +183,9 @@ mv data data_production
 
 1. **Access the applications via web browser.**
 
-    - Breedbase (Main Application): <http://localhost:8080>
-    - Keycloak Login (Single-Sign On/OIDC Testing): <http://localhost:9080/auth/realms/Breedbase/account>
-    - Keycloak Admin: http://localhost:9080/auth/admin/
+    - Breedbase (Main Application): <https://localhost>
+    - Keycloak Login (Single-Sign On/OIDC Testing): <https://localhost/auth/realms/Breedbase/account>
+    - Keycloak Admin: https://localhost/auth/admin/
 
     Login with the following credentials.
 
@@ -266,7 +266,7 @@ Tests can be run in `interactive` mode, where the same database and web server a
 1. **Start up all containers in interactive mode.**
 
     ```bash
-    D
+    ./run_test -i -s
     ```
 
 2. **Open a separate terminal to run the remaining commands.**
