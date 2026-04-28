@@ -38,6 +38,8 @@ Access [breedbase.org](https://breedbase.org/) to explore a default instance of 
     Please follow the instructions at https://docs.docker.com/engine/install.  
     You will probably also need to [add your user to the docker group](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
 
+    > ‼️**Warning:** Do not install docker in rootless mode! If you have a rootless install, you will need to disable it with `docker context use default` or `unset DOCKER_HOST`.
+
 1. **Install `docker compose`**
 
     - Debian/Ubuntu: `apt install docker-compose`
