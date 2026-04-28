@@ -1,0 +1,58 @@
+# Templated from David Pinkerton's Guide
+# Source: https://caddy.community/t/oauth2-authentication-template-with-group-checks-using-oauth2-proxy-and-self-hosted-oidc/31611
+
+{
+	local_certs
+	skip_install_trust
+	acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+	log {
+		output file /data/caddy/log/access.log
+		format json
+	}
+}
+
+{$DOMAIN_NAME} {
+
+	# ---------------------------------------------------------------------
+	# Keycloak: Authentication
+
+	redir /auth /auth/
+	handle /auth/* {
+		reverse_proxy keycloak:9080
+	}
+
+	# ---------------------------------------------------------------------
+	# Jbrowse: Genome Browser and file server
+
+	redir /jbrowse /jbrowse/
+	redir /jbrowse/data /jbrowse/data/
+	handle_path /jbrowse/* {
+
+		handle_path /data/* {
+			root * /data/jbrowse
+			file_server browse
+		}
+		handle {
+			root * /srv/www/jbrowse2
+			file_server
+		}
+	}
+
+	handle {
+
+		@static path /css/* /documents/* /img/* /react/assets/*
+		handle @static {
+			root * /home/production/cxgn/sgn/static
+			file_server
+		}
+		@js path /js/legacy/* /js/source/legacy/*
+		handle @js {
+			uri strip_prefix /js/legacy
+			uri strip_prefix /js/source/legacy
+			root * /home/production/cxgn/sgn/js/source/legacy
+			file_server
+		}
+
+		reverse_proxy breedbase:8080
+	}
+}

@@ -1,0 +1,5 @@
+name: quickstart
+
+include:
+  - docker/breedbase/db.yml  # Breedbase Database
+  - docker/breedbase/web.yml # Breedbase Web Application

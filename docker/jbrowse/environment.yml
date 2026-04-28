@@ -1,0 +1,8 @@
+name: jbrowse2-3.6.5
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - jbrowse2=3.6.5
+  - samtools
+  - tabix

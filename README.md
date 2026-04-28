@@ -1,159 +1,412 @@
+# Breedbase
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bff-afirms/breedbase_dockerfile/blob/master/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/bff-afirms/breedbase_dockerfile.svg)](https://github.com/phac-nml/rebar/issues)
+[![Test CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/test.yml)
+[![Deployment CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml)
+[![Dockerhub CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/dockerhub.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/dockerhub.yml)
+
 <p align="center">
-  <img src="Breedbase.png">
+  <img src="Breedbase.png" alt="breedbase logo">
 </p>
 
-This repo contains the Dockerfile for the breeDBase webserver, and the docker compose files for joint deployment of the breeDBase webserver and postgres database.
+This repo contains the Dockerfile for the BFF-AFIRMS Breedbase webserver, and the docker compose files for joint deployment of the webserver and postgres database.
 
->[!NOTE]
-> **For a simpler setup, you can use this repo:**
->
->[https://github.com/solgenomics/breedbase_site](https://github.com/solgenomics/breedbase_site)
->
+To learn more about Breedbase:
 
-To learn more about breeDBase:
-
-Access the [SGN repository](https://github.com/solgenomics/sgn) to contribute to the underlying codebase or submit new issues
-Access the [manual](https://solgenomics.github.io/sgn/) to learn how to use breeDBase's many features
+Access the [SGN repository](https://github.com/solgenomics/sgn) to contribute to the underlying codebase or submit new issues.  
+Access the [manual](https://solgenomics.github.io/sgn/) to learn how to use breeDBase's many features.  
 Access [breedbase.org](https://breedbase.org/) to explore a default instance of breeDBase.
 
-#### Table of Contents
+## Table of Contents
 
-[Deploy in Production](#deploy-in-production)<br>
-[Deploy for Development](#deploy-for-development)<br>
-[Access and Configure](#access-and-configure)<br>
-[Debugging](#debugging)<br>
-[Testing](#testing)<br>
-[Miscellaneous](#miscellaneous)<br>
+1. [Install](#install)
+2. [Deploy](#deploy)
+    - [Quick Start](#quick-start)
+    - [Production](#production)
+    - [Development](#development)
+    - [Testing](#testing)
+3. [Updating](#updating)
+4. [Debugging](#debugging)
+5. [Miscellaneous](#miscellaneous)
+6. [Credits](#credits)
 
-## Install Docker
+## Install
 
-For installs on Debian, follow the instructions on https://docs.docker.com/engine/install/debian/ to install the docker executable.
+1. **Install `docker`**
 
-## Deploy in Production
+    Please follow the instructions at https://docs.docker.com/engine/install.  
+    You will probably also need to [add your user to the docker group](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
 
-### Using `docker compose`
+1. **Install `docker compose`**
 
-1. Install docker-compose
+    - Debian/Ubuntu: `apt install docker-compose`
 
-    Debian/Ubuntu: ```apt-get install docker-compose-plugin```
-
-    For Mac/Windows: It will be installed as part of installing [Docker Desktop](https://www.docker.com/products/docker-desktop)
-
-    Please note that installing docker natively in Windows will conflict with VMWare and Virtualbox virtualization settings
-
-2. Clone this repo and set up a sgn_local.conf file and a .env file
-
-    ```
-    git clone https://github.com/solgenomics/breedbase_dockerfile
-    cd breedbase_dockerfile
-    touch .env
-    ```
-
-    Add the following lines to `.env` to set the necessary environment variables
-
-    ```
-    PGDATABASE=breedbase
-    PGHOST=breedbase_db
-    PGPASSWORD=postgres
-    PGUSER=postgres
-    ```
-    
-    Use ``` source .env ``` to read the environment variables.
-
-3. Deploy with docker-compose
-
-    Make sure to specify both the base yml file and the production yml file with your command. These will overwrite the default development settings found in `docker-compose.override.yml`, and instead use production settings. These settings include setting the env MODE to PRODUCTION rather than DEVELOPMENT, and mounting fewer volumes from the host (won't use host `./cxgn` dir to overwrite `/home/production/cxgn` in the container).
-
-    ```
-    docker-compose -f docker-compose.yml -f production.yml up -d
-    ```
-    Then follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment. You might also have to run the db patches to have an up to date database structure. See [Updating the database schema from the docker](#updating-the-database-schema-from-the-docker).
-
-### Using `docker swarm`
-Docker Swarm allows you to define a service, as well as to allow you to configure auto scaling and clustering of a service.
-
-You need to write an `sgn_local.conf` file specific to your service. A [template](./sgn_local.conf) is provided in the breedbase_dockerfile repo (you have to fill in the `dbhost`, `dbport`, `dbname`, and `dbuser` and `dbpassword`).
-
-1. (If needed) Initialize Docker Swarm
-
-    Once the image has been created either through Docker Hub or by building the image, the image can be started. First, Docker Swarm needs to be initialized on the machine. This needs to be done only once.
+1. **Clone repository**
 
     ```bash
-    docker swarm init
-    ```
-
-2. Add `sgn_local.conf` to docker config
-    ```bash
-    cat sgn_local.conf | docker config create "breedbase_sgn_local.conf" -
-    ```
-
-3. Start the service
-
-    To run the image on swarm, you have to provide the `sgn_local.config` using `--config`, as well as any mounts that are required for persistent data. Currently, breedbase just mounts directories on the docker host (which can be nfs mounts), but later this could be changed to docker volumes. Multiple mountpoints can be provided with multiple `--mount` options, as follows:
-    ```bash
-    docker service create --name "breedbase_service" --mount src=/export/prod/archive,target=/home/production/archive,type=bind --mount src=/export/prod/public_breedbase,target=/home/production/public,type=bind --config source="breedbase_sgn_local.conf",target="/home/production/cxgn/sgn/sgn_local.conf"  breedbase_image
-    ```
-
-    Depending on where your database is running, you may need to use the `--network` option. For a database server running on the host machine (localhost in your sgn_local.conf), use `--network="host"`.
-
-
-## Deploy for Development
-
-1. Install docker-compose
-
-    Debian/Ubuntu: https://www.digitalocean.com/community/tutorials/how-to-install-docker-compose-on-ubuntu-18-04
-
-    For Mac/Windows: It will be installed as part of installing [Docker Desktop](https://www.docker.com/products/docker-desktop)
-
-2. Clone this repo and set up other requirements on your host
-
-    If you haven't done so already, setup keys with GitHub following the instructions at https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account .
-
-    ```bash
-    git clone --recursive git@github.com:solgenomics/breedbase_dockerfile
+    git clone https://github.com/bff-afirms/breedbase_dockerfile
     cd breedbase_dockerfile
     ```
-   
-   This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`.
-    This directory will be mounted onto the devel container during the compose step, but will still be accessible from the host for development work.
 
-3. Deploy with docker-compose, then follow [the instructions below](#access-and-configure) to access and configure your new breedbase deployment!
-    ```
-    docker-compose up -d
-    ```
+## Deploy
 
-    This will deploy 2 containers, `breedbase_web` and `breedbase_db`, combined in a single service named `breedbase`
-    The deployment will set the container environment MODE to DEVELOPMENT, which will run the web server using Catalyst instead of Starman. In this configuration, the server will restart when any changes are detected in the config file or sgn perl libraries.
+All deployment options involve first running setup to create credentials and data directories.
 
-
-## Access and Configure
-
-Once your breedbase service is running, you can access the application at http://localhost:8080. User accounts can be created via the web interface, and their roles can be controlled by the default admin account:
+```bash
+./setup
 ```
-username: admin
-password: password
-```
-Please login and change the password of the admin user.
 
-Most configuration is handled in the `sgn_local.conf` file. Just edit the corresponding configuration line in the file to change your database name, species, ontology, mason skin, etc.
+```text
+-----------------------------------------------------------------------------
+2026-02-24 08:02:03     Beginning setup.
+2026-02-24 08:02:03     Generating secure credentials: .env
+2026-02-24 08:02:03     Creating data directories: data/
+2026-02-24 08:02:03     Downloading jbrowse files: jbrowse
+2026-02-24 08:02:03     Completed setup.
+-----------------------------------------------------------------------------
+```
+
+There are four different options for deployment:
+
+- [Quickstart](#quick-start): For those new to breedbase.
+- [Production](#production): Run a secure, performant server.
+- [Development](#development): Make changes to the applications.
+- [Testing](#testing): Run the comprehensive test suite.
+
+### Quick Start
+
+1. **Deploy with docker compose.**
+
+    ```bash
+    docker compose up -d
+    ```
+
+1. **(Optional): Watch the startup logs.**
+
+    ```bash
+    docker compose logs -f breedbase
+    ```
+
+1. **Wait for the container to be HEALTHY**.
+
+    Once the breedbase service has started, it must be in a healthy state before it can be accessed. This will take several minutes on first startup.
+
+    ```bash
+    docker compose ps breedbase
+    ```
+
+    ```text
+    NAME            IMAGE                        COMMAND            SERVICE     CREATED         STATUS                   PORTS
+    breedbase       bffafirms/breedbase:latest   "/entrypoint.sh"   breedbase   2 minutes ago   Up 2 minutes (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+    ```
+
+1. **Access the breedbase application at: <http://localhost:8080>**
+
+    Login with the following credentials.
+
+    | username | password | role      |
+    | -------- | -------- | --------- |
+    | admin    | password | curator   |
+
+### Production
+
+After quick-start, deploying for production is the most straightforward. Production mode provides 3 features:
+
+- Randomly generated passwords for default db and web accounts.
+- Secures web application with HTTPS.
+- Serves static files and js with Caddy for better browsing performance.
+
+> Note: If you have already started the quickstart deployment, you will need to first run these steps:
+
+```bash
+# Stop containers
+docker compose down
+# Clean up data directory
+mv data data_quickstart
+# Regenerate data directory
+./setup
+```
+
+You can then proceed to the following steps:
+
+1. **Deploy with docker compose**
+
+    ```bash
+    docker compose -f compose.production.yml up -d
+    ```
+
+1. **Access the breedbase application at: <https://localhost>**
+
+    > The password to log in to the admin account is in the `.env` file as `ADMIN_PASSWORD`.
+
+### Development
+
+Development mode will allow you to make changes to the application in real-time.
+
+Note: If you have already started the production deployment, you will need to first run these steps:
+
+```bash
+# Stop containers
+docker compose down
+# Clean up data directory
+mv data data_production
+# Regenerate data directory
+./setup
+```
+
+1. **Clone the submodules**
+
+    ```bash
+    git submodule update --init --recursive --progress
+    ```
+
+   > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted into the container during the compose step, but will still be accessible from the host for development work.
+
+1. **Build Docker Containers**
+
+    ```bash
+    docker compose -f compose.development.yml build
+    ```
+
+1. **Deploy with docker compose**
+
+    ```bash
+    docker compose -f compose.development.yml up -d
+    ```
+
+1. **Wait for the container to be HEALTHY**.
+
+    ```bash
+    docker compose -f compose.development.yml ps breedbase
+    ```
+
+1. **Access the applications via web browser.**
+
+    - Breedbase (Main Application): <https://localhost>
+    - Keycloak Login (Single-Sign On/OIDC Testing): <https://localhost/auth/realms/Breedbase/account>
+    - Keycloak Admin: https://localhost/auth/admin/
+
+    Login with the following credentials.
+
+    | username | password | role            |
+    | -------- | -------- | --------------- |
+    | admin    | password | curator/admin   |
+
+1. **Make changes to the code under `cxgn/sgn`.**
+
+    - Changes to mason components (`mason`) will update on page refresh.
+    - Changes to config files or libraries (`lib`) will trigger the server to restart, with changes going live once the restart is complete.
+    - Changes to javascript files (`js`) will require manual recompilation:
+
+        ```bash
+        docker compose -f compose.development.yml exec breedbase bash -c 'cd js && npm run build'
+        ```
+
+    - Changes to the react app (`react`) can either be manually recompiled:
+
+        ```bash
+        docker compose -f compose.development.yml exec breedbase bash -c 'cd react && npm run build'
+        ```
+
+        Or run with live changes locally with a local nodejs install:
+
+        ```bash
+        cd react
+        npm install
+        npm run dev
+        ```
+
+### Testing
+
+Testing mode is for writing and debugging new tests.
+
+1. **Clone the submodules**
+
+    ```bash
+    git submodule update --init --recursive --progress
+    ```
+
+Then choose either [Standalone](#standalone) or [Interactive](#interactive) mode from below.
+
+#### Standalone
+
+Tests can be run in `standalone` mode. For each test, a new database and web server will be created, ensuring reproducibility and isolation between tests.
+
+> This mode can be very slow to start up and run.  
+> For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>  
+> The `-s` flag shows stderr, omit for cleaner output.
+
+```bash
+# Single
+./run_test -s t/unit/CXGN/String
+./run_test -s t/selenium2/search/stock.t
+
+# Group
+./run_test -s t/unit/CXGN
+./run_test -s t/selenium2/search
+
+# Category
+./run_test -s t/unit/
+./run_test -s t/unit_fixture
+./run_test -s t/unit_mech
+./run_test -s t/selenium2
+```
+
+For less noisy output, omit the `-s` flag that show stderr.
+
+```bash
+./run_test t/unit_fixture
+```
+
+#### Interactive
+
+Tests can be run in `interactive` mode, where the same database and web server are re-used between tests for quick iteration. This is particulary useful when writing and troubleshooting new tests.
+
+1. **Start up all containers in interactive mode.**
+
+    ```bash
+    ./run_test -i -s
+    ```
+
+2. **Open a separate terminal to run the remaining commands.**
+
+3. **Wait for the web server container to be healthy.**
+
+    ```bash
+    docker compose -f compose.testing.yml ps breedbase
+
+    NAME                                    IMAGE                        COMMAND                  SERVICE          CREATED              STATUS                        PORTS
+    breedbase_dockerfile-breedbase-1   bff-afirms/breedbase:latest   "/entrypoint.sh --in…"   breedbase   About a minute ago   Up About a minute (healthy)   0.0.0.0:3010->3010/tcp, [::]:3010->3010/tcp, 8080/tcp
+    ```
+
+4. **Browse the testing environment at: <http://localhost:3010>**
+
+    Login with the following credentials.
+
+    | username | password | role      |
+    | -------- | -------- | --------- |
+    |janedoe   | secretpw | curator   |
+    |johndoe   | secretpw | submitter |
+    |freddy    | atgc     | user      |
+
+5. **Connect to the test container.**
+
+    ```bash
+    docker compose -f compose.testing.yml exec breedbase bash
+
+    # Find the name of the test database
+    psql -l
+
+    # Export the db as a variable (example)
+    export TEST_DB_NAME=test_db_2026_2_25_22_22794
+    ```
+
+6. **Run tests in the container.**
+
+    > For selenium (browser) tests, open the visualizer at: <http://localhost:8081/vnc.html>
+
+    ```bash
+    # Single
+    perl t/test_fixture.pl t/unit/CXGN/String
+    perl t/test_fixture.pl t/selenium2/search/stock.t
+
+    # Group
+    perl t/test_fixture.pl t/unit/CXGN
+    perl t/test_fixture.pl t/selenium2/search
+
+    # Category
+    perl t/test_fixture.pl t/unit/
+    perl t/test_fixture.pl t/unit_fixture
+    perl t/test_fixture.pl t/unit_mech
+    perl t/test_fixture.pl t/selenium2/01_list
+    perl t/test_fixture.pl t/selenium2/02_trial
+    ```
+
+To troubleshoot selenium tests:
+
+- Open the Selenium Hub: <http://localhost:4444/wd/hub/static/resource/hub.html>
+- Click `Create Session` -> `Firefox`
+- Open the Visualizer to see the Firefox window: <http://localhost:8081/vnc.html>
+
+## Updating
+
+To update to the latest changes from the [upstream repo](https://github.com/solgenomics/breedbase_dockerfile).
+
+1. Update the `master` branch to have the latest changes from the [upstream repo](https://github.com/solgenomics/breedbase_dockerfile).
+
+    ```bash
+    git checkout master
+    git remote add upstream https://github.com/solgenomics/breedbase_dockerfile
+    git pull upstream master
+    git pull upstream --tags
+    ```
+
+2. Checkout the commit or tag you want to update to.
+
+    ```bash
+    # sgn-447.0 = breedbase_dockerfile v1.98
+    git checkout v1.98
+    ```
+
+3. Create a new branch off of `bff-afirms`.
+
+    ```bash
+    git checkout bff-afirms
+    git submodule update --recursive --progress --init
+    git checkout -b bff-afirms-sgn-447.0
+    ```
+
+4. Merge the upstream changes into the new branch.
+
+    > Do not rebase!
+
+    ```bash
+    git checkout bff-afirms-sgn-447.0
+    git submodule update --recursive --progress --init
+    git merge master
+    ```
+
+5. Push to GitHub.
+
+    ```bash
+    git push --set-upstream origin bff-afirms-sgn-447.0
+    ```
+
+6. Open a pull request.
+
+    ```yaml
+    Base Repository: BFF-AFIRMS/breedbase_dockerfile
+    Base: bff-afirms
+    Compare: bff-afirms-sgn-447.0
+    ```
+
+    There will be a larger number of commits in the history, because the BFF-AFIRMS branch split off of the upstream at version `sgn-444.0`. These will be squashed into one final commit reflecting the single update.
+
+7. Confirm that the tests all pass before `Squash and Merge`.
+
+You have now successfully updated to the latest SGN changes while keeping the BFF-AFIRMS features.
 
 ## Debugging
 
 Docker has a [wealth of command-line options](https://docs.docker.com/engine/reference/commandline/docker/) for working with your new containers. Some commonly used commands include:<br>
 
 `docker ps -a` Will list all running containers and their details.<br>
-`docker-compose start breedbase` Will start both containers (web and db) if they have been stopped.<br>
-`docker exec -it breedbase_web bash` Will open a new bash terminal within the web container.<br>
-`docker logs breedbase_web` Will let you access webserver error output from your host.<br>
-`docker-compose stop breedbase` Will stop both containers (web and db), but will not remove them.<br>
-`docker-compose down`   Will remove both containers, but only if run within the breedbase_dockerfile directory.<br>
+`docker compose start breedbase` Will start both containers (web and db) if they have been stopped.<br>
+`docker compose exec breedbase bash` Will open a new bash terminal within the web container.<br>
+`docker compose logs breedbase` Will let you access webserver error output from your host.<br>
+`docker compose stop breedbase` Will stop both containers (web and db), but will not remove them.<br>
+`docker compose down`   Will remove both containers, but only if run within the breedbase_dockerfile directory.<br>
 
-To debug, log into the container. You can find the container id using
-```
+You can find the container id using
+
+``` bash
 docker ps
 ```
+
 then
-```
+
+``` bash
 docker exec -it <container_id> bash
 ```
 
@@ -161,48 +414,7 @@ You can use `lynx localhost:8080` to see if the server is running correctly with
 
 You can of course also find the IP address of the running container either in the container using `ip address` or from the host using `docker inspect <container_id>`.
 
-
-## Testing
-
-To run tests from the docker, please note that the $HOME environment variable is set to ```/home/production```, so the ```.pgpass``` file will be written there. Most likely you will run the test as root, so the ```.pgpass``` file will be expected in the ```/root``` directory.
-
-To run all tests using `docker-compose`:
-
-```
-docker-compose -f docker-compose.test.yml run --use-aliases test_breedbase
-```
-
-Testing can be performed while other services deployed using docker-compose for development or production are up, as the services defined in docker-compose.test.yml are started on a separate Docker network.
-
-To run only select tests, list them after the `test_breedbase` service:
-
-```
-docker-compose -f docker-compose.test.yml run --use-aliases test_breedbase t/unit_fixture/SGN/genefamily.t
-```
-
-After testing, stop remaining test (for selenium & postgres):
-
-```
-docker-compose -f docker-compose.test.yml down
-```
-
-
 ## Miscellaneous
-
-### Running Breedbase behind a proxy server
-
-In many situations, the Breedbase server will be installed behind a proxy server. While everything should run normally, there is an issue with ```npm```, and it needs to be specially configured. Create a file on the host server, let's say, ```npm_config.txt```, with the following lines in it:
-
-```
-strict-ssl=false
-registry=http://registry.npmjs.org/
-proxy=http://yourproxy.server.org:3128
-https-proxy=http://yourproxy.server.org:3128
-maxsockets=1
-```
-Of course, replace ```yourproxy.server.org:3128``` with your correct proxy server hostname and port.
-
-When running the docker, mount this file (using the ```volumes``` option in ```docker-compose``` or ```-v``` with ```docker run``` etc.) at the location ```/home/production/.npmrc``` in the docker. Then start your docker and now npm should be able to fetch dependencies from the registry.
 
 ### Updating the database schema from the docker
 
@@ -210,61 +422,26 @@ Code updates sometimes require the database schema to be updated. This is done u
 
 The db patches can be run individually by changing into the specific directory, and then running the script using ```mx-run```, using the parameters as described in the ```perldoc``` for the scripts.
 
-The database can be updated to the current level in one step (recommended method) by running the ```run_all_patches.pl``` script in the ```db/``` directory, which calls all the db patches individually. If you are using the standard docker-compose setup, the command line is (options in square brackets are optional):
-```
-    cd db;
-    perl run_all_patches.pl -u postgres -p postgres -h breedbase_db -d
-    breedbase -e admin [-s <startfrom>] [--test]
+The database can be updated to the current level in one step (recommended method) by running the ```run_all_patches.pl``` script in the ```db/``` directory, which calls all the db patches individually. If you are using the standard docker compose setup, the command line is (options in square brackets are optional):
+
+```bash
+perl db/run_all_patches.pl -e admin [-s <startfrom>] [--test]
 ```
 
 Note that for this to work, the $PERL5LIB environment variable should have the current directory included. If it isn't, run:
+
+```bash
+export PERL5LIB=$PERL5LIB:.
 ```
-    export PERL5LIB=$PERL5LIB:.
-```
 
-### Deploying Services Individually
+## Credits
 
- * Individual deployment is generally not necessary or recommended. When possible deploy jointly with docker compose *
+The original [breedbase_dockerfile repository](https://github.com/solgenomics/breedbase_dockerfile) is built by Dr. Lukas Mueller's lab at the [Boyce Thompson Institute](https://btiscience.org/). For a full list of contributors, please  see [this link](https://github.com/solgenomics/breedbase_dockerfile/graphs/contributors).
 
-1. Install docker
+This fork is maintained by [Katherine Eaton](https://ktmeaton.github.io/) through Dr. Barb Thomas' [Tree Improvement Lab](https://people.ales.ualberta.ca/barbthomas/) at the [University of Alberta](https://www.ualberta.ca/).
 
-  Debian/Ubuntu: `sudo apt install docker.io`
+## License
 
-  For Mac/Windows: [Docker Desktop](https://www.docker.com/products/docker-desktop)
+Copyright 2026 University of Alberta
 
-2. Deploy a Web Server
-
-  This will create a Breedbase web server container. The -v flag is used to mount a local conf file and a couple of dirs from the host. Create the file and ris on your host if they don't exist and update the paths before running the command.
-
-  ```
-  docker run -d --name breedbase_web -p 8080:8080 -v /host/path/to/sgn_local.conf:/home/production/cxgn/sgn/sgn_local.conf -v /host/path/to/archive:/home/production/archive -v /host/path/to/public_breedbase:/home/production/public breedbase/breedbase:latest
-  ```
-
-3. Deploy a Postgres Database
-
-  This will create an empty Breedbase postgres database container.
-
-  ```
-  docker run -d --name breedbase_db -p 5432:5432 breedbase/pg:latest
-  ```
-
-  For more information, visit: https://github.com/solgenomics/postgres_dockerfile
-
-4. Connect containers via Docker Network
-
-  Assuming you've named the Breedbase database container `breedbase_db`, in your `sgn_local.conf`, set the following:
-
-  ```
-  dbhost breedbase_db
-  dbport 5432
-  ```
-
-  Create a network and add your containers
-
-  ```
-  docker network create -d bridge bb_bridge_network
-  docker network connect bb_bridge_network breedbase_db
-  docker network connect bb_bridge_network breedbase_web
-  ```
-
-  Finally access the application at http://localhost:8080
+Licensed under the MIT License.
