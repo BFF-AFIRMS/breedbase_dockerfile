@@ -14,6 +14,14 @@
 {$DOMAIN_NAME} {
 
 	# ---------------------------------------------------------------------
+	# Keycloak: Authentication
+
+	redir /auth /auth/
+	handle /auth/* {
+		reverse_proxy keycloak:9080
+	}
+
+	# ---------------------------------------------------------------------
 	# Jbrowse: Genome Browser and file server
 
 	redir /jbrowse /jbrowse/
