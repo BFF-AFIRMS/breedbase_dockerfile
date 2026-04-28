@@ -232,13 +232,13 @@ sub formatted_phenotype_file {
 
 sub phenotype_file_name {
     my ($self, $c, $pop_id) = @_;
-
+    
     $pop_id = $c->stash->{training_pop_id} || $c->{stash}->{combo_pops_id} if !$pop_id;
 
     unless ($pop_id) {
        die "No population ID (pop_id) provided for phenotype file name.\n";
     }
-
+ 
     my $dir;
     if ($pop_id =~ /list/)
     {
@@ -296,14 +296,14 @@ sub analysis_report_file {
     my $cache_dir = $c->stash->{cache_dir} || $c->stash->{solgs_cache_dir};
     my $file_id   = $c->stash->{file_id};
 
-    if (!$file_id)
+    if (!$file_id) 
     {
         my $pop_id = $c->stash->{training_pop_id} || $c->stash->{combo_pops_id};
         my $trait_abbr = $c->stash->{trait_abbr};
         my $protocol_id = $c->stash->{genotyping_protocol_id};
 
-        if ($analysis_type =~ /selection_prediction/)
-        {
+        if ($analysis_type =~ /selection_prediction/) 
+        {     
             $pop_id .= "_" . $c->stash->{selection_pop_id};
         }
 
@@ -391,7 +391,7 @@ sub relationship_matrix_adjusted_file {
     my ($self, $c) = @_;
 
     my $file_id = $self->kinship_file_id($c);
-
+    
     my $cache_data = {key    => 'relationship_matrix_adjusted_table_' . $file_id ,
 		      file      => 'relationship_matrix_adjusted_table_' . $file_id,
 		      stash_key => 'relationship_matrix_adjusted_table_file',
@@ -417,8 +417,8 @@ sub kinship_file_id {
     my $protocol_id = $c->stash->{genotyping_protocol_id};
     my $trait_abbr = $c->stash->{trait_abbr};
 
-    my $file_id =  $trait_abbr ?
-        "${pop_id}_${trait_abbr}_GP_${protocol_id}" :
+    my $file_id =  $trait_abbr ? 
+        "${pop_id}_${trait_abbr}_GP_${protocol_id}" : 
         "${pop_id}_GP_${protocol_id}";
 
     return $file_id;
@@ -698,7 +698,7 @@ sub gebvs_file_id {
 
     my $identifier = $training_pop_id;
 
-    if ($type =~ /selection/)
+    if ($type =~ /selection/) 
     {
         $identifier = "${identifier}-${selection_pop_id}";
     }
@@ -831,18 +831,18 @@ sub cache_file {
     no warnings 'uninitialized';
 
     unless (-s $file)
-    {
+    { 
         $file = catfile($cache_dir, $cache_data->{file});
 
-         if ($file !~ /(\.\w+)/)
+         if ($file !~ /(\.\w+)/) 
         {
             my $ext = $cache_data->{ext};
-            if ($ext)
+            if ($ext) 
             {
                 if ($ext !~ /^\./) { $ext = '.' . $ext}
-            }
-            else
-            {
+            } 
+            else 
+            {          
                 $ext = '.txt';
             }
             $file = $file . $ext;
@@ -983,7 +983,7 @@ sub create_file_id {
     }
 
     $file_id = $data_type ? $file_id . '-' . lc($data_type) : $file_id;
-    if ($cluster_type !~ /hierarchical/i)
+    if ($cluster_type !~ /hierarchical/i) 
     {
         $file_id = $k_number  ? $file_id . '-k-' . $k_number : $file_id;
     }
