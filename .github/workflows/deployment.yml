@@ -1,0 +1,102 @@
+# Re-usable workflow to test deployments
+name: Deployment
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 0'
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Deployment Modes
+
+  deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      DOCKER_BUILDKIT: 1
+
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [quickstart, development, production, testing]
+        sgn_branch: [master, current]
+
+    steps:
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # when set to "true" but frees about 6 GB
+          tool-cache: true
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: false
+          large-packages: false
+          swap-storage: false
+
+      - name: Checkout breedbase_dockerfile repo
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Link compose file
+        run: |
+          ln -s compose.yml compose.quickstart.yml
+
+      - name: Setup
+        run: ./setup
+
+      - name: Checkout sgn branch
+        if: ${{ matrix.sgn_branch != 'current' }}
+        run: |
+          cd cxgn/sgn
+          git checkout ${{ matrix.sgn_branch }}
+
+      - name: Build breedbase image
+        run: docker build -t bffafirms/breedbase:latest .
+
+      # ---------------------------------------------------------------------------
+      # Deployments
+
+      - name: Build supporting images
+        run: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache
+
+      - name: Start containers
+        run: docker compose -f compose.${{ matrix.mode }}.yml up -d
+
+      - name: Healthcheck containers
+        uses: stringbean/docker-healthcheck-action@v3
+        with:
+          container: ${{ matrix.mode }}-breedbase-1
+          wait-time: 300
+          require-status: running
+          require-healthy: true
+
+      - name: Breedbase DB container log
+        if: always()
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase_db
+
+      - name: Breedbase Web container log
+        if: always()
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase
+
+      - name: Keycloak Web container log
+        if: ${{ (matrix.mode == 'testing') || (matrix.mode == 'development') }}
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs keycloak
+
+      - name: Stop containers
+        run: docker compose down
+
+      - name: Clean volumes
+        run: docker volume prune -af
+
+      - name: Clean data
+        run: rm -rf data

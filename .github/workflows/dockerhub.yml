@@ -1,0 +1,117 @@
+# Re-usable workflow to check dockerhub pull
+name: Dockerhub
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 0'
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Deployment Modes
+
+  deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      DOCKER_BUILDKIT: 1
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: quickstart
+          - mode: production
+
+    steps:
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # when set to "true" but frees about 6 GB
+          tool-cache: true
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: false
+          large-packages: false
+          swap-storage: false
+
+      - name: Checkout breedbase_dockerfile repo
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Link compose file
+        run: |
+          ln -s compose.yml compose.quickstart.yml
+
+      - name: Build container image
+        run: docker pull bffafirms/breedbase:latest
+
+      # ---------------------------------------------------------------------------
+      # No Overlay
+
+      - name: Setup
+        run: ./setup
+
+      - name: Start containers
+        run: docker compose -f compose.${{ matrix.mode }}.yml up -d
+
+      - name: Healthcheck containers
+        uses: stringbean/docker-healthcheck-action@v3
+        with:
+          container: ${{ matrix.mode }}-breedbase-1
+          wait-time: 300
+          require-status: running
+          require-healthy: true
+
+      - name: DB container log
+        if: always()
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase_db
+
+      - name: Web container log
+        if: always()
+        run: docker compose -f compose.${{ matrix.mode }}.yml logs breedbase
+
+      - name: Stop containers
+        run: docker compose down
+
+      - name: Clean volumes
+        run: docker volume prune -af
+
+      - name: Clean data
+        run: rm -rf data
+
+      # ---------------------------------------------------------------------------
+      # Site Overlay
+
+
+      - name: Setup overlay
+        run: ./setup
+
+      - name: Start containers overlay
+        run: docker compose -f compose.${{ matrix.mode }}.yml up -d
+
+      - name: Healthcheck containers overlay
+        uses: stringbean/docker-healthcheck-action@v3
+        with:
+          container: ${{ matrix.mode }}-breedbase-1
+          wait-time: 300
+          require-status: running
+          require-healthy: true
+
+      - name: Stop containers overlay
+        run: docker compose down
+
+      - name: Clean volumes overlay
+        run: docker volume prune -af
+
+      - name: Clean data overlay
+        run: rm -rf data

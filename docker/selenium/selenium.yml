@@ -1,0 +1,35 @@
+services:
+
+  # Browser automation
+  selenium:
+    hostname: selenium
+    image: selenium/standalone-firefox:3.141.59
+    shm_size: '2gb'
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    depends_on:
+      - novnc
+    healthcheck:
+      test: "curl --silent --head http://localhost:4444 || exit 1"
+    volumes:
+      # required volumes
+      - type: bind
+        source: ../../cxgn/sgn/t/data
+        target: /home/production/cxgn/sgn/t/data
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/breedbase
+        target: /downloads
+        bind:
+          create_host_path: false
+
+    environment:
+      DISPLAY: novnc:0.0
+    ports:
+       - 5900:5900
+       - 4444:4444
