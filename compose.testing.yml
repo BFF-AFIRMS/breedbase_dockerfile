@@ -1,0 +1,68 @@
+name: testing
+
+include:
+  - docker/breedbase/db.yml           # Breedbase Database
+  - docker/keycloak/web.yml           # Keycloak Web Application + Database
+  - docker/selenium/selenium.yml      # Selenium Web Browser
+  - docker/novnc/novnc.yml            # NoVNC Visualizer for Selenium Tests
+
+volumes:
+  npmdata:
+
+services:
+
+  breedbase:
+    hostname: test_breedbase
+    extends:
+      file: docker/breedbase/web.yml
+      service: breedbase
+    restart: no
+    depends_on:
+      breedbase_db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      selenium:
+        condition: service_healthy
+    environment:
+      MODE:            TESTING
+      SGN_TEST_SERVER: http://test_breedbase:3010
+    command: ["--interactive"]
+    ports:
+      - 3010:3010
+    healthcheck:
+      test: curl -I localhost:3010
+    volumes:
+      - npmdata:/home/production/npm
+
+      - type: bind
+        source: ./cxgn
+        target: /home/production/cxgn
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ./.git
+        target: /home/production/.git
+        bind:
+          create_host_path: false
+
+      # mount scripts when developing the docker image itself
+      - type: bind
+        source: ./docker/breedbase/web_entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ./docker/breedbase/web_setup
+        target: /usr/local/bin/web_setup
+        bind:
+          create_host_path: false
+
+      # Testing config
+      - type: bind
+        source: ./docker/breedbase/sgn_test.conf
+        target: /home/production/cxgn/sgn/sgn_test.conf
+        bind:
+          create_host_path: false

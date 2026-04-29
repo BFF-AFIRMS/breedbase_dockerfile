@@ -1,0 +1,65 @@
+name: development
+
+include:
+  - docker/breedbase/db.yml           # Breedbase Database
+  - docker/keycloak/db.yml            # Keycloak Database
+
+volumes:
+  npmdata:
+
+services:
+
+  caddy:
+    extends:
+      file: docker/caddy/caddy.yml
+      service: caddy
+    volumes:
+      - ./cxgn:/home/production/cxgn
+
+  keycloak:
+    extends:
+      file: docker/keycloak/web.yml
+      service: keycloak
+    environment:
+      KC_HOSTNAME:       https://localhost/auth
+      KC_HOSTNAME_ADMIN: https://localhost/auth
+
+  breedbase:
+    extends:
+      file: docker/breedbase/web.yml
+      service: breedbase
+    depends_on:
+      breedbase_db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      MODE:            DEVELOPMENT
+      SGN_TEST_SERVER: http://breedbase:3010
+    volumes:
+      - npmdata:/home/production/npm
+
+      - type: bind
+        source: ./cxgn
+        target: /home/production/cxgn
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ./.git
+        target: /home/production/.git
+        bind:
+          create_host_path: false
+
+      # mount scripts when developing the docker image itself
+      - type: bind
+        source: ./docker/breedbase/web_entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ./docker/breedbase/web_setup
+        target: /usr/local/bin/web_setup
+        bind:
+          create_host_path: false
