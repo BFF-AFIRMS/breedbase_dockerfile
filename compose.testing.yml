@@ -66,3 +66,9 @@ services:
         target: /home/production/cxgn/sgn/sgn_test.conf
         bind:
           create_host_path: false
+      
+      - type: bind
+        source: ./screenshots
+        target: /screenshots
+        bind:
+          create_host_path: true
