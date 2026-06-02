@@ -86,13 +86,6 @@ services:
       file: docker/selenium/selenium.yml
       service: selenium
     volumes:
-      # Screenshots
-      - type: bind
-        source: $PWD/data/selenium/screenshots
-        target: /screenshots
-        bind:
-          create_host_path: false
-
       # Downloads
       - type: bind
         source: $PWD/data/selenium/downloads
