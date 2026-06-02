@@ -3,7 +3,6 @@ name: testing
 include:
   - docker/breedbase/db.yml           # Breedbase Database
   - docker/keycloak/web.yml           # Keycloak Web Application + Database
-  - docker/selenium/selenium.yml      # Selenium Web Browser
   - docker/novnc/novnc.yml            # NoVNC Visualizer for Selenium Tests
 
 volumes:
@@ -64,5 +63,32 @@ services:
       - type: bind
         source: ./docker/breedbase/sgn_test.conf
         target: /home/production/cxgn/sgn/sgn_test.conf
+        bind:
+          create_host_path: false
+
+      # Screenshots from selenium host
+      - type: bind
+        source: $PWD/data/selenium/screenshots
+        target: /screenshots
+        bind:
+          create_host_path: true
+
+      # Files downloaded from selenium host
+      - type: bind
+        source: $PWD/data/selenium/downloads
+        target: /selenium/downloads
+        bind:
+          create_host_path: false
+
+  selenium:
+    hostname: selenium
+    extends:
+      file: docker/selenium/selenium.yml
+      service: selenium
+    volumes:
+      # Downloads
+      - type: bind
+        source: $PWD/data/selenium/downloads
+        target: /downloads
         bind:
           create_host_path: false

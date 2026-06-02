@@ -90,5 +90,12 @@ if [[ ! -d jbrowse ]]; then
   fi
 fi
 
+# selenium
+mkdir -p selenium/screenshots
+chmod 777 selenium/screenshots
+
+mkdir -p selenium/downloads
+chmod 777 selenium/downloads
+
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
 echo -e "-----------------------------------------------------------------------------"
