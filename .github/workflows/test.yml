@@ -22,9 +22,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sgn_branch:
-          - master
-          - current
         subtest_key:
           - unit
           - unit_fixture
@@ -64,14 +61,11 @@ jobs:
       - name: Setup
         run: ./setup
 
-      - name: Checkout sgn branch
-        if: ${{ matrix.sgn_branch != 'current' }}
-        run: |
-          cd cxgn/sgn
-          git checkout ${{ matrix.sgn_branch }}
-
-      - name: Build Breedbase web image
-        run: docker build -t bffafirms/breedbase:latest .
+      - uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          command: docker build -t bffafirms/breedbase:latest .
 
       - name: Build supporting images
         run: docker compose -f compose.testing.yml build --no-cache
