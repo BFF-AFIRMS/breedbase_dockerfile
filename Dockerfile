@@ -125,7 +125,7 @@ RUN apt-get install -y python3-dev  python3-pip python3-numpy libgtk2.0-dev libg
 
 # Install python packages, strip unneeded symbols, clear cache
 RUN pip3 install --upgrade pip \
-    && pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python \
+    && pip3 install grpcio==1.40.0 imutils numpy matplotlib pillow statistics PyExifTool pytz pysolar scikit-image packaging pyzbar pandas opencv-python==4.13.0.92 \
     && pip3 install -U keras-tuner \
     && rm -rf /root/.cache/pip
 
