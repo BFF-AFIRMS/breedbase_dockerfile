@@ -54,6 +54,13 @@ services:
         bind:
           create_host_path: false
 
+      - type: bind
+        source: ./postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
+        bind:
+          create_host_path: false
+
     expose:
       - "5432"
     healthcheck:
