@@ -1,0 +1,9 @@
+name: TargetedSequencing
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bwa=0.7.19
+  - samtools=1.22
+  - bcftools=1.22
+  - tassel=5.2.89

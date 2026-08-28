@@ -1,21 +1,28 @@
-FROM keycloak/keycloak:26.5.1-0
+# -----------------------------------------------------------------------------
+# Build Layer
 
-RUN mkdir -p /opt/keycloak/data/import
+FROM keycloak/keycloak:26.7.2 AS builder
 
-COPY realms/breedbase-realm.json  /opt/keycloak/data/import/breedbase-realm.json
-COPY web_entrypoint.sh /entrypoint.sh
+# Enable health and metrics support
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
 
+# Configure a database vendor
 ENV KC_DB=postgres
-ENV KC_DB_URL=jdbc:postgresql://keycloak_db:5432/keycloak
-ENV KC_BOOTSTRAP_ADMIN_USERNAME=admin
-ENV KC_HTTP_ENABLED=true
-ENV KC_HTTP_PORT=9080
-ENV KC_HOSTNAME=http://keycloak:9080/auth
-ENV KC_HTTP_RELATIVE_PATH=/auth
-ENV KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true
-ENV KC_PROXY_HEADERS=xforwarded
 
+# Themes
+ADD --chown=keycloak:keycloak themes/bff-afirms-theme /opt/keycloak/themes/bff-afirms-theme
+
+# Build
+WORKDIR /opt/keycloak
+RUN /opt/keycloak/bin/kc.sh build
+
+# -----------------------------------------------------------------------------
+# Final Layer
+
+FROM keycloak/keycloak:26.7.2
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+COPY web_entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-
 HEALTHCHECK --interval=10s --timeout=5s --retries=30 --start-period=5s \
   CMD bash -c ":> /dev/tcp/localhost/$KC_HTTP_PORT"

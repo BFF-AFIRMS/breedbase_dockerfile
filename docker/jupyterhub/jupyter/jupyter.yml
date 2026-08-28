@@ -1,0 +1,17 @@
+services:
+
+  jupyter-default:
+    image: "bffafirms/jupyter-default:0.2.0"
+    hostname: jupyter-default
+    build:
+      context: .
+      dockerfile: Dockerfile.default
+    # restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    restart: no
+    user: ${USER_GROUP_ID}
+    environment:
+      USER_GROUP_ID: ${USER_GROUP_ID:?}

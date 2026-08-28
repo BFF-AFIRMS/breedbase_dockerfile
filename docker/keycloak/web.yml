@@ -5,7 +5,7 @@ services:
 
   keycloak:
     hostname: keycloak
-    image: bffafirms/keycloak:26.5.1-0-breedbase-testing
+    image: bffafirms/keycloak:26.7.2
     build:
       context: .
     # Restrict security privileges

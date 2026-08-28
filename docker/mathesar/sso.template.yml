@@ -1,0 +1,10 @@
+# This config file allows you to configure OpenID Connect(OIDC)
+# based Single Sign-On(SSO) for logging into Mathesar with your preferred
+# Identity Provider(IdP).
+version: 1
+oidc_providers:
+  keycloak:
+    provider_name: keycloak
+    client_id: mathesar
+    secret: {MATHESAR_CLIENT_SECRET}
+    server_url: http://keycloak:9080/auth/realms/{PROJECT_NAME}/.well-known/openid-configuration

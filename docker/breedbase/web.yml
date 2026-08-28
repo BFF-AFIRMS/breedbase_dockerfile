@@ -2,7 +2,10 @@ services:
 
   breedbase:
     hostname: breedbase
-    image: bffafirms/breedbase:latest
+    image: bffafirms/breedbase:bff-afirms-sgn-453.1
+    build:
+      context: ../..
+      dockerfile: docker/breedbase/Dockerfile
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
@@ -94,7 +97,7 @@ services:
         bind:
           create_host_path: false
 
-      # ???
+      # General data transfer in and out of container
       - type: bind
         source: $PWD/data/breedbase/downloads
         target: /downloads

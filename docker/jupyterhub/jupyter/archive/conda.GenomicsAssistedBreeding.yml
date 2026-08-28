@@ -1,0 +1,14 @@
+name: GAB
+channels:
+  - conda-forge
+dependencies:
+  - r-remotes=2.5.0      # Install packages from remote repositories (ex. GitHub)
+  - r-devtools=2.4.5     # Development tools for compiling and installing packages
+  - cmake=4.0.3          # C compiler for R packages
+  - pkg-config=0.29.2    # C compiler configuration
+  # The following packages come from conda because they have system dependencies
+  - r-s2=1.1.7           # Bindings for Google's S2 Library for geometric calcuations
+  - r-units=0.8_5        # Measurement units
+  - r-nloptr=2.2.1       # Optimization problem solving
+  - r-sf=1.0_20          # Spatial vector data bindings
+  - r-lme4=1.1_37        # Fit linear and generalized linear mixed-effects models

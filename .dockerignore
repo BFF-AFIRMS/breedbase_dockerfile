@@ -8,3 +8,4 @@ cxgn/sgn/logfile*
 cxgn/sgn/sgn_fixture.conf
 cxgn/*/sgn_local.conf
 **/*.env
+**/__pycache__

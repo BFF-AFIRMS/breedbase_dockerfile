@@ -1,0 +1,7 @@
+[*]
+max-processes = 800
+max-memory-mb = 8,192
+session-limit=3
+session-timeout-minutes=360
+session-timeout-kill-hours=168
+r-version = /opt/conda/bin/R

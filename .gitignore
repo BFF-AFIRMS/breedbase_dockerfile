@@ -40,3 +40,5 @@ inc/
 data*/*
 *.tmp.yml
 *.vscode*
+
+.cache_ggshield

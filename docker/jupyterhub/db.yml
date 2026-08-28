@@ -1,0 +1,36 @@
+services:
+
+  jupyterhub_db:
+    hostname: jupyterhub_db
+    extends:
+      file: ../../docker/postgres/db.yml
+      service: db
+    environment:
+      JUPYTERHUB_PASSWORD: ${JUPYTERHUB_PASSWORD}
+      TLS_DOMAIN:          jupyterhub_db
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q jupyterhub -c '\\dt'"]
+    volumes:
+      - type: bind
+        source: $PWD/data/jupyterhub_db/db
+        target: /data/postgresql
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/jupyterhub_db/pgbackrest
+        target: /data/pgbackrest
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/jupyterhub_db/certs
+        target: /data/certs
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/jupyterhub_db/log
+        target: /data/log
+        bind:
+          create_host_path: false

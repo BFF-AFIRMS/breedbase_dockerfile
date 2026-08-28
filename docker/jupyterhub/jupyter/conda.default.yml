@@ -1,0 +1,25 @@
+name: jupyter-default-0.2.0
+channels:
+  - conda-forge
+dependencies:
+  # Languages
+  - r-base=4.5.3
+  - zlib=1.3.2                   # For compiling R packages
+  # Kernels
+  - bash_kernel=0.10.0           # Bash kernel for jupyter notebooks
+  - r-irkernel=1.3.2             # R kernel for jupyter notebooks
+  # Extensions
+  - jupysql=0.11.1               # Enable SQL magic
+  - rpy2=3.6.6                   # Enable R magic
+  # Application Proxies
+  - jupyter-server-proxy=4.4.0   # Main proxy, Do not use 4.5.0
+  - jupyter-rsession-proxy=2.3.0 # Rstudio Proxy, Server installed in Dockerfile
+  - jupyter-vscode-proxy=0.7     # VSCode Proxy, Server installed in Dockerfile
+  # R Packages
+  - r-shiny=1.13.0               # Shiny package for shiny-server
+  # Themes
+  - catppuccin-jupyterlab=0.2.4  # Soothing pastel theme
+  - pip
+  - pip:
+    - jupyter-shiny-proxy==1.3   # Shiny IDE
+    - jupyterlab_theme_solarized_dark==3.0.1 # Dark solarized theme

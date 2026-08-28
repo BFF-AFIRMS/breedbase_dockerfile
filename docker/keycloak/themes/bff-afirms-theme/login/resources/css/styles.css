@@ -1,0 +1,80 @@
+.login-pf body {
+    background: white;
+    background-size: cover;
+    height: 100%;
+}
+
+.login-pf-page {
+    background-color: white !important;
+    min-width: 340px;
+    padding: 20px;
+}
+
+.login-pf-page-header {
+    background: url('../img/BFF-AFIRMS_logo_HiRes.png') no-repeat center top fixed;
+    height: 200px;
+    background-attachment: inherit;
+    background-size: contain;
+}
+
+.login-pf-page .card-pf {
+    padding: 20px 40px 30px 40px;
+    margin: auto;
+    max-width: 570px;
+    background-color: #f2f2f2;
+    border: 1px solid black;
+    border-radius: 16px;
+}
+
+.pf-c-form-control {
+    border: 1px solid black
+}
+
+.pf-m-control {
+    --pf-c-button--after--BorderColor: transparent !important;
+    --pf-c-button--m-control--BackgroundColor: rgb(240, 240, 240);
+    height: 36px;
+    border: 1px solid black;
+}
+
+.pf-m-control:hover {
+    --pf-c-button--m-control--BackgroundColor: rgb(226, 226, 226) !important;
+}
+
+#kc-login {
+    width: 50%;
+    margin: auto;
+    background-color: #00a040;
+    font-size: 16px;
+    border: 1px solid #19510d;
+    border-radius: 8px;
+}
+
+#kc-login:hover {
+    background-color: #006000 !important;
+    font-weight: bold;
+}
+
+#kc-header-wrapper {
+    display: none
+}
+
+ul.kc-social-links li {
+    width: 100%;
+    margin: 5px;
+}
+
+.kc-social-item {
+    width: 50% !important;
+    margin: auto;
+    background-color: white !important;
+    border: 1px solid black !important;
+    border-radius: 8px;
+    line-height: 1.333333333;
+    --pf-c-button--after--BorderColor: transparent !important;
+}
+
+.kc-social-item:hover {
+    background-color: rgb(238, 238, 238) !important;
+    font-weight: bold;
+}

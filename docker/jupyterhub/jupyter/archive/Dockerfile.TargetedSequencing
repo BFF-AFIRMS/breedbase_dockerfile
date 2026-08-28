@@ -1,0 +1,14 @@
+FROM bff-afirms/jupyter-default:latest
+
+# Switch to root for system package install
+USER root
+
+# System packages
+RUN apt update -y
+
+# Conda packages
+COPY conda.TargetedSequencing.yml /home/root/environment.yml
+RUN conda env update --file /home/root/environment.yml --name base
+
+# Create custom controlled user
+USER jupyter

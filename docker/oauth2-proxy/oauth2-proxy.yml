@@ -1,0 +1,33 @@
+services:
+
+  oauth2-proxy:
+    hostname: oauth2-proxy
+    build:
+      context: .
+    image: bffafirms/oauth2-proxy:v7.15.4-alpine
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    user: ${USER_GROUP_ID}
+    environment:
+      USER_GROUP_ID: ${USER_GROUP_ID:?} # Ensure we have host user information
+    command: --config /oauth2-proxy.cfg
+    expose:
+      - 4180
+    healthcheck:
+      test: curl -s -o /dev/null http://localhost:4180
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
