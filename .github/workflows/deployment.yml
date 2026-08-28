@@ -64,6 +64,7 @@ jobs:
       # Deployments
 
       - name: Build supporting images
+        if: ${{ matrix.mode != 'quickstart' }}
         run: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache
 
       - name: Start containers
