@@ -65,7 +65,7 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: docker compose build breedbase
+          command: docker compose -f compose.testing.yml build --no-cache breedbase
 
       - name: Build supporting images
         run: docker compose -f compose.testing.yml build --no-cache
