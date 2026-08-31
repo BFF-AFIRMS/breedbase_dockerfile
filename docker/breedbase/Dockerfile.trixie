@@ -117,22 +117,29 @@ RUN cd /home/production/cxgn/sgn/programs/ \
 WORKDIR /home/production/cxgn/sgn
 
 # Install perl dependencies
-ENV PERL5LIB=/home/production/cxgn/bio-chado-schema/lib:/home/production/cxgn/local-lib/lib/perl5/:/home/production/cxgn/sgn/lib:/home/production/cxgn/cxgn-corelibs/lib:/home/production/cxgn/Phenome/lib:/home/production/cxgn/Cview/lib:/home/production/cxgn/ITAG/lib:/home/production/cxgn/biosource/lib:/home/production/cxgn/tomato_genome/lib:/home/production/cxgn/chado_tools/chado/lib:.
+ENV PERL5_LOCAL_LIB=/home/production/cxgn/local-lib
+ENV PERL5LIB=/home/production/cxgn/bio-chado-schema/lib:${PERL5_LOCAL_LIB}/lib/perl5/:/home/production/cxgn/sgn/lib:/home/production/cxgn/cxgn-corelibs/lib:/home/production/cxgn/Phenome/lib:/home/production/cxgn/Cview/lib:/home/production/cxgn/ITAG/lib:/home/production/cxgn/biosource/lib:/home/production/cxgn/tomato_genome/lib:/home/production/cxgn/chado_tools/chado/lib:.
 RUN curl -L https://cpanmin.us | perl - --sudo App::cpanminus \
-  && cpanm --notest -L /home/production/cxgn/local-lib Parse::Deb::Control Selenium::Remote::Driver@1.49 \
-  && perl /home/production/cxgn/sgn/Build.PL \
-  && cpanm --notest --installdeps -L /home/production/cxgn/local-lib . \
-  && rm -rf /root/.cpanm/work
+  && cpanm --notest -L ${PERL5_LOCAL_LIB} Parse::Deb::Control Selenium::Remote::Driver@1.49 \
+  && for file_path in $(ls /home/production/cxgn/*/Build.PL); do \
+    cd $(dirname $file_path); \
+    perl Build.PL; \
+    cpanm --notest --installdeps -L ${PERL5_LOCAL_LIB} . ; \
+    done \
+  && rm -rf /root/.cpanm/work \
+  && chown -R production:production /home/production/cxgn/local-lib
 
-# Install R dependencies
-# At the end, shrink R_libs from 2.2 GB -> 0.84 GB
-# by stripping unneeded symbols: https://dirk.eddelbuettel.com/blog/2017/08/20/#010_stripping_shared_libraries
-# # Could be --strip-debug instead of strip-unneeded, to be more conservative
-ENV HOME=/home/production
-ENV R_LIBS_USER=/home/production/cxgn/R_libs
-RUN echo "R_LIBS_USER=$R_LIBS_USER" >> /etc/R/Renviron
-RUN perl /home/production/cxgn/sgn/Build installdeps \
-  && find /home/production/cxgn/R_libs -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded
+# # Install R dependencies
+# # At the end, shrink R_libs from 2.2 GB -> 0.84 GB
+# # by stripping unneeded symbols: https://dirk.eddelbuettel.com/blog/2017/08/20/#010_stripping_shared_libraries
+# # # Could be --strip-debug instead of strip-unneeded, to be more conservative
+# ENV HOME=/home/production
+# ENV R_LIBS_USER=/home/production/cxgn/R_libs
+# RUN echo "R_LIBS_USER=$R_LIBS_USER" >> /etc/R/Renviron
+# RUN perl /home/production/cxgn/sgn/Build installdeps \
+#   && find /home/production/cxgn/R_libs -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded
+
+# # TBD: Change ownership of R_libs directory
 
 # Copy over config files, entrypoint scripts, database dumps
 RUN mkdir /etc/starmachine
