@@ -174,8 +174,8 @@ sed \
 # jupyterhub
 
 mkdir -p jupyterhub/users jupyterhub/config
-chown -R $USER_ID:$DOCKER_ID jupyterhub
-chmod g+w -R jupyterhub
+chown $USER_ID:$DOCKER_ID jupyterhub jupyterhub/users jupyterhub/config
+chmod g+w jupyterhub jupyterhub/users jupyterhub/config
 
 if [[ ! -e jupyterhub/config/jupyterhub_config.py ]]; then
   cp ../docker/jupyterhub/jupyterhub_config.py jupyterhub/config/jupyterhub_config.py
