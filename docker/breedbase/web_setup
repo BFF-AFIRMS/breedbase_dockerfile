@@ -36,7 +36,7 @@ start_system_services() {
     sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
     /etc/init.d/postfix start
     /etc/init.d/cron start
-    chown 106 /etc/munge/munge.key
+    chown munge:munge /etc/munge/munge.key
     /etc/init.d/munge start
     /etc/init.d/slurmctld start
     /etc/init.d/slurmd start
