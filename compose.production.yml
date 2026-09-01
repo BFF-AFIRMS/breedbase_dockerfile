@@ -327,6 +327,7 @@ services:
         target: /usr/local/bin/web_setup
         bind:
           create_host_path: false
+
     # Uncomment for production resources
     # deploy:
     #   resources:

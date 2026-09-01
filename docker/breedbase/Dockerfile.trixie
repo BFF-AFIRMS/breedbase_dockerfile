@@ -108,7 +108,7 @@ RUN ln -s /home/production/cxgn/starmachine/bin/starmachine_init.d /etc/init.d/s
 # Compile gtsimsrch
 RUN cd /home/production/cxgn/gtsimsrch/src \
   && make \
-  && rm -rf data/ example/ testing/
+  && rm -rf ../data/ ../example/ ../testing/
 
 # Compile contigalign, small program, no cleanup needed
 RUN cd /home/production/cxgn/sgn/programs/ \
@@ -121,10 +121,11 @@ ENV PERL5_LOCAL_LIB=/home/production/cxgn/local-lib
 ENV PERL5LIB=/home/production/cxgn/bio-chado-schema/lib:${PERL5_LOCAL_LIB}/lib/perl5/:/home/production/cxgn/sgn/lib:/home/production/cxgn/cxgn-corelibs/lib:/home/production/cxgn/Phenome/lib:/home/production/cxgn/Cview/lib:/home/production/cxgn/ITAG/lib:/home/production/cxgn/biosource/lib:/home/production/cxgn/tomato_genome/lib:/home/production/cxgn/chado_tools/chado/lib:.
 RUN curl -L https://cpanmin.us | perl - --sudo App::cpanminus \
   && cpanm --notest -L ${PERL5_LOCAL_LIB} Parse::Deb::Control Selenium::Remote::Driver@1.49 \
-  && for file_path in $(ls /home/production/cxgn/*/Build.PL); do \
-    cd $(dirname $file_path); \
+  && for build_file in $(ls /home/production/cxgn/*/Build.PL); do \
+    cd $(dirname $build_file); \
     perl Build.PL; \
     cpanm --notest --installdeps -L ${PERL5_LOCAL_LIB} . ; \
+    cd -; \
     done \
   && rm -rf /root/.cpanm/work \
   && chown -R production:production /home/production/cxgn/local-lib
