@@ -22,8 +22,8 @@ RUN apt update -y \
     libmoosex-runnable-perl libmunge-dev libmunge2 libnlopt0 libopenblas-dev \
     libpng-dev libpq-dev libproj-dev libslurm-perl libssl-dev libswscale-dev \
     libtbb-dev libtbbmalloc2 libterm-readline-zoid-perl \
-    libtext-multimarkdown-perl libtiff-dev libudunits2-dev libxvidcore-dev \
-    libzbar-dev \
+    libtext-multimarkdown-perl libtiff-dev libudunits2-dev libuv1-dev \
+    libxvidcore-dev libzbar-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Install system tools
@@ -114,43 +114,6 @@ RUN cd /home/production/cxgn/gtsimsrch/src \
 RUN cd /home/production/cxgn/sgn/programs/ \
   && make
 
-# -----------------------------------------------------------------------------
-# Install perl and R dependencies
-# Takes a long time (~1 hour), only uncomment RUN commands when building fully from scratch
-# Otherwise, pre-compiled ones from the github repos:
-#   https://github.com/BFF-AFIRMS/perl-local-lib
-#   https://github.com/BFF-AFIRMS/R_libs
-# To extract libs after building:
-#   docker run --rm -it -v $(pwd)/cxgn:/data/extract --entrypoint bash bffafirms/breedbase:<TAG> -c 'cp -r /home/production/cxgn/local-lib /data/extract'
-#   docker run --rm -it -v $(pwd)/cxgn:/data/extract --entrypoint bash bffafirms/breedbase:<TAG> -c 'cp -r /home/production/cxgn/R_libs /data/extract'
-
-# Install perl dependencies
-ENV PERL5_LOCAL_LIB=/home/production/cxgn/local-lib
-ENV PERL5LIB=/home/production/cxgn/bio-chado-schema/lib:${PERL5_LOCAL_LIB}/lib/perl5/:/home/production/cxgn/sgn/lib:/home/production/cxgn/cxgn-corelibs/lib:/home/production/cxgn/Phenome/lib:/home/production/cxgn/Cview/lib:/home/production/cxgn/ITAG/lib:/home/production/cxgn/biosource/lib:/home/production/cxgn/tomato_genome/lib:/home/production/cxgn/chado_tools/chado/lib:.
-
-RUN curl -L https://cpanmin.us | perl - --sudo App::cpanminus \
-  && cpanm --notest -L ${PERL5_LOCAL_LIB} Parse::Deb::Control Selenium::Remote::Driver@1.49 \
-  && for build_file in $(ls /home/production/cxgn/*/Build.PL); do \
-    cd $(dirname $build_file); \
-    perl Build.PL; \
-    cpanm --notest --installdeps -L ${PERL5_LOCAL_LIB} . ; \
-    cd -; \
-    done \
-  && rm -rf /root/.cpanm/work \
-  && chown -R production:production /home/production/cxgn/local-lib
-
-# # Install R dependencies
-# # At the end, shrink R_libs from 2.2 GB -> 0.84 GB
-# # by stripping unneeded symbols: https://dirk.eddelbuettel.com/blog/2017/08/20/#010_stripping_shared_libraries
-# # # Could be --strip-debug instead of strip-unneeded, to be more conservative
-# ENV HOME=/home/production
-# ENV R_LIBS_USER=/home/production/cxgn/R_libs
-# RUN echo "R_LIBS_USER=$R_LIBS_USER" >> /etc/R/Renviron
-# RUN perl /home/production/cxgn/sgn/Build installdeps \
-#   && find /home/production/cxgn/R_libs -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded
-
-# # TBD: Change ownership of R_libs directory
-
 # Copy over config files, entrypoint scripts, database dumps
 RUN mkdir /etc/starmachine
 RUN mkdir /var/log/sgn
@@ -161,6 +124,55 @@ COPY docker/breedbase/web_setup /usr/local/bin/web_setup
 COPY db_dumps /db_dumps
 
 # -----------------------------------------------------------------------------
+# Install perl dependencies
+
+ENV PERL5_LOCAL_LIB=/home/production/cxgn/local-lib
+ENV PERL5LIB=/home/production/cxgn/bio-chado-schema/lib:${PERL5_LOCAL_LIB}/lib/perl5/:/home/production/cxgn/sgn/lib:/home/production/cxgn/cxgn-corelibs/lib:/home/production/cxgn/Phenome/lib:/home/production/cxgn/Cview/lib:/home/production/cxgn/ITAG/lib:/home/production/cxgn/biosource/lib:/home/production/cxgn/tomato_genome/lib:/home/production/cxgn/chado_tools/chado/lib:.
+
+RUN curl -L https://cpanmin.us | perl - --sudo App::cpanminus \
+  && cpanm --notest -L ${PERL5_LOCAL_LIB} Parse::Deb::Control \
+  && rm -rf /root/.cpanm/work
+
+# Takes a long time (~10 minutes), only uncomment the following RUN command
+# when building fully from scratch (ex. operating system upgrade)
+# Otherwise, pre-compiled ones are pulled from the github repo:
+#   https://github.com/BFF-AFIRMS/perl-local-lib
+# To extract libs after building:
+#   docker run --rm -it -v $(pwd)/cxgn:/data/extract --entrypoint bash bffafirms/breedbase:<TAG> -c 'cp -r /home/production/cxgn/local-lib /data/extract'
+
+# RUN for build_file in $(ls /home/production/cxgn/*/Build.PL); do \
+#     cd $(dirname $build_file); \
+#     perl Build.PL; \
+#     cpanm --notest --installdeps -L ${PERL5_LOCAL_LIB} . ; \
+#     cd -; \
+#     done \
+#   && rm -rf /root/.cpanm/work
+
+# RUN chown -R production:production /home/production/cxgn/local-lib
+
+# -----------------------------------------------------------------------------
+# Install R dependencies
+
+ENV HOME=/home/production
+ENV R_LIBS_USER=/home/production/cxgn/R_libs
+RUN echo "R_LIBS_USER=$R_LIBS_USER" >> /etc/R/Renviron
+
+# Takes a long time (~? minutes), only uncomment the following RUN command
+# when building fully from scratch (ex. operating system upgrade)
+# Otherwise, pre-compiled ones are pulled from the github repo:
+#   https://github.com/BFF-AFIRMS/R_libs
+# To extract libs after building:
+#   docker run --rm -it -v $(pwd)/cxgn:/data/extract --entrypoint bash bffafirms/breedbase:<TAG> -c 'cp -r /home/production/cxgn/R_libs /data/extract'
+
+# # At the end, shrink R_libs from 2.2 GB -> 0.84 GB
+# # by stripping unneeded symbols: https://dirk.eddelbuettel.com/blog/2017/08/20/#010_stripping_shared_libraries
+# # # Could be --strip-debug instead of strip-unneeded, to be more conservative
+# RUN perl /home/production/cxgn/sgn/Build installdeps \
+#   && find /home/production/cxgn/R_libs -type f -regex  '.*\(\.so\|\.so\..*\)$' | xargs strip --strip-unneeded
+
+# RUN chown -R production:production /home/production/cxgn/R_libs
+
+# -----------------------------------------------------------------------------
 # Final environment definitions
 
 ARG CREATED
@@ -169,7 +181,6 @@ ARG BUILD_VERSION
 
 ENV VERSION=${BUILD_VERSION}
 ENV BUILD_DATE=${CREATED}
-ENV HOME=/home/production
 ENV PGPASSFILE=/home/production/.pgpass
 
 LABEL maintainer="bffafirm@ualberta.ca"
