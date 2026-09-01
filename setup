@@ -12,25 +12,45 @@ echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tGenerating secure credentials: .env"
 
 if [[ ! -e .env ]]; then
     {
-        echo USER_GROUP_ID=$(id -u):$(id -g)
+        echo -e "# Custom project information"
+        echo PROJECT_NAME=BFF-AFIRMS
         echo DOMAIN_NAME=localhost
-        echo SITE_BASE=bff-afirms
-        echo PGHOST=breedbase_db
-        echo PGDATABASE=breedbase
-        echo PGUSER=postgres
+        echo PROJECT_PATH=$(pwd)
+
+        echo -e "\n# Host user and group information for non-root container usage"
+        echo USER_GROUP_ID=$(id -u):$(id -g)
+        echo DOCKER_ID=$(getent group docker | cut -d ':' -f 3)
+        echo TZ='America/Edmonton'
+
+        echo -e "\n# Database Credentials"
+        echo PGUSER="postgres"
         echo PGPASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
-        echo ADMIN_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
         echo WEB_USR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo BREEDBASE_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo JUPYTERHUB_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo MATHESAR_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo KEYCLOAK_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+
+        echo -e "\n# Web applications"
+        echo ADMIN_USER=admin
+        echo ADMIN_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
+        echo SITE_OVERLAY=sgn
+
+        echo -e "\n# Encryption and Client Secrets"
         echo SECRET_KEY=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
+        echo BREEDBASE_CLIENT_SECRET=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
+        echo MATHESAR_CLIENT_SECRET=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
+        echo OAUTH2_PROXY_CLIENT_SECRET=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
+        echo JUPYTERHUB_CLIENT_SECRET=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 32)
     } > .env
 fi
-source .env
-USER_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 1)
-GROUP_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 2)
 
 if [[ ! -e .env.bak ]]; then
     cp .env .env.bak
 fi
+source .env
+USER_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 1)
+GROUP_ID=$(echo $USER_GROUP_ID | cut -d ":" -f 2)
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating data directories: data/"
 
@@ -38,32 +58,31 @@ mkdir -p data/
 cd data
 
 # Postgres Databases
-for db in breedbase_db keycloak_db; do
+for db in breedbase_db jupyterhub_db keycloak_db mathesar_db; do
   mkdir -p $db
   cd $db
   mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
   cd ../
 done
 
-# breedbase
-mkdir -p breedbase/volume breedbase/downloads
+# Breedbase Web Application
+mkdir -p breedbase/volume breedbase/downloads breedbase/cxgn
 touch breedbase/bash_history
+touch breedbase/sgn_local.conf
 
-if [[ ! -e breedbase/sgn_local.conf ]]; then
-
+if [[ ! -e breedbase/sgn_local_template.conf ]]; then
   sed \
     -e "s/{PROJECT_NAME}/$PROJECT_NAME/g" \
     -e "s/{DOMAIN_NAME}/$DOMAIN_NAME/g" \
     -e "s/{WEB_USR_PASSWORD}/$WEB_USR_PASSWORD/g" \
     -e "s/{BREEDBASE_CLIENT_SECRET}/$BREEDBASE_CLIENT_SECRET/g" \
-    ../docker/breedbase/sgn_local_template.conf > breedbase/sgn_local.conf
+    ../docker/breedbase/config/sgn_local_template.conf \
+    > breedbase/sgn_local.conf
 fi
 
-# keycloak web
-mkdir -p keycloak/export
-
-# caddy
+# Caddy Server and Reverse Proxy
 mkdir -p caddy/log
+
 
 # JbrowseGenome Browser
 if [[ ! -d jbrowse ]]; then
@@ -96,6 +115,79 @@ chmod 777 selenium/screenshots
 
 mkdir -p selenium/downloads
 chmod 777 selenium/downloads
+
+# -----------------------------------------------------------------------------
+# keycloak identity provider and authentication
+
+
+mkdir -p keycloak keycloak/import keycloak/export
+# TBD: Mount more directories for logs?
+
+if [[ ! -e keycloak/import/realm.json ]]; then
+  export PROJECT_NAME_LOWER=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+  cp ../docker/keycloak/realms/bff-afirms.template.json keycloak/import/bff-afirms.json
+  sed -i \
+    -e "s/{PROJECT_NAME}/${PROJECT_NAME}/g" \
+    -e "s/{PROJECT_NAME_LOWER}/${PROJECT_NAME_LOWER}/g" \
+    -e "s/{DOMAIN_NAME}/${DOMAIN_NAME}/g" \
+    -e "s/{ADMIN_USER}/${ADMIN_USER}/g" \
+    -e "s/{ADMIN_PASSWORD}/${ADMIN_PASSWORD}/g" \
+    -e "s/{OAUTH2_PROXY_CLIENT_SECRET}/${OAUTH2_PROXY_CLIENT_SECRET}/g" \
+    -e "s/{MATHESAR_CLIENT_SECRET}/${MATHESAR_CLIENT_SECRET}/g" \
+    -e "s/{JUPYTERHUB_CLIENT_SECRET}/${JUPYTERHUB_CLIENT_SECRET}/g" \
+    -e "s/{BREEDBASE_CLIENT_SECRET}/${BREEDBASE_CLIENT_SECRET}/g" \
+    keycloak/import/bff-afirms.json
+fi
+
+# keycloak oauth2-proxy
+if [[ ! -e keycloak/oauth2-proxy.cfg ]]; then
+  cp ../docker/keycloak/oauth2-proxy.template.cfg keycloak/oauth2-proxy.cfg
+  sed -i \
+    -e "s/{SECRET_KEY}/${SECRET_KEY}/g" \
+    -e "s/{DOMAIN_NAME}/${DOMAIN_NAME}/g" \
+    -e "s/{PROJECT_NAME}/${PROJECT_NAME}/g" \
+    -e "s/{ADMIN_PASSWORD}/${ADMIN_PASSWORD}/g" \
+    -e "s/{OAUTH2_PROXY_CLIENT_SECRET}/${OAUTH2_PROXY_CLIENT_SECRET}/g" \
+    keycloak/oauth2-proxy.cfg
+fi
+
+# redis
+mkdir -p redis
+
+# mathesar
+mkdir -p mathesar/media mathesar/static mathesar/.media
+if [[ ! -e mathesar/sso.yml ]]; then
+  cp ../docker/mathesar/sso.template.yml mathesar/sso.yml
+  sed -i \
+    -e "s/{PROJECT_NAME}/${PROJECT_NAME}/g" \
+    -e "s/{MATHESAR_CLIENT_SECRET}/${MATHESAR_CLIENT_SECRET}/g" \
+    mathesar/sso.yml
+fi
+
+# pghero
+mkdir -p pghero
+sed \
+  "s/{WEB_USR_PASSWORD}/${WEB_USR_PASSWORD}/g" \
+  ../docker/pghero/pghero.template.yml \
+  > pghero/pghero.yml
+
+# jupyterhub
+
+mkdir -p jupyterhub/users jupyterhub/config
+chown $USER_ID:$DOCKER_ID jupyterhub jupyterhub/users jupyterhub/config
+chmod g+w jupyterhub jupyterhub/users jupyterhub/config
+
+if [[ ! -e jupyterhub/config/jupyterhub_config.py ]]; then
+  cp ../docker/jupyterhub/jupyterhub_config.py jupyterhub/config/jupyterhub_config.py
+fi
+
+if [[ ! -e jupyterhub/config/conda_envs.json ]]; then
+  cp ../docker/jupyterhub/conda_envs.json jupyterhub/config/
+fi
+
+if [[ ! -e jupyterhub/config/condarc ]]; then
+  cp ../docker/jupyterhub/condarc jupyterhub/config/condarc
+fi
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted setup."
 echo -e "-----------------------------------------------------------------------------"

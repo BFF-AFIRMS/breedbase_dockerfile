@@ -1,0 +1,30 @@
+services:
+  redis:
+    hostname: redis
+    image: redis:8.10.1-alpine
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    user: ${USER_GROUP_ID}
+    environment:
+      USER_GROUP_ID: ${USER_GROUP_ID:?} # Ensure we have host user information
+    command: /bin/sh -c "redis-server --requirepass $$ADMIN_PASSWORD --save 60 1 --appendonly yes"
+    env_file:
+      - $PWD/.env
+    expose:
+      - 6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "$$ADMIN_PASSWORD", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    volumes:
+      - type: bind
+        source: $PWD/data/redis
+        target: /data
+        bind:
+          create_host_path: false

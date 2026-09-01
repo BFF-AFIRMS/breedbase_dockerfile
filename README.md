@@ -6,26 +6,25 @@
 [![Deployment CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/deployment.yml)
 [![Dockerhub CI](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/dockerhub.yml/badge.svg)](https://github.com/BFF-AFIRMS/breedbase_dockerfile/actions/workflows/dockerhub.yml)
 
-<p align="center">
-  <img src="Breedbase.png" alt="breedbase logo">
-</p>
+This repo contains the Dockerfile for the BFF-AFIRMS [Breedbase](https://breedbase.org/) webserver, and the docker compose files for joint deployment of the webserver and postgres database.
 
-This repo contains the Dockerfile for the BFF-AFIRMS Breedbase webserver, and the docker compose files for joint deployment of the webserver and postgres database.
-
-To learn more about Breedbase:
-
-Access the [SGN repository](https://github.com/solgenomics/sgn) to contribute to the underlying codebase or submit new issues.  
-Access the [manual](https://solgenomics.github.io/sgn/) to learn how to use breeDBase's many features.  
-Access [breedbase.org](https://breedbase.org/) to explore a default instance of breeDBase.
+<table>
+    <tbody>
+        <tr>
+            <td><img src="docs/images/breedbase.png" alt="Breedbase Screenshot"></td>
+            <td><img src="docs/images/mathesar.png" alt="Mathesar Screenshot"></td>
+        </tr>
+    </tbody>
+</table>
 
 ## Table of Contents
 
 1. [Install](#install)
 2. [Deploy](#deploy)
     - [Quick Start](#quick-start)
-    - [Production](#production)
     - [Development](#development)
     - [Testing](#testing)
+    - [Production](#production)
 3. [Updating](#updating)
 4. [Debugging](#debugging)
 5. [Miscellaneous](#miscellaneous)
@@ -72,9 +71,9 @@ All deployment options involve first running setup to create credentials and dat
 There are four different options for deployment:
 
 - [Quickstart](#quick-start): For those new to breedbase.
-- [Production](#production): Run a secure, performant server.
 - [Development](#development): Make changes to the applications.
 - [Testing](#testing): Run the comprehensive test suite.
+- [Production](#production): Run a secure, performant server with additional management tools.
 
 ### Quick Start
 
@@ -111,48 +110,16 @@ There are four different options for deployment:
     | -------- | -------- | --------- |
     | admin    | password | curator   |
 
-### Production
-
-After quick-start, deploying for production is the most straightforward. Production mode provides 3 features:
-
-- Randomly generated passwords for default db and web accounts.
-- Secures web application with HTTPS.
-- Serves static files and js with Caddy for better browsing performance.
-
-> Note: If you have already started the quickstart deployment, you will need to first run these steps:
-
-```bash
-# Stop containers
-docker compose down
-# Clean up data directory
-mv data data_quickstart
-# Regenerate data directory
-./setup
-```
-
-You can then proceed to the following steps:
-
-1. **Deploy with docker compose**
-
-    ```bash
-    docker compose -f compose.production.yml up -d
-    ```
-
-1. **Access the breedbase application at: <https://localhost>**
-
-    > The password to log in to the admin account is in the `.env` file as `ADMIN_PASSWORD`.
-
 ### Development
 
 Development mode will allow you to make changes to the application in real-time.
 
-Note: If you have already started the production deployment, you will need to first run these steps:
+Note: If you have already started the quickstart deployment, you will need to first run these steps:
 
 ```bash
-# Stop containers
-docker compose down
+docker compose -f compose.quickstart.yml down
 # Clean up data directory
-mv data data_production
+mv data data_quickstart
 # Regenerate data directory
 ./setup
 ```
@@ -330,6 +297,55 @@ To troubleshoot selenium tests:
 - Open the Selenium Hub: <http://localhost:4444/wd/hub/static/resource/hub.html>
 - Click `Create Session` -> `Firefox`
 - Open the Visualizer to see the Firefox window: <http://localhost:8081/vnc.html>
+
+### Production
+
+Production mode provides 3 features:
+
+- Randomly generated passwords for default db and web accounts.
+- Secures web application with HTTPS.
+- Additional tooling: Jupyterhub notebooks, logging with [dozzle](https://dozzle.dev/), performance with pghero, and a database admin UI with mathesar.
+
+1. **Clone the submodules.**
+
+    ```bash
+    git submodule update --init --recursive --progress
+    ```
+
+1. **Deploy with docker compose.**
+
+    ```bash
+    docker compose -f compose.production.yml build
+    docker compose -f compose.production.yml up -d
+    ```
+
+1. **Wait for the containers to be HEALTHY.**
+
+1. **Access the production applications at: <https://localhost>**
+
+    > The password to log in to the admin account is in the `.env` file as `ADMIN_PASSWORD`.
+
+    - Breedbase: <https://localhost>
+    - Keycloak administration: <https://localhost/auth/admin>
+    - Dozzle container logs: <https://localhost/dozzle>
+    - Jupyterhub notebooks: <https://localhost/jupyterhub>
+    - pgHero database maintenance: <https://localhost/pghero>
+    - Mathesar database UI: <https://localhost:8099>
+
+<table>
+    <tbody>
+        <tr>
+            <td><img src="docs/images/breedbase.png" alt="Breedbase Screenshot"></td>
+            <td><img src="docs/images/keycloak.png" alt="Keycloak Screenshot"></td>
+            <td><img src="docs/images/pghero.png" alt="pgHero Screenshot"></td>  
+        </tr>
+        <tr>
+            <td><img src="docs/images/jupyterhub.png" alt="Jupyterhub Screenshot"></td>
+            <td><img src="docs/images/dozzle.png" alt="Dozzle Screenshot"></td>
+            <td><img src="docs/images/mathesar.png" alt="Mathesar Screenshot"></td>  
+        </tr>
+    </tbody>
+</table>
 
 ## Updating
 

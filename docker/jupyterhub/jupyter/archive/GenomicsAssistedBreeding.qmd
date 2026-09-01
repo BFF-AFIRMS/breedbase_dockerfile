@@ -1,0 +1,172 @@
+---
+title: Genomics-Assisted Breeding
+editor: visual
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+    code-tools:
+      source: true
+      toggle: false
+      caption: none
+---
+
+This is a notebook for...
+
+## Resources
+
+- [breedR Tutorial](https://github.com/famuvie/breedR/wiki/Getting-started)
+- [ASRgenomics Manual](https://asreml.kb.vsni.co.uk/wp-content/uploads/sites/3/ASRgenomics_Manual.pdf)
+
+```{r, libraries, message=FALSE}
+#| code-summary: Show the code that imports packages.
+
+library(ASRgenomics)     # Molecular and genetic routine companions for ASReml-R, Genomic Selection (GS), and Genome-Wide Association Analyses (GWAS)
+library(breedR)          # Statistical methods for forest genetic resources analysts
+library(dplyr)           # Enables the %>% operator for command pipes.
+library(patchwork)       # Compose figures made of multiple subfigures
+library(purrr)           # Functional programming, captures messages and other outputs
+library(reactablefmtr)   # Visualize tables
+```
+
+## ASRgenomics
+
+### Reading and Filtering a Molecular Dataset
+
+::: {.callout-note collapse="true" appearance="simple" icon="false"}
+To illustrate the flow of functions and show some of the capabilities of ASRgenomics we are going to use a real dataset from Loblolly Pine (Pinus taeda L.) published by Resende et al. (2012). The genotypic portion of this dataset contains a total of 655 genotypes and 4,853 SNPs (coded as 0, 1, and 2, and here -9 is used for missing data). This is a subset of the original dataset where some full-sib genomic records have been artificially eliminated for illustration purposes.
+:::
+
+```{r}
+#| code-summary: Show the code to load genotypes.
+#| label: tbl-data-pine655
+#| tbl-cap: "Loblolly Pine table of 655 genotypes and 4,853 SNPs (-9 indicates missing data)<br>Only the first 4 genotypes and SNPs are displayed for brevity."
+#| tbl-cap-location: top
+data(geno.pine655)
+reactable(data = geno.pine655[1:4, 1:4])
+```
+
+::: {.callout-note collapse="true" appearance="simple" icon="false"}
+A reasonable initial step is to filter this molecular dataset, as it might contain large amounts of missing values and/or non-informative markers. This quality control step is critical to facilitate downstream analyses and further calculations (particularly to ensure that the genomic-based matrix G is invertible. For this, the function `qc.filtering()` can be used.
+
+Since the proportion of missing values in this dataset is less that 5%, we will perform a simple imputation (average method) of missing values.
+:::
+
+```{r,fig.height = 6}
+#| code-summary: Show the code to filter genotypes.
+#| label: filter-pine655
+
+# Redirect important messages to a variable
+quiet_filtering <- purrr::quietly(qc.filtering)
+result <- quiet_filtering(
+    M = geno.pine655,
+    base = FALSE,
+    ref = NULL,
+    marker.callrate = 0.2,
+    ind.callrate = 0.2,
+    maf = 0.05,
+    heterozygosity = 0.95,
+    Fis = 1,
+    impute = TRUE,
+    na.string = "-9",
+    plots = TRUE
+)
+
+# Store the analytical results
+M_filter <- result$result
+M_clean  <- as.data.frame(M_filter$M.clean)
+
+M_filter$plot.missing.ind +
+    M_filter$plot.missing.SNP +
+    M_filter$plot.Fis +
+    M_filter$plot.heteroz +
+    M_filter$plot.maf +
+    plot_layout(ncol = 3, nrow=2)
+```
+
+
+```{r, results='asis', echo=FALSE}
+#| label: filter-pine655-messages
+
+# Display the messages in a nicer format.
+cat(
+    '::: {.callout-note collapse="true" appearance="simple" icon="false"}\n',
+    paste0("- ", result$messages),
+    ':::',
+    sep=""
+)
+```
+
+### Generating a Kinship Matrix
+
+## breedR
+
+### Pedigree
+
+::: {.callout-note collapse="true" appearance="simple" icon="false"}
+-   A pedigree table identifies individual trees and their parents.
+:::
+
+```{r}
+#| code-summary: Show the code to construct the pedigree.
+#| label: tbl-pedigree-raw
+#| tbl-cap: A pedigree table that is unsorted and incomplete due to unsampled parents.
+#| tbl-cap-location: top
+
+# Generate an example pedigree table
+set.seed(123)
+n.ped <- 5
+ped.raw <- matrix(
+    sample(30, n.ped*3),
+    n.ped, 3,
+    dimnames = list(NULL, c('self', 'sire', 'dam'))
+)
+
+# Customize the visualization per columns
+column_options <- list (
+    self = colDef(name = "Tree"),
+    sire = colDef(name = "Male"),
+    dam  = colDef(name = "Female")
+)
+
+# Visualize the pedigree
+reactable(data = ped.raw, columns = column_options)
+```
+
+::: {.callout-note collapse="true" appearance="simple" icon="false"}
+-   The pedigree is sometimes unsorted and incomplete, with missing parent rows.
+-   The `breedR` package implements a method to complete, sort and recode the pedigree.
+:::
+
+```{r, warning=FALSE}
+#| code-summary: Show the code to fix the pedigree.
+#| label: tbl-pedigree-fix
+#| tbl-cap: A pedigree table that is sorted and complete.
+#| tbl-cap-location: top
+
+# Fix any pedigree format issues
+ped.fix <- as.data.frame(build_pedigree(1:3, data = ped.raw))
+
+# Visualize the fixed pedigree
+reactable(data = ped.fix, columns = column_options, pagination=FALSE)
+```
+
+### Additive Genetic Effects
+
+- Additive genetic effect, restricted maximum-likelihood (REML)
+
+```{r, }
+test.dat <- data.frame(ped.raw, y = rnorm(n.ped))
+res.raw <- remlf90(
+    data    = test.dat,
+    fixed   = y ~ 1,
+    genetic = list(
+        id = 'self',
+        model = 'add_animal',
+        pedigree = ped.raw,
+        var.ini = 1
+      ),
+    var.ini = list(resid = 1),
+)
+#reactable(data = res.raw)
+```

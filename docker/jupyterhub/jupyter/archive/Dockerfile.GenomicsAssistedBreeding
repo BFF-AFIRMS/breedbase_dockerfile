@@ -1,0 +1,18 @@
+FROM bff-afirms/jupyter-default:latest
+
+# Switch to root for system package install
+USER root
+
+# System packages
+RUN apt update -y
+
+# Conda packages
+COPY conda.GenomicsAssistedBreeding.yml /home/root/environment.yml
+RUN conda env update --file /home/root/environment.yml --name base
+
+# CRAN packages
+RUN conda run Rscript -e 'remotes::install_github("famuvie/breedR@bf52f982aaf8", dependencies=TRUE, upgrade="never")'
+RUN conda run Rscript -e 'remotes::install_github("asrtools/asrgenomics@2c3fd7b976", dependencies=TRUE, upgrade="never")'
+
+# Create custom controlled user
+USER jupyter

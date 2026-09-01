@@ -1,0 +1,35 @@
+services:
+
+  pghero:
+    build:
+      context: .
+    image: bffafirms/pghero:v3.7.0
+    hostname: pghero
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    # Run as the host user for volume mount permissions
+    user: ${USER_GROUP_ID}
+    environment:
+      # Ensure we have information about the host user
+      USER_GROUP_ID:   ${USER_GROUP_ID:?}
+      RAILS_RELATIVE_URL_ROOT: "/pghero"
+    expose:
+      - "8080"
+    healthcheck:
+      test: curl -f http://localhost:8080/pghero/health
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 4G
+        reservations:
+          cpus: 1
+          memory: 2G

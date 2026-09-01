@@ -24,7 +24,6 @@ jobs:
       matrix:
         include:
           - mode: quickstart
-          - mode: production
 
     steps:
 

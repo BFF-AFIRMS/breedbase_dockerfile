@@ -1,4 +1,4 @@
-FROM caddy:2.10.2
+FROM caddy:2.11.4
 
 RUN apk update \
   && apk add curl nss-tools

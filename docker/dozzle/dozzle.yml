@@ -1,0 +1,63 @@
+services:
+  # Dozzle web application
+  dozzle:
+    image: amir20/dozzle:v10.7.4
+    hostname: dozzle
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    environment:
+      DOZZLE_BASE: /dozzle
+      DOZZLE_AUTH_LOGOUT_URL: https://${DOMAIN_NAME}/logout
+      DOZZLE_AUTH_PROVIDER: forward-proxy
+    volumes:
+      # Bind Docker socket, so dozzle can read docker logs
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 3s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 2G
+        reservations:
+          cpus: 1
+          memory: 1G
+
+  # Stream db logs to dozzle
+  dozzle-log:
+    hostname: dozzle-log
+    image: alpine
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    user: ${USER_GROUP_ID}
+    environment:
+      USER_GROUP_ID:       ${USER_GROUP_ID:?}     # Ensure we have information about the host user
+    command: ["sh", "-c", 'tail -f /tmp/log/*.json']
+    healthcheck:
+      test: head /tmp/log/*.json
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

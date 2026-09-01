@@ -1,0 +1,22 @@
+FROM bff-afirms/jupyter-default:latest
+
+# Switch to root for system package install
+USER root
+
+# System packages
+RUN apt update -y \
+  && apt install -y python3-dev
+
+# Conda packages
+COPY conda.PyAGH.yml /home/root/environment.yml
+RUN conda env update --file /home/root/environment.yml --name base
+
+# # PyPI-only packages
+# RUN pip install --no-cache \
+#   "pybind11[global]"
+
+# # Needs to be a separate command
+# RUN pip install git+https://github.com/BFF-AFIRMS/PyAGH.git@read-csv-fix
+
+# Create custom controlled user
+USER jupyter

@@ -1,0 +1,97 @@
+secrets:
+  docker_id:
+    environment: DOCKER_ID
+
+services:
+
+  jupyterhub:
+    image: "bffafirms/jupyterhub:5.4.3-0"
+    hostname: jupyterhub
+    build:
+      context: .
+      args:
+        JUPYTERHUB_VERSION: 5.4.3-0
+      secrets:
+        - docker_id
+    # restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    # Reminder: This container will run as the internal user 'jupyterhub' (1001:XXX)
+    # Where the group will be mapped to the docker group
+    # and the username remapped when /etc/passwd is mounted
+    environment:
+      DOCKER_NETWORK_NAME:        ${PROJECT_NAME:?}
+      PROJECT_PATH:               ${PROJECT_PATH:?}
+      DB_HOST:                    jupyterhub_db
+      DB_NAME:                    jupyterhub
+      DB_USER:                    jupyterhub
+      DB_PASSWORD:                ${JUPYTERHUB_PASSWORD:?}
+      DOMAIN_NAME:                ${DOMAIN_NAME:?}
+      JUPYTERHUB_CLIENT_SECRET:   ${JUPYTERHUB_CLIENT_SECRET:?}
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: /etc/passwd
+        target: /etc/passwd
+        bind:
+          create_host_path: false
+
+      # SSL Certificates for database communication
+      - type: bind
+        source: $PWD/data/jupyterhub_db/certs
+        target: /data/certs
+        bind:
+          create_host_path: false
+
+      # Data to share with jupyter container
+      - type: bind
+        source: $PWD/data/jupyterhub
+        target: /data/jupyterhub
+        bind:
+          create_host_path: false
+
+      # Config file
+      - type: bind
+        source: $PWD/data/jupyterhub/config/jupyterhub_config.py
+        target: /srv/jupyterhub/jupyterhub_config.py
+        bind:
+          create_host_path: false
+
+      # Conda conda file
+      - type: bind
+        source: $PWD/data/jupyterhub/config/condarc
+        target: /tmp/condarc
+        bind:
+          create_host_path: false
+
+      # Conda Envs File
+      - type: bind
+        source: $PWD/data/jupyterhub/config/conda_envs.json
+        target: /tmp/conda_envs.json
+        bind:
+          create_host_path: false
+
+    expose:
+      - 8000
+    healthcheck:
+      test: curl -f http://jupyterhub:8080
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 8G
+        reservations:
+          cpus: 1
+          memory: 2G

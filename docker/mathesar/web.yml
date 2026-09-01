@@ -1,0 +1,68 @@
+services:
+
+  mathesar:
+    hostname: mathesar
+    build: .
+    image: bffafirms/mathesar:0.12.0
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    user: ${USER_GROUP_ID}
+    environment:
+      USER_GROUP_ID:            ${USER_GROUP_ID:?}
+      # Custom database connection variables
+      POSTGRES_HOST:            mathesar_db
+      POSTGRES_DB:              mathesar
+      POSTGRES_USER:            mathesar
+      POSTGRES_PASSWORD:        ${MATHESAR_PASSWORD:?}
+      # Django
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_EMAIL:    admin@example.com
+      DJANGO_SUPERUSER_PASSWORD: ${ADMIN_PASSWORD}
+      DJANGO_DJANGO_LOGOUT_REDIRECT_URL: https://${DOMAIN_NAME}/auth/realms/${PROJECT_NAME}/protocol/openid-connect/logout
+      SECRET_KEY:                ${SECRET_KEY:?}
+      DOMAIN_NAME:               ${DOMAIN_NAME:-http://localhost}
+      ALLOWED_HOSTS:             ${ALLOWED_HOSTS:-*}
+      DEBUG:                     ${DEBUG:-false}
+    volumes:
+      - type: bind
+        source: $PWD/data/mathesar/static
+        target: /code/static
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/mathesar/media
+        target: /code/media
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/mathesar/.media
+        target: /code/.media
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/mathesar/sso.yml
+        target: /code/sso.yml
+        bind:
+          create_host_path: false
+    expose:
+      - 8000
+    healthcheck:
+      test: curl -f http://localhost:8000
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 4G
+        reservations:
+          cpus: 1
+          memory: 2G

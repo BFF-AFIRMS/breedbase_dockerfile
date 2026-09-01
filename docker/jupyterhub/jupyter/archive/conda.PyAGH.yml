@@ -1,0 +1,8 @@
+name: PyAGH
+channels:
+  - conda-forge
+dependencies:
+  - pybind11-global=2.13.6
+  - python-graphviz=0.21
+  - pip:
+    - "--editable=git+https://github.com/BFF-AFIRMS/PyAGH.git@read-csv-fix#egg=PyAGH"

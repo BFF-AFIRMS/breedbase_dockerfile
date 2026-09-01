@@ -1,0 +1,226 @@
+#!/bin/bash
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCIS Docker Benchmark v1.8.0"
+
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+NC="\e[0m" # No Color
+
+security_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+out_dir=${security_dir}/security_scan_output
+mkdir -p $out_dir
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.0 CONTAINER IMAGES AND BUILD FILE CONFIGURATION"
+echo -e "-------------------------------------------------------------------------------"
+
+# -----------------------------------------------------------------------------
+# 4.1a | Ensure a user for the image has been created
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.1a | Ensure a user for the image has been created"
+
+docker image ls --format table\
+  | tail -n+2 \
+  | grep -v "<none>" \
+  | sed -E 's/[ ][ ]+/,/g' \
+  | awk -F ',' '{print $1":"$2","$0}' \
+  | sort -k 1 \
+  | sed -e '1 i\name,repository,tag,image_id,created_at,size' -e 's|^/||g' \
+  | tr ',' '\t' \
+  > ${out_dir}/images.tsv
+
+# Get text width of longest image name
+image_longest=$(awk 'BEGIN {max_length} {l=length($1); if (l > max_length){max_length=l} } END{print max_length}' ${out_dir}/images.tsv)
+
+cat ${out_dir}/images.tsv | tail -n+2 | cut -f 1 | while read image; do
+  padding_size=$(echo "$image" | awk -v longest=$image_longest '{print longest - length($0)}')
+  user=$(docker inspect --format '{{ .Config.User }}' $image)
+  if [[ $user == "" ]]; then
+    user=$(docker run --rm --entrypoint sh $image -c 'whoami' 2>/dev/null)
+    exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+      user="unknown"
+    fi
+  fi
+  if [[ $padding_size == 0 ]]; then
+    padding=""
+  else
+    padding=$(bash -c "printf ' %.0s' {1..$padding_size}")
+  fi
+  if [[ $user == root* ]]; then
+    color="❌ ${RED}Fail"
+  elif [[ $user == unknown ]]; then
+    color="❔ ${YELLOW}Warn"
+  else
+    color="✅ ${GREEN}Pass"
+  fi
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t ${color}: $image $padding| $user${NC}"
+done
+
+# -----------------------------------------------------------------------------
+# 4.1b | Ensure a user for the container has been created
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.1b | Ensure a user for the container has been created"
+docker ps --quiet --all \
+  | xargs docker inspect --format '{{.Name}} {{ .Config.User }} {{.Config.Image}}' 2>/dev/null \
+  | sort -k 1 \
+  | sed -e '1 i\container user image' -e 's|^/||g' \
+  | tr ' ' '\t' \
+  > ${out_dir}/containers.tsv
+
+# Get text width of longest container name
+container_longest=$(awk 'BEGIN {max_length} {l=length($1); if (l > max_length){max_length=l} } END{print max_length}' ${out_dir}/containers.tsv)
+
+cat ${out_dir}/containers.tsv | tail -n+2 | while read line; do
+  container=$(echo "$line" | cut -f 1)
+  user=$(echo "$line" | cut -f 2)
+  if [[ $user == "" ]]; then user=$(docker exec $container whoami); fi
+  padding_size=$(echo "$container" | awk -v longest=$container_longest '{print longest - length($0)}')
+  if [[ $padding_size == 0 ]]; then
+    padding=""
+  else
+    padding=$(bash -c "printf ' %.0s' {1..$padding_size}")
+  fi
+  if [[ $user == root* ]]; then
+    echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t❌ ${RED}Fail: $container $padding| $user${NC}"
+  else
+    echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t✅ ${GREEN}Pass: $container $padding| $user${NC}"
+  fi
+done
+
+# -----------------------------------------------------------------------------
+# 4.2 | Ensure that containers use trusted base images
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.2  | Ensure that containers use trusted base images"
+
+cat ${out_dir}/containers.tsv | tail -n+2 | while read line; do
+  container=$(echo "$line" | cut -f 1)
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t❔ Verify: $container"
+done
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.3  | Ensure unnecessary packages are not installed in the container"
+echo -e "container\tpackage\tarch\tinfo" > ${out_dir}/packages.tsv
+
+cat ${out_dir}/containers.tsv | tail -n+2 | while read line; do
+  container=$(echo "$line" | cut -f 1)
+  image=$(echo "$line" | cut -f 3)
+  # try alpine-based and debian-based package list
+  apk_output=$(docker run --rm --entrypoint sh $image -c 'apk list 2>&1')
+  apk_exit_code=$?
+  apt_output=$(docker run --rm --entrypoint sh $image -c 'apt list 2>&1')
+  apt_exit_code=$?
+
+  padding_size=$(echo "$container" | awk -v longest=$container_longest '{print longest - length($0)}')
+  if [[ $padding_size == 0 ]]; then
+    padding=""
+  else
+    padding=$(bash -c "printf ' %.0s' {1..$padding_size}")
+  fi
+
+  if [[ $apk_exit_code -eq 0 ]]; then
+    echo "$apk_output" \
+      | grep "installed" \
+      | sed -e 's/(/"(/g' -e 's/)/)"/g' \
+      | cut -d ' ' -f 1,2,5 \
+      | sed "s/^/$container /g" \
+      | tr ' ' '\t' \
+      >> ${out_dir}/packages.tsv
+      num_packages=$(grep -w -E "^$container" ${out_dir}/packages.tsv | wc -l)
+      echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t❔ Verify: $container $padding| $num_packages packages"
+  elif [[ $apt_exit_code -eq 0 ]]; then
+    echo "$apt_output" \
+      | grep "installed" \
+      | sed 's|/.*,now||g' \
+      | awk -F ' ' -v container=$container '{print container" "$1"-"$2" "$3" "$4}' \
+      | tr ' ' '\t' \
+      >> ${out_dir}/packages.tsv
+      num_packages=$(grep -w -E "^$container" ${out_dir}/packages.tsv | wc -l)
+      echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t❔ Verify: $container $padding| $num_packages packages"
+  else
+    echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t❌ ${RED}Fail: $container $padding| Unknown package manager (not apk or apt)${NC}"
+  fi
+done
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.4  | Ensure images are scanned and rebuilt to include security patches"
+
+today=$(date +'%Y-%m-%d')
+
+cat ${out_dir}/images.tsv | tail -n+2 | cut -f 1 | while read image; do
+  padding_size=$(echo "$image" | awk -v longest=$image_longest '{print longest - length($0)}')
+  if [[ $padding_size == 0 ]]; then
+    padding=""
+  else
+    padding=$(bash -c "printf ' %.0s' {1..$padding_size}")
+  fi
+  created=$(docker inspect --format '{{ .Created }}' $image | cut -d 'T' -f 1)
+  days_old=$(( ($(date +%s) - $(date --date="$created" +%s) )/(60*60*24) ))
+  if [[ $days_old -gt 30 ]]; then
+    status="❌ ${RED}Fail:"
+  else
+    status="✅ ${GREEN}Pass:"
+  fi
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t$status $image $padding| $created | $days_old days ${NC}"
+done
+
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.5  | Ensure content trust is enabled"
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t❔ DOCKER_CONTENT_TRUST is being retired: https://www.docker.com/blog/retiring-docker-content-trust"
+
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.6  | Ensure that HEALTHCHECK instructions have been added to container images"
+
+cat ${out_dir}/containers.tsv | tail -n+2 | while read line; do
+  container=$(echo "$line" | cut -f 1)
+  health=$(docker inspect --format "{{json .State.Health }}" $container)
+  if [[ "$health" == "null" ]]; then
+    status="❌ ${RED}Fail:"
+  else
+    status="✅ ${GREEN}Pass:"
+  fi
+
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t$status $container ${NC}"
+done
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.7  | Ensure update instructions are not used alone in Dockerfiles"
+
+cat ${out_dir}/images.tsv | tail -n+2 | cut -f 1 | while read image; do
+  docker image history --no-trunc $image  | grep -E "RUN.*(apt|apk|apt-get).update.*&&.*(apt|apk|apt-get).upgrade" 1>/dev/null 2>&1
+  result=$?
+  if [[ $result == 0 ]]; then
+    status="✅ ${GREEN}Pass:"
+  else
+    status="❌ ${RED}Fail:"
+  fi
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t\t$status $image ${NC}"
+done
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.8  | Ensure setuid and setgid permissions are removed"
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.9  | Ensure that COPY is used instead of ADD in Dockerfiles"
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.10 | Ensure secrets are not stored in Dockerfiles"
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.11 | Ensure only verified packages are installed"
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t4.12 | Ensure all signed artifacts are validated"
+
+echo -e "-------------------------------------------------------------------------------"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t5.0 CONTAINER RUNTIME CONFIGURATION"
+echo -e "-------------------------------------------------------------------------------"
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCompleted security scan."

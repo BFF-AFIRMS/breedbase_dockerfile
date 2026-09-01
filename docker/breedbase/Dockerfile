@@ -170,16 +170,9 @@ RUN git config --global --add safe.directory /home/production/cxgn/sgn
 WORKDIR /home/production/cxgn
 
 # System patches for postgres >= 17 and running as non-root user
-RUN mkdir -p /etc/breedbase/system_patches \
-  && chown production:production /etc/breedbase/system_patches
+COPY --chown=production:production docker/breedbase/patches /etc/breedbase/patches/
 
-COPY --chown=production:production docker/breedbase/patches/cxgn_fixture.sql /etc/breedbase/patches/
-COPY --chown=production:production docker/breedbase/patches/UpdatePhenotypeJsonbTableMaterializedViewIntercrop.pm /etc/breedbase/patches/
-COPY --chown=production:production docker/breedbase/patches/ExternalReferences.pm /etc/breedbase/patches/
-COPY --chown=production:production docker/breedbase/patches/Contact.pm /etc/breedbase/patches/
-COPY --chown=production:production docker/breedbase/patches/Files.pm /etc/breedbase/patches/
-
-COPY docker/breedbase/interactive.t /usr/local/bin/interactive.t
+COPY docker/breedbase/scripts/interactive.t /usr/local/bin/interactive.t
 # Set npm cache to the volume mount location
 RUN npm config set cache /home/production/npm --global
 
@@ -191,13 +184,13 @@ RUN mkdir /var/log/sgn
 
 # move this here so it is not clobbered by the cxgn move
 #
-COPY docker/breedbase/slurm.conf /etc/slurm/slurm.conf
-COPY docker/breedbase/starmachine.conf /etc/starmachine/
+COPY docker/breedbase/config/slurm.conf /etc/slurm/slurm.conf
+COPY docker/breedbase/config/starmachine.conf /etc/starmachine/
 
-COPY docker/breedbase/web_entrypoint.sh /entrypoint.sh
-COPY docker/breedbase/web_setup /usr/local/bin/web_setup
+COPY docker/breedbase/scripts/web_entrypoint /entrypoint.sh
+COPY docker/breedbase/scripts/web_setup /usr/local/bin/web_setup
 
-COPY db_dumps /db_dumps
+COPY docker/breedbase/db_dumps /db_dumps
 
 WORKDIR /home/production/cxgn/sgn
 

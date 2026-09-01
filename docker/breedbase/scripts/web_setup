@@ -36,7 +36,7 @@ start_system_services() {
     sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
     /etc/init.d/postfix start
     /etc/init.d/cron start
-    chown 106 /etc/munge/munge.key
+    chown munge:munge /etc/munge/munge.key
     /etc/init.d/munge start
     /etc/init.d/slurmctld start
     /etc/init.d/slurmd start
@@ -154,6 +154,11 @@ apply_system_patches() {
     echo "Using Files.pm for non-root user file permissions"
     cp -f /etc/breedbase/patches/Files.pm lib/SGN/Controller/solGS/Files.pm
 
+    if [[ $MODE == "PRODUCTION" ]]; then
+        echo "Using login.mas for routing logout to keycloak screen"
+        cp -f /etc/breedbase/patches/login.mas mason/site/toolbar/login.mas
+    fi
+
 }
 
 initialize_database() {
@@ -184,7 +189,7 @@ initialize_database() {
 
             if [[ ! -z $ADMIN_PASSWORD && $ADMIN_PASSWORD != "" ]]; then
                 echo "Creating secure admin password";
-                psql -c "update sgn_people.sp_person set password=sgn.crypt('$ADMIN_PASSWORD', sgn.gen_salt('bf', 6)) where first_name = 'admin'"
+                psql -c "update sgn_people.sp_person set password=sgn.crypt('$ADMIN_PASSWORD', sgn.gen_salt('bf', 6)), private_email='admin@example.com' where first_name = 'admin'"
             fi
         fi
 
@@ -207,26 +212,23 @@ initialize_javascript() {
     # Cleanup old builds
     if [[ -d js/build ]]; then rm -rf js/build; fi
 
+    if [[ -f .git ]]; then
+        echo "Temporarily moving .git to .git-bak"
+        mv .git .git-bak
+    fi
+
     cd js
 
     sudo -u $js_user npm config set engine-strict true
     echo "Install npm packages"
     sudo -u $js_user HOME=/tmp npm install --loglevel info
-    if [[ -f .git ]]; then
-        echo "Temporarily moving .git to .git-bak"
-        mv .git .git-bak
-    fi
-    echo "Running webpack build..."
-    sudo -u $js_user HOME=/tmp node_modules/.bin/webpack --config build.webpack.config.js
+    sudo -u $js_user HOME=/tmp npm run build
+
+    cd -
+
     if [[ -f .git-bak ]]; then
         echo "Restoring .git from .git-bak"
         mv .git-bak .git
-    fi
-    cd -
-
-    if [[ -e build_sgn ]]; then
-        echo "Building additional sgn app"
-        sudo -E -u sgn ./build_sgn
     fi
 }
 

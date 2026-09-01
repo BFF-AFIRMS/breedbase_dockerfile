@@ -1,0 +1,36 @@
+services:
+
+  mathesar_db:
+    hostname: mathesar_db
+    extends:
+      file: ../../docker/postgres/db.yml
+      service: db
+    environment:
+      MATHESAR_PASSWORD: ${MATHESAR_PASSWORD}
+      TLS_DOMAIN:          mathesar_db
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -U postgres -q mathesar -c '\\dt'"]
+    volumes:
+      - type: bind
+        source: $PWD/data/mathesar_db/db
+        target: /data/postgresql
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/mathesar_db/pgbackrest
+        target: /data/pgbackrest
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/mathesar_db/certs
+        target: /data/certs
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/mathesar_db/log
+        target: /data/log
+        bind:
+          create_host_path: false

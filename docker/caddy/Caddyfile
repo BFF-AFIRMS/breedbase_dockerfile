@@ -1,6 +1,5 @@
 # Templated from David Pinkerton's Guide
 # Source: https://caddy.community/t/oauth2-authentication-template-with-group-checks-using-oauth2-proxy-and-self-hosted-oidc/31611
-
 {
 	local_certs
 	skip_install_trust
@@ -9,10 +8,56 @@
 		output file /data/caddy/log/access.log
 		format json
 	}
+	servers {
+		trusted_proxies static private_ranges
+	}
 }
 
-{$DOMAIN_NAME} {
+(auth_error_handler) {
+	handle_errors {
+		@keycloak_unauthenticated expression `{http.error.status_code} == 401`
+		redir @keycloak_unauthenticated https://{$DOMAIN_NAME}/oauth2/sign_in?rd=https://{host}{uri} 302
+		respond "Service is currently unavailable. Please try again later." 503
+	}
+}
 
+(keycloak_authenticate) {
+	forward_auth oauth2-proxy:4180 {
+		header_up X-Auth-Request-Redirect https://{host}{uri}
+		uri /oauth2/auth
+		# Reminder: don't copy Authorization, otherwise it will override brapi endpoint
+		copy_headers X-Auth-Request-Groups X-Auth-Request-Email X-Auth-Request-Preferred-Username X-Accel-Expires
+
+		@keycloak_unauthenticated status 4xx
+		handle_response @keycloak_unauthenticated {
+			redir https://{$DOMAIN_NAME}/oauth2/sign_in?rd=https://{host}{uri} 302
+		}
+	}
+}
+
+(authorize_group_check) {
+	@no_groups not header X-Auth-Request-Groups *
+	respond @no_groups "Access denied: No group membership found." 403
+	@allowed header_regexp X-Auth-Request-Groups (?i)\b{args[0]}\b
+}
+
+(authorize_group_deny) {
+	respond "Access denied: You must be in the '{args[0]}' group to access this resource. Please contact your system adminstrator for more information." 403
+}
+
+(simple_error_handler) {
+	handle_errors {
+		respond "Something went wrong." 500
+	}
+}
+
+# Allow http requests for traefik integration
+{$DOMAIN_NAME}, http://{$DOMAIN_NAME} {
+
+	log {
+		output file /data/caddy/log/{$DOMAIN_NAME}.log
+		format json
+	}
 	# ---------------------------------------------------------------------
 	# Keycloak: Authentication
 
@@ -21,38 +66,134 @@
 		reverse_proxy keycloak:9080
 	}
 
-	# ---------------------------------------------------------------------
-	# Jbrowse: Genome Browser and file server
-
-	redir /jbrowse /jbrowse/
-	redir /jbrowse/data /jbrowse/data/
-	handle_path /jbrowse/* {
-
-		handle_path /data/* {
-			root * /data/jbrowse
-			file_server browse
-		}
-		handle {
-			root * /srv/www/jbrowse2
-			file_server
-		}
+	redir /login /login/
+	handle /login/ {
+		redir https://{$DOMAIN_NAME}/auth/realms/{$PROJECT_NAME}/account 302
 	}
 
-	handle {
+	# ---------------------------------------------------------------------
+	# Logouts
 
-		@static path /css/* /documents/* /img/* /react/assets/*
-		handle @static {
-			root * /home/production/cxgn/sgn/static
-			file_server
-		}
-		@js path /js/legacy/* /js/source/legacy/*
-		handle @js {
-			uri strip_prefix /js/legacy
-			uri strip_prefix /js/source/legacy
-			root * /home/production/cxgn/sgn/js/source/legacy
-			file_server
+	redir /logout /logout/
+	handle /logout/ {
+		redir https://{$DOMAIN_NAME}/auth/realms/{$PROJECT_NAME}/protocol/openid-connect/logout?client_id=oauth2-proxy&post_logout_redirect_uri=https://{$DOMAIN_NAME}/oauth2/sign_out 302
+	}
+
+	redir /logout/jupyter /logout/jupyter/
+	handle /logout/jupyter/ {
+		redir https://{$DOMAIN_NAME}/auth/realms/{$PROJECT_NAME}/protocol/openid-connect/logout?client_id=jupyterhub&post_logout_redirect_uri=https://{$DOMAIN_NAME}/oauth2/sign_out 302
+	}
+
+	redir /logout/breedbase /logout/breedbase/
+	handle /logout/breedbase/ {
+		redir https://{$DOMAIN_NAME}/auth/realms/{$PROJECT_NAME}/protocol/openid-connect/logout?client_id=breedbase&post_logout_redirect_uri=https://{$DOMAIN_NAME}/oauth2/sign_out 302
+	}
+
+	# ---------------------------------------------------------------------
+	# OAuth2-Proxy: Forward Auth
+
+	redir /oauth2 /oauth2/
+	handle /oauth2/* {
+		reverse_proxy oauth2-proxy:4180
+	}
+
+	import auth_error_handler
+
+	route {
+		# Authentication
+		import keycloak_authenticate
+
+		# ---------------------------------------------------------------------
+		# Jbrowse: Genome Browser and file server
+
+		redir /jbrowse /jbrowse/
+		redir /jbrowse/data /jbrowse/data/
+		handle_path /jbrowse/* {
+			import authorize_group_check web_user
+			handle @allowed {
+				route {
+					handle_path /data/* {
+						root * /data/jbrowse
+						file_server browse
+					}
+					handle {
+						root * /srv/www/jbrowse2
+						file_server
+					}
+				}
+			}
+			import authorize_group_deny web_user
 		}
 
-		reverse_proxy breedbase:8080
+		# ---------------------------------------------------------------------
+		# Jupyterhub: Developer coding application
+		redir /jupyter /jupyter/
+		handle /jupyter/* {
+			import authorize_group_check server_user
+			handle @allowed {
+				reverse_proxy jupyterhub:8000
+			}
+			import authorize_group_deny server_user
+		}
+
+		# ---------------------------------------------------------------------
+		# pghero: database performance dashboard
+
+		redir /pghero /pghero/
+		handle /pghero/* {
+			import authorize_group_check admin
+			handle @allowed {
+				reverse_proxy pghero:8080
+			}
+			import authorize_group_deny admin
+		}
+
+		# ---------------------------------------------------------------------
+		# dozzle: docker log dashboard
+		redir /dozzle /dozzle/
+		handle /dozzle/* {
+			import authorize_group_check admin
+			handle @allowed {
+				reverse_proxy dozzle:8080 {
+					header_up Remote-User "{header.X-Auth-Request-Preferred-Username}"
+				}
+			}
+			import authorize_group_deny admin
+		}
+
+		# ---------------------------------------------------------------------
+		# Static file serving
+
+		handle {
+			import authorize_group_check web_user
+
+			handle @allowed {
+
+
+				@static {
+					path /css/* /documents/* /img/* /react/assets/*
+					not path /documents/tempfiles/*
+				}
+				handle @static {
+					root * /home/production/cxgn/sgn/static
+					file_server
+				}
+				@js path /js/legacy/* /js/source/legacy/*
+				handle @js {
+					uri strip_prefix /js/legacy
+					uri strip_prefix /js/source/legacy
+					root * /home/production/cxgn/sgn/js/source/legacy
+					file_server
+				}
+
+				handle /user/login {
+					redir https://{$DOMAIN_NAME}/authenticate/oidc/keycloak/login 302
+				}
+
+				reverse_proxy breedbase:8080
+			}
+
+			import authorize_group_deny web_user
+		}
 	}
 }

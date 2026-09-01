@@ -58,12 +58,13 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: docker build -t bffafirms/breedbase:latest .
+          command: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache breedbase
 
       # ---------------------------------------------------------------------------
       # Deployments
 
       - name: Build supporting images
+        if: ${{ matrix.mode != 'quickstart' }}
         run: docker compose -f compose.${{ matrix.mode }}.yml build --no-cache
 
       - name: Start containers

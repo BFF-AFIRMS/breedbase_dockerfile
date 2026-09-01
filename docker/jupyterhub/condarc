@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+channel_priority: strict
+envs_dirs:
+  - /home/{username}/.local/share/jupyter/conda/envs
+  - /opt/conda/
+pkgs_dirs:
+  - /home/{username}/.local/share/jupyter/conda/pkgs

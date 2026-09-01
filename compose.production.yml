@@ -1,36 +1,495 @@
-name: production
+name: "${PROJECT_NAME}"
 
-volumes:
-  cxgndata:
-  npmdata:
+networks:
+  bff-afirms:
+    name: "${PROJECT_NAME}"
+  # Uncomment if connecting to external traefik container
+  # traefik-net:
+  #   external: true
+
+secrets:
+  docker_id:
+    environment: DOCKER_ID
 
 services:
-  breedbase_db:
-    extends:
-      file: docker/breedbase/db.yml
-      service: breedbase_db
-    environment:
-      POSTGRES_PASSWORD: ${PGPASSWORD}          # Create 'postgres' superuser with this password
-      PGPASSWORD:        ${PGPASSWORD}          # Default psql connection password
-      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD}    # Database password for 'web_usr'
 
-  breedbase:
-    extends:
-      file: docker/breedbase/web.yml
-      service: breedbase
-    environment:
-      MODE:              PRODUCTION             # SGN Server Mode
-      PGDATABASE:        ${PGDATABASE:?}        # Database name
-      PGPASSWORD:        ${PGPASSWORD:?}        # Database password for 'postgres' superuser
-      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Database password for 'web_usr'
-      ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user
-    volumes:
-      - cxgndata:/home/production/cxgn
-      - npmdata:/home/production/npm
+  # ---------------------------------------------------------------------------
+  # Caddy Web Server and Reverse Proxy
 
   caddy:
     extends:
       file: docker/caddy/caddy.yml
       service: caddy
+    environment:
+      PROJECT_NAME: ${PROJECT_NAME:?}
+      TZ:           ${TZ:?}
+    networks:
+      bff-afirms:
+        aliases:
+          - ${DOMAIN_NAME:?}
+      # Uncomment if connecting to external traefik container
+      # traefik-net: {}
+    # Uncomment if connecting to external traefik container
+    # ports: !reset []
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN_NAME:?}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=web"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
     volumes:
-      - cxgndata:/home/production/cxgn
+      - type: bind
+        source: $PWD/cxgn
+        target: /home/production/cxgn
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/docker/caddy/Caddyfile
+        target: /etc/caddy/Caddyfile
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/caddy
+        target: /data/caddy
+        bind:
+          create_host_path: false
+
+      # Jbrowse web application
+      - type: bind
+        source: $PWD/data/jbrowse/app
+        target: /srv/www/jbrowse2
+        bind:
+          create_host_path: false
+
+      # Jbrowse genomic data
+      - type: bind
+        source: $PWD/data/jbrowse/data
+        target: /data/jbrowse
+        bind:
+          create_host_path: false
+
+      # Uncomment for production jbrowse data
+      # - /data/projects:/data/projects
+
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 4G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 1G
+
+  # ---------------------------------------------------------------------------
+  # Databases for applications
+
+  breedbase_db:
+    extends:
+      file: docker/breedbase/db.yml
+      service: breedbase_db
+    environment:
+      TLS_DOMAIN:        breedbase_db
+      POSTGRES_PASSWORD: ${PGPASSWORD}       # Create 'postgres' superuser with this password
+      PGUSER:            ${PGUSER}           # Default psql connection username
+      PGPASSWORD:        ${PGPASSWORD}       # Default psql connection password
+      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD} # Database password for 'web_usr' user
+      TZ:                ${TZ:?}
+    networks:
+      bff-afirms:
+        aliases:
+          - breedbase-db
+    ports: !reset []
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '16'
+    #       memory: 16G
+    #     reservations:
+    #       cpus: '8'
+    #       memory: 8G
+
+
+  keycloak_db:
+    extends:
+      file: docker/keycloak/db.yml
+      service: keycloak_db
+    environment:
+      TLS_DOMAIN:        keycloak_db
+      POSTGRES_PASSWORD: ${PGPASSWORD}        # Create 'postgres' superuser with this password
+      PGUSER:            ${PGUSER}            # Default psql connection username
+      PGPASSWORD:        ${PGPASSWORD}        # Default psql connection password
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD} # Database password for 'keycloak' user
+      TZ:                ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 8G
+    #     reservations:
+    #       cpus: '2'
+    #       memory: 2G
+
+  jupyterhub_db:
+    extends:
+      file: ./docker/jupyterhub/db.yml
+      service: jupyterhub_db
+    environment:
+      TLS_DOMAIN:          jupyterhub_db
+      POSTGRES_PASSWORD:   ${PGPASSWORD}        # Create 'postgres' superuser with this password
+      PGUSER:              ${PGUSER}            # Default psql connection username
+      PGPASSWORD:          ${PGPASSWORD}        # Default psql connection password
+      JUPYTERHUB_PASSWORD: ${JUPYTERHUB_PASSWORD} # Database password for 'jupyter' user
+      TZ:                  ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 8G
+    #     reservations:
+    #       cpus: '2'
+    #       memory: 2G
+
+  mathesar_db:
+    extends:
+      file: ./docker/mathesar/db.yml
+      service: mathesar_db
+    environment:
+      TLS_DOMAIN:          jupyterhub_db
+      POSTGRES_PASSWORD:   ${PGPASSWORD}        # Create 'postgres' superuser with this password
+      PGUSER:              ${PGUSER}            # Default psql connection username
+      PGPASSWORD:          ${PGPASSWORD}        # Default psql connection password
+      MATHESAR_PASSWORD:   ${MATHESAR_PASSWORD} # Database password for 'mathesar' user
+      TZ:                  ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 8G
+    #     reservations:
+    #       cpus: '2'
+    #       memory: 2G
+
+  # ---------------------------------------------------------------------------
+  # Keycloak Authentication Web Application
+
+  keycloak:
+    extends:
+      file: docker/keycloak/web.yml
+      service: keycloak
+    depends_on:
+      caddy:
+        condition: service_healthy
+    environment:
+      KC_HOSTNAME:                     https://${DOMAIN_NAME}/auth
+      KC_HOSTNAME_ADMIN:               https://${DOMAIN_NAME}/auth
+      KC_DB:                           postgres
+      KC_DB_URL:                       jdbc:postgresql://keycloak_db:5432/keycloak
+      KC_DB_USERNAME:                  keycloak
+      KC_DB_PASSWORD:                  ${KEYCLOAK_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME:     admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD:     ${ADMIN_PASSWORD}
+      KC_HTTP_RELATIVE_PATH:           /auth
+      KC_HTTP_ENABLED:                 true
+      KC_HTTP_PORT:                    9080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
+      KC_PROXY_HEADERS:                xforwarded
+      TZ:                              ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    volumes:
+      - type: bind
+        source: ./docker/keycloak/web_entrypoint.sh
+        target: /entrypoint.sh
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/keycloak/import
+        target: /opt/keycloak/data/import/
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/keycloak
+        target: /data/keycloak
+        bind:
+          create_host_path: false
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 8G
+    #     reservations:
+    #       cpus: '2'
+    #       memory: 2G
+
+  # ---------------------------------------------------------------------------
+  # OAuth2-Proxy for Authentication
+
+  oauth2-proxy:
+    extends:
+      file: docker/oauth2-proxy/oauth2-proxy.yml
+      service: oauth2-proxy
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    volumes:
+      - type: bind
+        source: $PWD/data/keycloak/oauth2-proxy.cfg
+        target: /oauth2-proxy.cfg
+        bind:
+          create_host_path: false
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 4G
+    #     reservations:
+    #       cpus: '2'
+    #       memory: 2G
+
+  # Redis store for oauth2-proxy sessions
+  redis:
+    extends:
+      file: docker/redis/redis.yml
+      service: redis
+    environment:
+      TZ: ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 4G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 1G
+
+  # ---------------------------------------------------------------------------
+  # Breedbase Web Application
+
+  breedbase:
+    extends:
+      file: docker/breedbase/web.yml
+      service: breedbase
+    depends_on:
+      breedbase_db:
+        condition: service_healthy
+      oauth2-proxy:
+        condition: service_healthy
+    environment:
+      MODE:              PRODUCTION             # SGN Server Mode
+      PGPASSWORD:        ${PGPASSWORD:?}        # Database password for 'postgres' superuser
+      WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Database password for 'web_usr'
+      ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user
+      TZ:                ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    volumes:
+      - type: bind
+        source: ./cxgn
+        target: /home/production/cxgn
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ./docker/breedbase/scripts/web_setup
+        target: /usr/local/bin/web_setup
+        bind:
+          create_host_path: false
+
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '32'
+    #       memory: 32G
+    #     reservations:
+    #       cpus: '8'
+    #       memory: 8G
+
+  # ---------------------------------------------------------------------------
+  # Jupyter Notebooks and Jupyterhub Server
+
+  jupyter-default:
+    extends:
+      file: docker/jupyterhub/jupyter/jupyter.yml
+      service: jupyter-default
+    networks:
+      - bff-afirms
+    ports: !reset []
+
+  jupyterhub:
+    extends:
+      file: docker/jupyterhub/web.yml
+      service: jupyterhub
+    depends_on:
+      jupyter-default:
+        condition: service_started
+      jupyterhub_db:
+        condition: service_healthy
+      oauth2-proxy:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    # Uncomment for production resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 8G
+    #     reservations:
+    #       cpus: '2'
+    #       memory: 2G
+
+  # ---------------------------------------------------------------------------
+  # Mathesar PostgreSQL Interface
+
+  mathesar:
+    extends:
+      file: docker/mathesar/web.yml
+      service: mathesar
+    depends_on:
+      mathesar_db:
+        condition: service_healthy
+    environment:
+      DOMAIN_NAME: http://localhost
+      TZ:          ${TZ:?}
+    networks:
+      - bff-afirms
+    # Mathesar cannot be hosted on a subpath yet
+    # https://github.com/mathesar-foundation/mathesar/issues/5234
+    ports: ["8099:8000"]
+
+  # ---------------------------------------------------------------------------
+  # pgHero Dashboard
+
+  pghero:
+    extends:
+      file: docker/pghero/pghero.yml
+      service: pghero
+    depends_on:
+      breedbase:
+        condition: service_healthy
+      oauth2-proxy:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+    volumes:
+      - type: bind
+        source: $PWD/data/pghero/pghero.yml
+        target: /app/config/pghero.yml
+        bind:
+          create_host_path: false
+
+  # ---------------------------------------------------------------------------
+  # Dozzle Log Dashboard
+
+  dozzle:
+    extends:
+      file: docker/dozzle/dozzle.yml
+      service: dozzle
+    depends_on:
+      oauth2-proxy:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:?}
+    networks:
+      - bff-afirms
+    ports: !reset []
+
+  caddy_logs:
+    extends:
+      file: docker/dozzle/dozzle.yml
+      service: dozzle-log
+    depends_on:
+      dozzle:
+        condition: service_healthy
+      caddy:
+        condition: service_healthy
+    networks:
+      - bff-afirms
+    ports: !reset []
+    command: ["sh", "-c", 'tail -f /tmp/log/*.log']
+    volumes:
+      - type: bind
+        source: $PWD/data/caddy/log
+        target: /tmp/log
+        bind:
+          create_host_path: false
+
+  breedbase_db_logs:
+    extends:
+      file: docker/dozzle/dozzle.yml
+      service: dozzle-log
+    depends_on:
+      dozzle:
+        condition: service_healthy
+      breedbase_db:
+        condition: service_healthy
+    networks:
+      - bff-afirms
+    ports: !reset []
+    command: ["sh", "-c", 'tail -f /tmp/log/*.json']
+    volumes:
+      - type: bind
+        source: $PWD/data/breedbase_db/log
+        target: /tmp/log
+        bind:
+          create_host_path: false
+
+  keycloak_db_logs:
+    extends:
+      file: docker/dozzle/dozzle.yml
+      service: dozzle-log
+    depends_on:
+      dozzle:
+        condition: service_healthy
+      keycloak_db:
+        condition: service_healthy
+    networks:
+      - bff-afirms
+    ports: !reset []
+    command: ["sh", "-c", 'tail -f /tmp/log/*.json']
+    volumes:
+      - type: bind
+        source: $PWD/data/keycloak_db/log
+        target: /tmp/log
+        bind:
+          create_host_path: false

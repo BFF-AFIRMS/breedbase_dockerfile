@@ -8,14 +8,14 @@ repos:
         args: [--markdown-linebreak-ext=md]
         exclude: |
           (?x)(
-              ^db_dumps/|
+              ^docker/breedbase/db_dumps/|
               ^docker/breedbase/patches/
           )
 
       - id: end-of-file-fixer
         exclude: |
           (?x)(
-              ^db_dumps/|
+              ^docker/breedbase/db_dumps/|
               ^docker/breedbase/patches/
           )
 
@@ -26,7 +26,7 @@ repos:
         args: ['--maxkb=10000']
         exclude: |
           (?x)(
-              ^db_dumps/|
+              ^docker/breedbase/db_dumps/|
               ^docker/breedbase/patches/
           )
 
@@ -34,7 +34,7 @@ repos:
         args: [--fix=lf]
         exclude: |
           (?x)(
-              ^db_dumps/|
+              ^docker/breedbase/db_dumps/|
               ^docker/breedbase/patches/
           )
 
@@ -64,4 +64,3 @@ repos:
       - id: ggshield
         language_version: python3
         stages: [pre-commit]
-        exclude: docker/keycloak/realms/master-realm.json
