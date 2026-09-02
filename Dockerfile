@@ -90,8 +90,8 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
 #RUN wget https://github.com/SchedMD/slurm/archive/refs/tags/slurm-${SLURM_VERSION}.tar.gz \
 #  && tar -xvf slurm-${SLURM_VERSION}.tar.gz \
 
-ENV SLURM_VERSION="20.11.9"
-RUN wget https://download.schedmd.com/slurm/slurm-20.11.9.tar.bz2 \
+ENV SLURM_VERSION="21.08.8-2"
+RUN wget https://download.schedmd.com/slurm/slurm-${SLURM_VERSION}.tar.bz2 \
   && tar -xvf slurm-${SLURM_VERSION}.tar.bz2 \
   && rm -f slurm-${SLURM_VERSION}.tar.gz \
   && mkdir -p /opt/slurm \
