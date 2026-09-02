@@ -33,13 +33,13 @@ start_system_services() {
     echo "Starting system services"
     echo "-------------------------------------------------------------------------"
 
-    sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
+    sed -i s/localhost/$HOSTNAME/g ${SLURM_CONFIG}
     /etc/init.d/postfix start
     /etc/init.d/cron start
-    chown munge:munge /etc/munge/munge.key
     /etc/init.d/munge start
-    /etc/init.d/slurmctld start
-    /etc/init.d/slurmd start
+    slurmctld start
+    slurmd start
+    sinfo
 
     chown root /etc/crontab # in case it was mounted from local dir
 

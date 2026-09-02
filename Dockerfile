@@ -20,8 +20,8 @@ RUN apt update -y \
     libhdf5-serial-dev libgtk2.0-dev libgtk-3-0 libgtk-3-dev \
     libimage-exiftool-perl libimage-magick-perl libjpeg-dev \
     libmoosex-runnable-perl libmunge-dev libmunge2 libnlopt0 libopenblas-dev \
-    libpng-dev libpq-dev libproj-dev libslurm-perl libssl-dev libswscale-dev \
-    libtbb-dev libtbbmalloc2 libterm-readline-zoid-perl \
+    libpng-dev libpq-dev libproj-dev libslurm-perl libssl-dev \
+    libswscale-dev libtbb-dev libtbbmalloc2 libterm-readline-zoid-perl \
     libtext-multimarkdown-perl libtiff-dev libudunits2-dev libuv1-dev \
     libxvidcore-dev libzbar-dev \
   && rm -rf /var/lib/apt/lists/*
@@ -34,7 +34,7 @@ RUN apt update -y \
     gnupg2 graphviz htop imagemagick less linux-headers-generic locales \
     locales-all lsof lynx mailutils make mrbayes munge muscle ncbi-blast+ \
     nfs-common nginx perl-doc pkg-config plink postfix primer3 r-base \
-    r-base-dev rsync rsyslog screen slurm-wlm slurmctld slurmd starman \
+    r-base-dev rsync rsyslog screen slurm-wlm-basic-plugins starman \
     sudo vim xutils-dev wget xvfb zbar-tools \
   && rm -rf /var/lib/apt/lists/*
 
@@ -59,15 +59,6 @@ RUN apt update -y \
   && rm -rf /root/.cache/pip \
   && rm -rf /var/lib/apt/lists/* 
 
-# Configure slurm directories and permissions
-RUN rm /etc/munge/munge.key \
-  && chmod 777 /var/spool/ \
-  && mkdir /var/spool/slurmstate \
-  && chown slurm:slurm /var/spool/slurmstate/ \
-  && /usr/sbin/mungekey \
-  && ln -s /var/lib/slurm-llnl /var/lib/slurm \
-  && mkdir -p /var/log/slurm
-
 # Install and configure nodejs, npm install needs a non-root user
 ENV NODE_VERSION="25.6.1"
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz \
@@ -85,6 +76,51 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
   && mkdir -p /home/production/public/sgn_static_content \
   && chown -R production:production /home/production \
   && npm config set cache /home/production/npm --global
+
+# Install and configure slurm
+# 20-11-4-1, 21-08-7-1
+# 20.11.9:   https://download.schedmd.com/slurm/slurm-20.11.9.tar.bz2
+# 21.08.8-2: https://download.schedmd.com/slurm/slurm-21.08.8-2.tar.bz2
+# 22.05.11:  https://download.schedmd.com/slurm/slurm-22.05.11.tar.bz2
+# 23.11.11:  https://download.schedmd.com/slurm/slurm-23.11.11.tar.bz2
+# 24.11.7:   https://download.schedmd.com/slurm/slurm-24.11.7.tar.bz2
+# 25.11.7:   https://download.schedmd.com/slurm/slurm-25.11.7.tar.bz2
+# 26.05.3:   https://download.schedmd.com/slurm/slurm-26.05.3.tar.bz2
+ENV SLURM_VERSION="20-11-4-1"
+RUN wget https://github.com/SchedMD/slurm/archive/refs/tags/slurm-${SLURM_VERSION}.tar.gz \
+  && tar -xvf slurm-${SLURM_VERSION}.tar.gz \
+  && rm -f slurm-${SLURM_VERSION}.tar.gz \
+  && mkdir -p /opt/slurm \
+  && mv slurm-slurm-${SLURM_VERSION} /opt/slurm/${SLURM_VERSION} \
+  && cd /opt/slurm/${SLURM_VERSION} \
+  && ./configure \
+  && make \
+  && make install \
+  && cd contribs \
+  && make \
+  && make install
+
+# TBD:  Cleanup slurm install (saves ~1GB), move into previous command
+# RUN cd /opt \
+#  && rm -rf /opt/slurm
+
+# Configure munge
+RUN rm /etc/munge/munge.key \
+  && /usr/sbin/mungekey \
+  && chown munge:munge /etc/munge/munge.key
+
+# Configure slurm directories and permissions
+ENV SLURM_CONFIG=/usr/local/etc/slurm.conf
+COPY docker/breedbase/slurm.conf ${SLURM_CONFIG}
+RUN chmod 777 /var/spool/ \
+  && mkdir -p /var/spool/slurmstate \
+  && chown -R slurm:slurm /var/spool/slurmstate/ \
+  && ln -s /var/lib/slurm-llnl /var/lib/slurm \
+  && mkdir -p /var/log/slurm \
+  && chown -R slurm:slurm /var/log/slurm \
+  && mkdir -p /etc/slurm \
+  && ln -s $SLURM_CONFIG /etc/slurm/slurm.conf \
+  && chown -R slurm:slurm /etc/slurm
 
 # -----------------------------------------------------------------------------
 # Install local application code, libraries, and dependencies
@@ -117,7 +153,6 @@ RUN cd /home/production/cxgn/sgn/programs/ \
 # Copy over config files, entrypoint scripts, database dumps
 RUN mkdir /etc/starmachine
 RUN mkdir /var/log/sgn
-COPY docker/breedbase/slurm.conf /etc/slurm/slurm.conf
 COPY docker/breedbase/starmachine.conf /etc/starmachine/
 COPY docker/breedbase/web_entrypoint.sh /entrypoint.sh
 COPY docker/breedbase/web_setup /usr/local/bin/web_setup
