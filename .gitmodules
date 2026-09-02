@@ -37,8 +37,8 @@
 [submodule "cxgn/R_libs"]
 	path = cxgn/R_libs
 	url = https://github.com/bff-afirms/R_libs
-[submodule "cxgn/Bio-Chado-Schema"]
-	path = cxgn/Bio-Chado-Schema
+[submodule "cxgn/bio-chado-schema"]
+	path = cxgn/bio-chado-schema
 	url = https://github.com/solgenomics/bio-chado-schema
 [submodule "cxgn/chado_tools"]
 	path = cxgn/chado_tools
