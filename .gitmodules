@@ -1,6 +1,6 @@
 [submodule "cxgn/cxgn-corelibs"]
 	path = cxgn/cxgn-corelibs
-	url = https://github.com/solgenomics/cxgn-corelibs.git
+	url = https://github.com/bff-afirms/cxgn-corelibs.git
 [submodule "cxgn/sgn"]
 	path = cxgn/sgn
 	url = https://github.com/bff-afirms/sgn.git
@@ -33,71 +33,11 @@
 	url = https://github.com/solgenomics/DroneImageScripts.git
 [submodule "cxgn/local-lib"]
 	path = cxgn/local-lib
-	url = https://github.com/solgenomics/perl-local-lib
+	url = https://github.com/bff-afirms/perl-local-lib
 [submodule "cxgn/R_libs"]
 	path = cxgn/R_libs
-	url = https://github.com/solgenomics/R_libs
-[submodule "cxgn/cassava"]
-	path = cxgn/cassava
-	url = https://github.com/solgenomics/cassava.git
-[submodule "cxgn/yambase"]
-	path = cxgn/yambase
-	url = https://github.com/solgenomics/yambase.git
-[submodule "cxgn/sweetpotatobase"]
-	path = cxgn/sweetpotatobase
-	url = https://github.com/solgenomics/sweetpotatobase.git
-[submodule "cxgn/ricebase"]
-	path = cxgn/ricebase
-	url = https://github.com/solgenomics/ricebase.git
-[submodule "cxgn/citrusgreening"]
-	path = cxgn/citrusgreening
-	url = https://github.com/solgenomics/citrusgreening.git
-[submodule "cxgn/coconut"]
-	path = cxgn/coconut
-	url = https://github.com/solgenomics/coconut.git
-[submodule "cxgn/cassbase"]
-	path = cxgn/cassbase
-	url = https://github.com/solgenomics/cassbase.git
-[submodule "cxgn/musabase"]
-	path = cxgn/musabase
-	url = https://github.com/solgenomics/musabase.git
-[submodule "cxgn/potatobase"]
-	path = cxgn/potatobase
-	url = https://github.com/solgenomics/potatobase.git
-[submodule "cxgn/cea"]
-	path = cxgn/cea
-	url = https://github.com/solgenomics/cea.git
-[submodule "cxgn/cippotatobase"]
-	path = cxgn/cippotatobase
-	url = https://github.com/solgenomics/cippotatobase.git
-[submodule "cxgn/fernbase"]
-	path = cxgn/fernbase
-	url = https://github.com/solgenomics/fernbase.git
-[submodule "cxgn/solgenomics"]
-	path = cxgn/solgenomics
-	url = https://github.com/solgenomics/solgenomics.git
-[submodule "cxgn/varitome"]
-	path = cxgn/varitome
-	url = https://github.com/solgenomics/varitome.git
-[submodule "cxgn/milkweed"]
-	path = cxgn/milkweed
-	url = https://github.com/solgenomics/milkweed.git
-[submodule "cxgn/erysimum"]
-	path = cxgn/erysimum
-	url = https://github.com/solgenomics/erysimum.git
-[submodule "cxgn/vitisbase"]
-	path = cxgn/vitisbase
-	url = https://github.com/solgenomics/vitisbase.git
-[submodule "cxgn/gorelabbbase"]
-	path = cxgn/gorelabbbase
-	url = https://github.com/solgenomics/gorelabbase.git
-[submodule "cxgn/imagesol"]
-	path = cxgn/imagesol
-	url = https://github.com/solgenomics/imagesol.git
-[submodule "cxgn/cxgn/chado_tools"]
-	path = cxgn/chado_tools
-	url = https://github.com/GMOD/chado_tools
-[submodule "cxgn/cxgn/Bio-Chado-Schema"]
+	url = https://github.com/bff-afirms/R_libs
+[submodule "cxgn/Bio-Chado-Schema"]
 	path = cxgn/Bio-Chado-Schema
 	url = https://github.com/solgenomics/bio-chado-schema
 [submodule "cxgn/chado_tools"]
@@ -109,11 +49,6 @@
 [submodule "cxgn/gtsimsrch"]
 	path = cxgn/gtsimsrch
 	url = https://github.com/solgenomics/gtsimsrch.git
-[submodule "sgn-biotools"]
-	path = sgn-biotools
+[submodule "cxgn/sgn-biotools"]
+	path = cxgn/sgn-biotools
 	url = https://github.com/solgenomics/sgn-biotools.git
-
-
-[submodule "cxgn/Bio-Chado-Schema"]
-	path = cxgn/bio-chado-schema
-	url = https://github.com/solgenomics/bio-chado-schema
