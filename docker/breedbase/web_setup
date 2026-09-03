@@ -33,7 +33,7 @@ start_system_services() {
     echo "Starting system services"
     echo "-------------------------------------------------------------------------"
 
-    sed -i s/localhost/$HOSTNAME/g ${SLURM_CONFIG}
+    sed -i s/localhost/$HOSTNAME/g ${SLURM_CONF}
     /etc/init.d/postfix start
     /etc/init.d/cron start
     /etc/init.d/munge start

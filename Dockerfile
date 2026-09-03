@@ -47,7 +47,7 @@ RUN apt update -y \
   && apt install -y postgresql-common \
   && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
   && apt install -y postgresql-client-18 \
-  && rm -rf /var/lib/apt/lists/* 
+  && rm -rf /var/lib/apt/lists/*
 
 # Install python packages
 RUN apt update -y \
@@ -57,7 +57,7 @@ RUN apt update -y \
     python3-pytz python3-setuptools python3-skimage python3-zbar \
   && pip3 install --break-system-packages PyExifTool keras-tuner \
   && rm -rf /root/.cache/pip \
-  && rm -rf /var/lib/apt/lists/* 
+  && rm -rf /var/lib/apt/lists/*
 
 # Install and configure nodejs, npm install needs a non-root user
 ENV NODE_VERSION="25.6.1"
@@ -90,7 +90,7 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
 #RUN wget https://github.com/SchedMD/slurm/archive/refs/tags/slurm-${SLURM_VERSION}.tar.gz \
 #  && tar -xvf slurm-${SLURM_VERSION}.tar.gz \
 
-ENV SLURM_VERSION="21.08.8-2"
+ENV SLURM_VERSION="22.05.11"
 RUN wget https://download.schedmd.com/slurm/slurm-${SLURM_VERSION}.tar.bz2 \
   && tar -xvf slurm-${SLURM_VERSION}.tar.bz2 \
   && rm -f slurm-${SLURM_VERSION}.tar.gz \
@@ -112,17 +112,24 @@ RUN rm /etc/munge/munge.key \
   && chown munge:munge /etc/munge/munge.key
 
 # Configure slurm directories and permissions
-ENV SLURM_CONFIG=/usr/local/etc/slurm.conf
-COPY docker/breedbase/slurm.conf ${SLURM_CONFIG}
-RUN chmod 777 /var/spool/ \
-  && mkdir -p /var/spool/slurmstate \
-  && chown -R slurm:slurm /var/spool/slurmstate/ \
+ENV SLURM_CONF=/usr/local/etc/slurm.conf
+COPY docker/breedbase/slurm.conf ${SLURM_CONF}
+#COPY docker/breedbase/cgroup.conf /etc/slurm/cgroup.conf
+COPY docker/breedbase/cgroup.conf /usr/local/etc/cgroup.conf
+RUN  chmod 777 /var/spool/ \
+  && mkdir -p /var/spool/slurmstate && chown -R slurm:slurm /var/spool/slurmstate/ \
+  && mkdir -p /var/spool/slurmd     && chown -R slurm:slurm /var/spool/slurmd/ \
+  && mkdir -p /var/lib/slurm-llnl   && chown -R slurm:slurm /var/lib/slurm-llnl \
   && ln -s /var/lib/slurm-llnl /var/lib/slurm \
   && mkdir -p /var/log/slurm \
   && chown -R slurm:slurm /var/log/slurm \
   && mkdir -p /etc/slurm \
-  && ln -s $SLURM_CONFIG /etc/slurm/slurm.conf \
-  && chown -R slurm:slurm /etc/slurm
+  && chown -R slurm:slurm /etc/slurm \
+  && ln -s $SLURM_CONF /etc/slurm/slurm.conf \
+  && ln -s /usr/local/etc/cgroup.conf /etc/slurm/cgroup.conf
+
+# TBD, put slurm config in /etc/slurm/slurm.conf rather than symlink
+# `./configure --sysconfdir=/etc/slurm` when compiling
 
 # -----------------------------------------------------------------------------
 # Install local application code, libraries, and dependencies
