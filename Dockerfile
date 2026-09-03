@@ -55,7 +55,7 @@ RUN apt update -y \
     python3-dev python3-grpcio python3-matplotlib python3-numpy python3-opencv \
     python3-packaging python3-pandas python3-pillow python3-pip python3-pysolar \
     python3-pytz python3-setuptools python3-skimage python3-zbar \
-  && pip3 install --break-system-packages PyExifTool keras-tuner \
+  && pip3 install --break-system-packages PyExifTool keras-tuner imutils \
   && rm -rf /root/.cache/pip \
   && rm -rf /var/lib/apt/lists/*
 
