@@ -36,7 +36,6 @@ start_system_services() {
     sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
     /etc/init.d/postfix start
     /etc/init.d/cron start
-    chown 106 /etc/munge/munge.key
     /etc/init.d/munge start
     /etc/init.d/slurmctld start
     /etc/init.d/slurmd start
@@ -207,22 +206,24 @@ initialize_javascript() {
     # Cleanup old builds
     if [[ -d js/build ]]; then rm -rf js/build; fi
 
+    if [[ -f .git ]]; then
+        echo "Temporarily moving .git to .git-bak"
+        mv .git .git-bak
+    fi
+
     cd js
 
     sudo -u $js_user npm config set engine-strict true
     echo "Install npm packages"
     sudo -u $js_user HOME=/tmp npm install --loglevel info
-    if [[ -f .git ]]; then
-        echo "Temporarily moving .git to .git-bak"
-        mv .git .git-bak
-    fi
     echo "Running webpack build..."
     sudo -u $js_user HOME=/tmp node_modules/.bin/webpack --config build.webpack.config.js
+    cd -
+
     if [[ -f .git-bak ]]; then
         echo "Restoring .git from .git-bak"
         mv .git-bak .git
     fi
-    cd -
 
     if [[ -e build_sgn ]]; then
         echo "Building additional sgn app"
