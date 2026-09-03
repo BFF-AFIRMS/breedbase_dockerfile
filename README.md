@@ -160,7 +160,7 @@ mv data data_production
 1. **Clone the submodules**
 
     ```bash
-    git submodule update --init --recursive --progress --depth 1
+    git submodule update --init --recursive --progress
     ```
 
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted into the container during the compose step, but will still be accessible from the host for development work.
