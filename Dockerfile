@@ -84,13 +84,13 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
 # 22.05.11:  https://download.schedmd.com/slurm/slurm-22.05.11.tar.bz2
 # 23.11.11:  https://download.schedmd.com/slurm/slurm-23.11.11.tar.bz2
 # 24.11.7:   https://download.schedmd.com/slurm/slurm-24.11.7.tar.bz2
-# 25.11.7:   https://download.schedmd.com/slurm/slurm-25.11.7.tar.bz2
-# 26.05.3:   https://download.schedmd.com/slurm/slurm-26.05.3.tar.bz2
+# 25.11.8:   https://download.schedmd.com/slurm/slurm-25.11.8.tar.bz2
+# 26.05.4:   https://download.schedmd.com/slurm/slurm-26.05.4.tar.bz2
 # ENV SLURM_VERSION="20-11-4-1"
 #RUN wget https://github.com/SchedMD/slurm/archive/refs/tags/slurm-${SLURM_VERSION}.tar.gz \
 #  && tar -xvf slurm-${SLURM_VERSION}.tar.gz \
 
-ENV SLURM_VERSION="22.05.11"
+ENV SLURM_VERSION="23.11.11"
 RUN wget https://download.schedmd.com/slurm/slurm-${SLURM_VERSION}.tar.bz2 \
   && tar -xvf slurm-${SLURM_VERSION}.tar.bz2 \
   && rm -f slurm-${SLURM_VERSION}.tar.gz \
