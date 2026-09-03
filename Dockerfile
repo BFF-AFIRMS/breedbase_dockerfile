@@ -51,7 +51,7 @@ RUN apt update -y \
 
 # Install python packages
 RUN apt update -y \
-  && apt-get install -y \
+  && apt install -y \
     python3-dev python3-grpcio python3-matplotlib python3-numpy python3-opencv \
     python3-packaging python3-pandas python3-pillow python3-pip python3-pysolar \
     python3-pytz python3-setuptools python3-skimage python3-zbar \
