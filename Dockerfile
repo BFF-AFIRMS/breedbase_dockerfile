@@ -34,8 +34,8 @@ RUN apt update -y \
     gnupg2 graphviz htop imagemagick less linux-headers-generic locales \
     locales-all lsof lynx mailutils make mrbayes munge muscle ncbi-blast+ \
     nfs-common nginx perl-doc pkg-config plink postfix primer3 r-base \
-    r-base-dev rsync rsyslog screen slurm-wlm-basic-plugins starman \
-    sudo vim xutils-dev wget xvfb zbar-tools \
+    r-base-dev rsync rsyslog screen slurmctld slurmd slurm-wlm-basic-plugins \
+    starman sudo vim xutils-dev wget xvfb zbar-tools \
   && rm -rf /var/lib/apt/lists/*
 
 # Set the locale
@@ -77,56 +77,23 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
   && chown -R production:production /home/production \
   && npm config set cache /home/production/npm --global
 
-# Install and configure slurm
-# 20-11-4-1, 21-08-7-1
-# 20.11.9:   https://download.schedmd.com/slurm/slurm-20.11.9.tar.bz2
-# 21.08.8-2: https://download.schedmd.com/slurm/slurm-21.08.8-2.tar.bz2
-# 22.05.11:  https://download.schedmd.com/slurm/slurm-22.05.11.tar.bz2
-# 23.11.11:  https://download.schedmd.com/slurm/slurm-23.11.11.tar.bz2
-# 24.11.7:   https://download.schedmd.com/slurm/slurm-24.11.7.tar.bz2
-# 25.11.8:   https://download.schedmd.com/slurm/slurm-25.11.8.tar.bz2
-# 26.05.4:   https://download.schedmd.com/slurm/slurm-26.05.4.tar.bz2
-# ENV SLURM_VERSION="20-11-4-1"
-#RUN wget https://github.com/SchedMD/slurm/archive/refs/tags/slurm-${SLURM_VERSION}.tar.gz \
-#  && tar -xvf slurm-${SLURM_VERSION}.tar.gz \
-
-ENV SLURM_VERSION="24.11.7"
-RUN wget https://download.schedmd.com/slurm/slurm-${SLURM_VERSION}.tar.bz2 \
-  && tar -xvf slurm-${SLURM_VERSION}.tar.bz2 \
-  && rm -f slurm-${SLURM_VERSION}.tar.gz \
-  && mkdir -p /opt/slurm \
-  && mv slurm-${SLURM_VERSION} /opt/slurm/${SLURM_VERSION} \
-  && cd /opt/slurm/${SLURM_VERSION} \
-  && ./configure \
-  && make \
-  && make install \
-  && cd contribs \
-  && make \
-  && make install \
-  && cd /opt \
-  && rm -rf /opt/slurm
-
 # Configure munge
 RUN rm /etc/munge/munge.key \
   && /usr/sbin/mungekey \
   && chown munge:munge /etc/munge/munge.key
 
 # Configure slurm directories and permissions
-ENV SLURM_CONF=/usr/local/etc/slurm.conf
+ENV SLURM_CONF=/etc/slurm/slurm.conf
 COPY docker/breedbase/slurm.conf ${SLURM_CONF}
-#COPY docker/breedbase/cgroup.conf /etc/slurm/cgroup.conf
-COPY docker/breedbase/cgroup.conf /usr/local/etc/cgroup.conf
+COPY docker/breedbase/cgroup.conf /etc/slurm/cgroup.conf
 RUN  chmod 777 /var/spool/ \
   && mkdir -p /var/spool/slurmstate && chown -R slurm:slurm /var/spool/slurmstate/ \
   && mkdir -p /var/spool/slurmd     && chown -R slurm:slurm /var/spool/slurmd/ \
   && mkdir -p /var/lib/slurm-llnl   && chown -R slurm:slurm /var/lib/slurm-llnl \
-  && ln -s /var/lib/slurm-llnl /var/lib/slurm \
-  && mkdir -p /var/log/slurm \
-  && chown -R slurm:slurm /var/log/slurm \
-  && mkdir -p /etc/slurm \
-  && chown -R slurm:slurm /etc/slurm \
-  && ln -s $SLURM_CONF /etc/slurm/slurm.conf \
-  && ln -s /usr/local/etc/cgroup.conf /etc/slurm/cgroup.conf
+  && mkdir -p /var/log/slurm        && chown -R slurm:slurm /var/log/slurm \
+  && mkdir -p /etc/slurm            && chown -R slurm:slurm /etc/slurm \
+  && ln -s /var/lib/slurm-llnl /var/lib/slurm
+
 
 # TBD, put slurm config in /etc/slurm/slurm.conf rather than symlink
 # `./configure --sysconfdir=/etc/slurm` when compiling
