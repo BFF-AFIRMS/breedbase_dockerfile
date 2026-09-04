@@ -6,6 +6,15 @@
 
 FROM debian:bullseye AS build
 
+# Debian bullseye end of life
+RUN <<EOF cat >> /etc/apt/sources.list
+deb http://security.debian.org/debian-security bullseye-security main
+deb http://archive.debian.org/debian bullseye main
+deb http://archive.debian.org/debian bullseye-updates main
+EOF
+
+RUN apt-get update --fix-missing -y
+
 # install system dependencies
 RUN apt update && apt install binutils gcc libgd-dev make -y
 
@@ -37,6 +46,15 @@ RUN rm -rf /cxgn/R_libs/*/doc /cxgn/R_libs/*/help /cxgn/R_libs/*/html
 # Final Image
 
 FROM debian:bullseye AS final
+
+# Debian bullseye end of life
+RUN <<EOF cat >> /etc/apt/sources.list
+deb http://security.debian.org/debian-security bullseye-security main
+deb http://archive.debian.org/debian bullseye main
+deb http://archive.debian.org/debian bullseye-updates main
+EOF
+
+RUN apt-get update --fix-missing -y
 
 ENV CPANMIRROR=http://cpan.cpantesters.org
 # based on the vagrant provision.sh script by Nick Morales <nm529@cornell.edu>
