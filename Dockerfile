@@ -47,6 +47,15 @@ RUN rm -rf /cxgn/R_libs/*/doc /cxgn/R_libs/*/help /cxgn/R_libs/*/html
 
 FROM debian:bullseye AS final
 
+# Debian bullseye end of life
+RUN <<EOF cat >> /etc/apt/sources.list
+deb http://security.debian.org/debian-security bullseye-security main
+deb http://archive.debian.org/debian bullseye main
+deb http://archive.debian.org/debian bullseye-updates main
+EOF
+
+RUN apt-get update --fix-missing -y
+
 ENV CPANMIRROR=http://cpan.cpantesters.org
 # based on the vagrant provision.sh script by Nick Morales <nm529@cornell.edu>
 
@@ -73,13 +82,6 @@ RUN echo "deb https://cloud.r-project.org/bin/linux/debian/ bullseye-cran40/" >>
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main" | tee  /etc/apt/sources.list.d/pgdg.list
 
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc |  apt-key add -
-
-# Debian bullseye end of life
-RUN <<EOF cat >> /etc/apt/sources.list
-deb http://security.debian.org/debian-security bullseye-security main
-deb http://archive.debian.org/debian bullseye main
-deb http://archive.debian.org/debian bullseye-updates main
-EOF
 
 RUN apt-get update --fix-missing -y
 #RUN apt-get update -y;
