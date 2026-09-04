@@ -37,6 +37,11 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main" | tee
 
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc |  apt-key add -
 
+# hotfixes for debian bullseye end of life
+RUN echo "deb http://security.debian.org/debian-security bullseye-security main" >> /etc/apt/sources.list \
+  && wget http://security.debian.org/debian-security/pool/updates/main/m/munge/libmunge2_0.5.14-4+deb11u1_amd64.deb \
+  && dpkg -i libmunge2_0.5.14-4+deb11u1_amd64.deb
+
 RUN apt-get update --fix-missing -y
 #RUN apt-get update -y;
 
