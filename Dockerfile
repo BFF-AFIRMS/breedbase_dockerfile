@@ -1,5 +1,13 @@
 FROM debian:bullseye
 
+# Debian bullseye end of life
+RUN <<EOF cat >> /etc/apt/sources.list
+deb http://security.debian.org/debian-security bullseye-security main
+deb http://archive.debian.org/debian bullseye main
+deb http://archive.debian.org/debian bullseye-updates main
+EOF
+RUN apt-get update --fix-missing -y
+
 ENV CPANMIRROR=http://cpan.cpantesters.org
 # based on the vagrant provision.sh script by Nick Morales <nm529@cornell.edu>
 
