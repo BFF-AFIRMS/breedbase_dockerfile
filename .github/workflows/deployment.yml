@@ -10,9 +10,19 @@ on:
 jobs:
 
   # ---------------------------------------------------------------------------
+  # Build Docker Image
+
+  build:
+    uses: ./.github/workflows/build.yaml
+
+  # ---------------------------------------------------------------------------
   # Deployment Modes
 
   deployment:
+
+    needs: build
+    if: ${{ always() }}
+
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -26,20 +36,19 @@ jobs:
 
     steps:
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+      - name: Download Build Output
+        uses: actions/download-artifact@v8
         with:
-          # this might remove tools that are actually needed,
-          # when set to "true" but frees about 6 GB
-          tool-cache: true
+          name: breedbase-docker
+          path: breedbase.tar
 
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: true
-          dotnet: true
-          haskell: false
-          large-packages: false
-          swap-storage: false
+      # parse tag from load output, PR have unusual formats, also sometimes multiple tags
+      - name: Load Docker Image
+        run: |
+          load=$(docker load --input breedbase.tar | tee /dev/stderr)
+          echo -e $load
+          TAG=$(echo -e $load | sed 's/Loaded image: //g' | head -n 1 | cut -d ":" -f 2 | cut -d " " -f 1)
+          echo DOCKER_TAG="$TAG" >> $GITHUB_ENV
 
       - name: Checkout breedbase_dockerfile repo
         uses: actions/checkout@v6
@@ -53,12 +62,6 @@ jobs:
 
       - name: Setup
         run: ./setup
-
-      - uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          command: docker build -t bffafirms/breedbase:latest .
 
       # ---------------------------------------------------------------------------
       # Deployments
@@ -97,3 +100,9 @@ jobs:
 
       - name: Clean data
         run: rm -rf data
+
+      - name: Delete Docker iamge
+        if: always()
+        uses: geekyeggo/delete-artifact@v6
+        with:
+            name: breedbase-docker
