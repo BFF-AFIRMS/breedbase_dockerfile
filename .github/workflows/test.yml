@@ -229,7 +229,7 @@ jobs:
 
   cleanup:
 
-    needs: [deployment]
+    needs: [deployment, test]
     if: ${{ always() }}
     runs-on: ubuntu-latest
 
