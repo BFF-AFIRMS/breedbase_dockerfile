@@ -51,8 +51,11 @@ jobs:
       - name: Checkout breedbase_dockerfile repo
         uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: false
           fetch-depth: 1
+
+      - name: Checkout sgn submodule
+        run: git submodule update --recursive --progress --init --depth 1 cxgn/sgn
 
       - name: Link compose file
         run: |
@@ -145,8 +148,11 @@ jobs:
       - name: Checkout breedbase_dockerfile repo
         uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: false
           fetch-depth: 1
+
+      - name: Checkout sgn submodule
+        run: git submodule update --recursive --progress --init --depth 1 cxgn/sgn
 
       - name: Setup
         run: ./setup
