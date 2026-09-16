@@ -35,7 +35,7 @@ jobs:
           context: .
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=breedbase.tar
+          outputs: type=tar,dest=breedbase.tar
 
       - name: Load Image
         run: |
