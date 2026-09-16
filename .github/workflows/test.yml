@@ -39,7 +39,6 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: breedbase-docker
-          path: breedbase.tar
 
       # parse tag from load output, PR have unusual formats, also sometimes multiple tags
       - name: Load Docker Image
@@ -129,6 +128,19 @@ jobs:
           - selenium2_tools
 
     steps:
+
+      - name: Download Build Output
+        uses: actions/download-artifact@v8
+        with:
+          name: breedbase-docker
+
+      # parse tag from load output, PR have unusual formats, also sometimes multiple tags
+      - name: Load Docker Image
+        run: |
+          load=$(docker load --input breedbase.tar | tee /dev/stderr)
+          echo -e $load
+          TAG=$(echo -e $load | sed 's/Loaded image: //g' | head -n 1 | cut -d ":" -f 2 | cut -d " " -f 1)
+          echo DOCKER_TAG="$TAG" >> $GITHUB_ENV
 
       - name: Checkout breedbase_dockerfile repo
         uses: actions/checkout@v6
