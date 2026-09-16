@@ -82,6 +82,7 @@ jobs:
       - name: Debug solgwas
         run: |
           ./run_test -s t/unit_mech/AJAX/Solgwas.t
+          exit $(docker inspect testing-breedbase-1 --format='{{.State.ExitCode}}')
 
       # - name: Run unit tests
       #   if: ${{ matrix.subtest_key == 'unit' }}

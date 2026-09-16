@@ -1,0 +1,73 @@
+# Re-usable workflow to create the docker image
+name: Docker
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: bffafirms/breedbase
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  image:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # when set to "true" but frees about 6 GB
+          tool-cache: true
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: false
+          large-packages: false
+          swap-storage: false
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=breedbase.tar
+      
+
+      - name: Load Image
+        run: |
+          load=$(docker load --input breedbase.tar | tee /dev/stderr)
+          TAGS=$(echo $load | sed "s/Loaded image: //g")
+          echo TAGS="$TAGS" >> $GITHUB_ENV
+
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: breedbase-docker
+          path: breedbase.tar
+          retention-days: 1
+          if-no-files-found: error
