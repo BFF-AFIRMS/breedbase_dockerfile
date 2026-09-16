@@ -224,11 +224,6 @@ initialize_javascript() {
         echo "Restoring .git from .git-bak"
         mv .git-bak .git
     fi
-
-    if [[ -e build_sgn ]]; then
-        echo "Building additional sgn app"
-        sudo -E -u sgn ./build_sgn
-    fi
 }
 
 _main() {

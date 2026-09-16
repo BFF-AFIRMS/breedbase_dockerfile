@@ -1,6 +1,6 @@
 #syntax=docker/dockerfile:1
 
-FROM debian:trixie-20260824 AS final
+FROM debian:trixie AS final
 
 # -----------------------------------------------------------------------------
 # Install system packages and tools
@@ -8,12 +8,10 @@ FROM debian:trixie-20260824 AS final
 # Perform initial upgrade of system packages
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
   && apt update -y \
-  && apt upgrade -y \
-  && rm -rf /var/lib/apt/lists/*
+  && apt upgrade -y
 
 # Install system development libraries
-RUN apt update -y \
-  && apt install -y \
+RUN apt install -y \
     libavcodec-dev libavformat-dev libbarcode-zbar-perl libcairo2-dev \
     libcatalyst-controller-html-formfu-perl libcupsimage2 libexpat1-dev \
     libgd-dev libgdal-dev libgdbm6 libgdm-dev libglib2.0-bin libglib2.0-dev \
@@ -23,8 +21,7 @@ RUN apt update -y \
     libpng-dev libpq-dev libproj-dev libslurm-perl libssl-dev \
     libswscale-dev libtbb-dev libtbbmalloc2 libterm-readline-zoid-perl \
     libtext-multimarkdown-perl libtiff-dev libudunits2-dev libuv1-dev \
-    libxvidcore-dev libzbar-dev \
-  && rm -rf /var/lib/apt/lists/*
+    libxvidcore-dev libzbar-dev
 
 # Install system tools
 RUN apt update -y \
@@ -35,32 +32,27 @@ RUN apt update -y \
     locales-all lsof lynx mailutils make mrbayes munge muscle ncbi-blast+ \
     nfs-common nginx perl-doc pkg-config plink postfix primer3 r-base \
     r-base-dev rsync rsyslog screen slurmctld slurmd slurm-wlm-basic-plugins \
-    starman sudo vim xutils-dev wget xvfb zbar-tools \
-  && rm -rf /var/lib/apt/lists/*
+    starman sudo vim xutils-dev wget xvfb zbar-tools
 
 # Set the locale
 RUN locale-gen en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
 
 # Install tools that need special configuration (ex. postgres)
-RUN apt update -y \
-  && apt install -y postgresql-common \
+RUN apt install -y postgresql-common \
   && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
-  && apt install -y postgresql-client-18 \
-  && rm -rf /var/lib/apt/lists/*
+  && apt install -y postgresql-client-18
+
 
 # Install python packages
-RUN apt update -y \
-  && apt install -y \
-    python3-dev python3-grpcio python3-matplotlib python3-numpy python3-opencv \
-    python3-packaging python3-pandas python3-pillow python3-pip python3-pysolar \
-    python3-pytz python3-setuptools python3-skimage python3-zbar \
-  && pip3 install --break-system-packages PyExifTool keras-tuner imutils \
-  && rm -rf /root/.cache/pip \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt install -y python3-pip \
+  && pip3 install --no-cache-dir --break-system-packages \
+      grpcio keras-tuner imutils matplotlib numpy opencv-python packaging \
+      pandas pillow PyExifTool pysolar pytz pyzbar setuptools scikit-image \
+  && rm -rf /root/.cache/pip
 
 # Install and configure nodejs, npm install needs a non-root user
-ENV NODE_VERSION="25.6.1"
+ENV NODE_VERSION="26.8.2"
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz \
   && tar -xvf node-v${NODE_VERSION}-linux-x64.tar.xz \
   && rm -f node-v${NODE_VERSION}-linux-x64.tar.xz \
@@ -93,10 +85,6 @@ RUN  chmod 777 /var/spool/ \
   && mkdir -p /var/log/slurm        && chown -R slurm:slurm /var/log/slurm \
   && mkdir -p /etc/slurm            && chown -R slurm:slurm /etc/slurm \
   && ln -s /var/lib/slurm-llnl /var/lib/slurm
-
-
-# TBD, put slurm config in /etc/slurm/slurm.conf rather than symlink
-# `./configure --sysconfdir=/etc/slurm` when compiling
 
 # -----------------------------------------------------------------------------
 # Install local application code, libraries, and dependencies
@@ -168,7 +156,7 @@ ENV HOME=/home/production
 ENV R_LIBS_USER=/home/production/cxgn/R_libs
 RUN echo "R_LIBS_USER=$R_LIBS_USER" >> /etc/R/Renviron
 
-# Takes a long time (~? minutes), only uncomment the following RUN command
+# Takes a long time (many hours), only uncomment the following RUN command
 # when building fully from scratch (ex. operating system upgrade)
 # Otherwise, pre-compiled ones are pulled from the github repo:
 #   https://github.com/BFF-AFIRMS/R_libs
