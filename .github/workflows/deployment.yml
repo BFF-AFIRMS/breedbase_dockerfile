@@ -101,8 +101,17 @@ jobs:
       - name: Clean data
         run: rm -rf data
 
+  # ---------------------------------------------------------------------------
+  # Cleanup
+
+  cleanup:
+
+    needs: [deployment]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Delete Docker iamge
-        if: always()
         uses: geekyeggo/delete-artifact@v6
         with:
             name: breedbase-docker
