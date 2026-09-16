@@ -10,6 +10,10 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
   && apt update -y \
   && apt upgrade -y
 
+# Configure repository for libgdal-dev, postgresql-client-18
+RUN apt install -y postgresql-common \
+    && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+
 # Install system development libraries
 RUN apt install -y \
     libavcodec-dev libavformat-dev libbarcode-zbar-perl libcairo2-dev \
@@ -30,19 +34,13 @@ RUN apt update -y \
     clustalw cmake cron curl dkms emacs exiftool gcc gedit gfortran git \
     gnupg2 graphviz htop imagemagick less linux-headers-generic locales \
     locales-all lsof lynx mailutils make mrbayes munge muscle ncbi-blast+ \
-    nfs-common nginx perl-doc pkg-config plink postfix primer3 r-base \
-    r-base-dev rsync rsyslog screen slurmctld slurmd slurm-wlm-basic-plugins \
-    starman sudo vim xutils-dev wget xvfb zbar-tools
+    nfs-common nginx perl-doc pkg-config plink postfix postgresql-client-18 \
+    primer3 r-base r-base-dev rsync rsyslog screen slurmctld slurmd \
+    slurm-wlm-basic-plugins starman sudo vim xutils-dev wget xvfb zbar-tools
 
 # Set the locale
 RUN locale-gen en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
-
-# Install tools that need special configuration (ex. postgres)
-RUN apt install -y postgresql-common \
-  && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
-  && apt install -y postgresql-client-18
-
 
 # Install python packages
 RUN apt install -y python3-pip \
