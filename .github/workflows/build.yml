@@ -23,7 +23,7 @@ jobs:
         with:
           submodules: true
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Extract metadata (labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -33,7 +33,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: bffafirms/breedbase:latest
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=tar,dest=breedbase.tar
 
