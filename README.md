@@ -157,10 +157,10 @@ mv data data_production
 ./setup
 ```
 
-1. **Clone the submodules**
+1. **Clone the sgn submodule**
 
     ```bash
-    git submodule update --init --recursive --progress
+    git submodule update --init --recursive --progress cxgn/sgn
     ```
 
    > This will clone all the git repos that are needed for breedbase into a subdirectory called `cxgn/`. This directory will be mounted into the container during the compose step, but will still be accessible from the host for development work.
@@ -223,10 +223,10 @@ mv data data_production
 
 Testing mode is for writing and debugging new tests.
 
-1. **Clone the submodules**
+1. **Clone the sgn submodule**
 
     ```bash
-    git submodule update --init --recursive --progress
+    git submodule update --init --recursive --progress cxgn/sgn
     ```
 
 Then choose either [Standalone](#standalone) or [Interactive](#interactive) mode from below.
