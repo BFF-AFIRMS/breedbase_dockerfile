@@ -41,7 +41,9 @@ cd data
 for db in breedbase_db keycloak_db; do
   mkdir -p $db
   cd $db
-  mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
+  mkdir -p certs config db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
+  cp ../../docker/postgres/postgresql.conf config/
+  cp ../../docker/postgres/pg_hba.conf config/
   cd ../
 done
 
