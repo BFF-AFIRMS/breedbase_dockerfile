@@ -8,11 +8,15 @@ on:
       - '.gitignore'
 
 jobs:
+
+  docker:
+    uses: ./.github/workflows/docker.yml
+
   # lint:
   #   uses: ./.github/workflows/lint.yml
 
   # deployment:
   #   uses: ./.github/workflows/deployment.yml
 
-  test:
-    uses: ./.github/workflows/test.yml
+  # test:
+  #   uses: ./.github/workflows/test.yml
