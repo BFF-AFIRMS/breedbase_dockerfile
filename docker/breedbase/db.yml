@@ -37,8 +37,15 @@ services:
           create_host_path: false
 
       - type: bind
-        source: ../postgres/pg_hba.conf
+        source: $PWD/data/breedbase_db/config/pg_hba.conf
         target: /etc/postgresql/pg_hba.conf
+        read_only: true
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: $PWD/data/breedbase_db/config/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
         read_only: true
         bind:
           create_host_path: false

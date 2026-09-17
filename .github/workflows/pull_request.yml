@@ -8,11 +8,9 @@ on:
       - '.gitignore'
 
 jobs:
+
   # lint:
   #   uses: ./.github/workflows/lint.yml
-
-  deployment:
-    uses: ./.github/workflows/deployment.yml
 
   test:
     uses: ./.github/workflows/test.yml

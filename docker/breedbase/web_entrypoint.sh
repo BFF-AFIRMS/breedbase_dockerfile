@@ -15,6 +15,7 @@ wait_for_post_start() {
 
   setup_log="/tmp/web_setup.log"
   first="true"
+  touch ${setup_log}.seen
 
   while [ ! -f ${setup_log}.finished ]; do
 
