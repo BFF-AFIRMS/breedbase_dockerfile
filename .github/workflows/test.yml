@@ -248,7 +248,6 @@ jobs:
   cleanup:
 
     needs: [deployment, test]
-    if: ${{ always() }}
     runs-on: ubuntu-latest
 
     steps:
