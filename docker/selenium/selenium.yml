@@ -3,7 +3,7 @@ services:
   # Browser automation
   selenium:
     hostname: selenium
-    image: selenium/standalone-firefox:3.141.59
+    image: selenium/standalone-firefox:156.0
     shm_size: '2gb'
     # Restrict security privileges
     security_opt:
