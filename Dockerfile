@@ -67,11 +67,6 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
   && chown -R production:production /home/production \
   && npm config set cache /home/production/npm --global
 
-# Configure munge
-RUN rm /etc/munge/munge.key \
-  && /usr/sbin/mungekey \
-  && chown munge:munge /etc/munge/munge.key
-
 # Configure slurm directories and permissions
 ENV SLURM_CONF=/etc/slurm/slurm.conf
 COPY docker/breedbase/slurm.conf ${SLURM_CONF}

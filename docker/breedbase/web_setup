@@ -11,7 +11,7 @@ setup_log="/tmp/web_setup.log"
 
 # https://serverfault.com/a/103569
 exec 3>&1 4>&2
-trap 'exec 2>&4 1>&3' 0 1 2 3
+trap '[[ -e .git-bak ]] && mv .git-bak .git; exec 2>&4 1>&3' 0 1 2 3
 
 exec 1>${setup_log} 2>&1
 
@@ -33,6 +33,9 @@ start_system_services() {
     echo "Starting system services"
     echo "-------------------------------------------------------------------------"
 
+    rm -f /etc/munge/munge.key
+    /usr/sbin/mungekey
+    chown munge:munge /etc/munge/munge.key
     sed -i s/localhost/$HOSTNAME/g /etc/slurm/slurm.conf
     /etc/init.d/postfix start
     /etc/init.d/cron start
