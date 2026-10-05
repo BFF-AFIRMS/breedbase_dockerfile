@@ -8,3 +8,11 @@ cxgn/sgn/logfile*
 cxgn/sgn/sgn_fixture.conf
 cxgn/*/sgn_local.conf
 **/*.env
+
+# Saves about 230 MB of space
+cxgn/sgn/docs/BreedbaseManual.pdf
+cxgn/sgn/docs/r_markdown_docs/*
+cxgn/gtsimsrch/data/*
+cxgn/gtsimsrch/example/*
+cxgn/gtsimsrch/testing/*
+
