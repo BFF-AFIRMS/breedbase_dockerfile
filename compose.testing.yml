@@ -34,12 +34,14 @@ services:
     volumes:
       - npmdata:/home/production/npm
 
+      # sgn app folder
       - type: bind
-        source: ./cxgn
-        target: /home/production/cxgn
+        source: ./cxgn/sgn
+        target: /home/production/cxgn/sgn
         bind:
           create_host_path: false
 
+      # Top level git folder
       - type: bind
         source: ./.git
         target: /home/production/.git
