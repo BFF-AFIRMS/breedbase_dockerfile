@@ -91,6 +91,6 @@ services:
       # Downloads
       - type: bind
         source: $PWD/data/selenium/downloads
-        target: /downloads
+        target: /home/seluser/Downloads
         bind:
           create_host_path: false
