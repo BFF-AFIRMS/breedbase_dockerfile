@@ -9,7 +9,7 @@ if [[ $KC_HOSTNAME ]]; then
 else
     cp /opt/keycloak/data/import/${REALM_FILE} /tmp/${REALM_FILE}
 fi
-/opt/keycloak/bin/kc.sh import --file=/tmp/${REALM_FILE} --override=false
+/opt/keycloak/bin/kc.sh import --file=/tmp/${REALM_FILE} --override=false --spi-connections-jpa--quarkus--migration-strategy=update
 
 # Start server
 /opt/keycloak/bin/kc.sh start
