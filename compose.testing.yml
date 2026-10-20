@@ -3,7 +3,6 @@ name: testing
 include:
   - docker/breedbase/db.yml           # Breedbase Database
   - docker/keycloak/web.yml           # Keycloak Web Application + Database
-  - docker/novnc/novnc.yml            # NoVNC Visualizer for Selenium Tests
 
 volumes:
   npmdata:
