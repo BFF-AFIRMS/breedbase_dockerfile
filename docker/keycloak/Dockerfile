@@ -1,4 +1,4 @@
-FROM keycloak/keycloak:26.5.1-0
+FROM keycloak/keycloak:26.7.2-2
 
 RUN mkdir -p /opt/keycloak/data/import
 
