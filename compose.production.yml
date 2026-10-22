@@ -1,7 +1,6 @@
 name: production
 
 volumes:
-  cxgndata:
   npmdata:
 
 services:
@@ -25,12 +24,21 @@ services:
       WEB_USR_PASSWORD:  ${WEB_USR_PASSWORD:?}  # Database password for 'web_usr'
       ADMIN_PASSWORD:    ${ADMIN_PASSWORD:?}    # Breedbase web password for admin user
     volumes:
-      - cxgndata:/home/production/cxgn
       - npmdata:/home/production/npm
+
+      - type: bind
+        source: ./cxgn/sgn
+        target: /home/production/cxgn/sgn
+        bind:
+          create_host_path: false
 
   caddy:
     extends:
       file: docker/caddy/caddy.yml
       service: caddy
     volumes:
-      - cxgndata:/home/production/cxgn
+      - type: bind
+        source: ./cxgn/sgn
+        target: /home/production/cxgn/sgn
+        bind:
+          create_host_path: false
